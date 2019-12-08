@@ -1,0 +1,5 @@
+*.VC.opendb
+*.VC.db
+ x64/
+vulkan-renderer/x64
+.vs
