@@ -17,6 +17,10 @@ int main()
 
 	Renderer renderer(window);
 
+	while (renderer.Run())
+	{
+		renderer.DrawFrame();
+	}
 	//VkCommandPool commandPool;
 	//VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 

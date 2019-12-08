@@ -105,15 +105,40 @@ uint32_t Renderer::GetSwapchainImageCount()
 	return uint32_t();
 }
 
-void Renderer::BeginRender()
+void Renderer::DrawFrame()
 {
-	vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, 0, _swapchainImageAvailable, &_activeSwapchainImageId);
-	vkWaitForFences(_device, 1, &_swapchainImageAvailable, VK_TRUE, UINT64_MAX);
-	vkResetFences(_device, 1, &_swapchainImageAvailable);
-	vkQueueWaitIdle(_queue);
+	_beginRender();
+	
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { _imageAvailableSemaphore };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &_commandBuffers[_activeSwapchainImageId];
+
+	std::vector<VkSemaphore> signalSemaphores{ _renderFinishedSemaphore };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores.data();
+
+	vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
+
+	_endRender(signalSemaphores);
 }
 
-void Renderer::EndRender(std::vector<VkSemaphore> waitSemaphores)
+void Renderer::_beginRender()
+{
+	vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &_activeSwapchainImageId);
+	//vkWaitForFences(_device, 1, &_swapchainImageAvailable, VK_TRUE, UINT64_MAX);
+	//vkResetFences(_device, 1, &_swapchainImageAvailable);
+	//vkQueueWaitIdle(_queue);
+}
+
+void Renderer::_endRender(std::vector<VkSemaphore> waitSemaphores)
 {
 	VkResult  presentResult = VkResult::VK_RESULT_MAX_ENUM;
 	VkPresentInfoKHR presentInfo = {};
@@ -309,6 +334,7 @@ void Renderer::_initGraphicsPipeline()
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.lineWidth = 1.0;
 
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -359,6 +385,19 @@ void Renderer::_initGraphicsPipeline()
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 	ErrorCheck(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_pipelineLayout));
 
+	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
+	depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	//depthStencilStateCreateInfo.flags;
+	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+	depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+	//depthStencilStateCreateInfo.depthCompareOp;
+	//depthStencilStateCreateInfo.depthBoundsTestEnable;
+	//depthStencilStateCreateInfo.stencilTestEnable;
+	//depthStencilStateCreateInfo.front;
+	//depthStencilStateCreateInfo.back;
+	//depthStencilStateCreateInfo.minDepthBounds;
+	//depthStencilStateCreateInfo.maxDepthBounds;
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -368,7 +407,7 @@ void Renderer::_initGraphicsPipeline()
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr; // Optional
+	pipelineInfo.pDepthStencilState = &depthStencilStateCreateInfo; // Optional
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = nullptr; // Optional
 	pipelineInfo.layout = _pipelineLayout;
@@ -756,12 +795,23 @@ void Renderer::_initRenderPass()
 	subpasses[0].pColorAttachments = subpassColorAttachments.data();
 	subpasses[0].pDepthStencilAttachment = &subpassDepthStencilAttachment;
 
+	// TODO: look into the documentation of subpass and subpass dependencies.
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
 	VkRenderPassCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	createInfo.attachmentCount = attachments.size();
 	createInfo.pAttachments = attachments.data();
 	createInfo.subpassCount = subpasses.size();
 	createInfo.pSubpasses = subpasses.data();
+	createInfo.dependencyCount = 1;
+	createInfo.pDependencies = &dependency;
 
 	ErrorCheck(vkCreateRenderPass(_device, &createInfo, nullptr, &_renderPass));
 }
@@ -802,18 +852,66 @@ void Renderer::_deInitFramebuffer()
 
 void Renderer::_initCommandBufferPool()
 {
+	
+	VkCommandPoolCreateInfo commandPoolCreateInfo = {};
+
+	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	commandPoolCreateInfo.queueFamilyIndex = _graphicFamilyIndex;
+	vkCreateCommandPool(_device, &commandPoolCreateInfo, nullptr, &_commandPool);
 }
 
 void Renderer::_deInitCommandBufferPool()
 {
+	vkDestroyCommandPool(_device, _commandPool, nullptr);
 }
 
 void Renderer::_initCommandBuffers()
 {
+	_commandBuffers.resize(_swapchainImageCount);
+	for (uint32_t i = 0; i < _commandBuffers.size(); ++i)
+	{
+		VkCommandBuffer commandBuffer = {};
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
+		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		commandBufferAllocateInfo.commandPool = _commandPool;
+		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		commandBufferAllocateInfo.commandBufferCount = 1;
+		ErrorCheck(vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer));
+		_commandBuffers[i]= commandBuffer;
+	}
+
+	for (size_t i = 0; i < _commandBuffers.size(); ++i) {
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = 0; // Optional
+		beginInfo.pInheritanceInfo = nullptr; // Optional
+
+		ErrorCheck(vkBeginCommandBuffer(_commandBuffers[i], &beginInfo));
+		
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = _renderPass;
+		renderPassInfo.framebuffer = _framebuffers[i];
+
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = _swapchainExtent;
+
+		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		renderPassInfo.clearValueCount = 4;
+		renderPassInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
+		vkCmdDraw(_commandBuffers[i], 3, 1, 0, 0);
+		vkCmdEndRenderPass(_commandBuffers[i]);
+		ErrorCheck(vkEndCommandBuffer(_commandBuffers[i]));
+	}
 }
 
 void Renderer::_deInitCommandBuffers()
 {
+	// The command buffers are allocated from the commandBufferPool, so no need to clean up the memory.
 }
 
 void Renderer::_initSynchronizations()
@@ -821,11 +919,21 @@ void Renderer::_initSynchronizations()
 	VkFenceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	vkCreateFence(_device, &createInfo, nullptr, &_swapchainImageAvailable);
+
+	VkSemaphoreCreateInfo semaphoreInfo = {};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_imageAvailableSemaphore);
+	vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_renderFinishedSemaphore);
+
 }
 
 void Renderer::_deInitSynchronizations()
 {
 	vkDestroyFence(_device, _swapchainImageAvailable, nullptr);
+
+	vkDestroySemaphore(_device, _renderFinishedSemaphore, nullptr);
+	vkDestroySemaphore(_device, _imageAvailableSemaphore, nullptr);
 }
 
 

@@ -21,10 +21,11 @@ public:
 	VkRenderPass GetVulkanRenderPass();
 	VkFramebuffer GetActiveFramebuffer();
 	uint32_t GetSwapchainImageCount();
-
-	void BeginRender();
-	void EndRender(std::vector<VkSemaphore> waitSemaphores);
+	void DrawFrame();
 private:
+	void _beginRender();
+	void _endRender(std::vector<VkSemaphore> waitSemaphores);
+
 	void _setupLayersAndExtensions();
 	void _initInstance();
 	void _deInitInstance();
@@ -83,6 +84,11 @@ private:
 	std::vector<VkFramebuffer>			_framebuffers;
 	VkPipelineLayout					_pipelineLayout;
 	VkPipeline							_graphicsPipeline;
+	VkCommandPool						_commandPool;
+	std::vector<VkCommandBuffer>		_commandBuffers;
+
+	VkSemaphore							_imageAvailableSemaphore;
+	VkSemaphore							_renderFinishedSemaphore;
 
 	VkExtent2D							_swapchainExtent;
 
