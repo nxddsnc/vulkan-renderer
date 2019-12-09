@@ -30,7 +30,7 @@
     <ClCompile Include="Window_32.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GlfwWindow.cpp">
+    <ClCompile Include="GLFWWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
