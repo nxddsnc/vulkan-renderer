@@ -29,6 +29,7 @@ Renderer::Renderer(Window *window)
 
 Renderer::~Renderer()
 {
+    vkDeviceWaitIdle(_device);
 	vkQueueWaitIdle(_queue);
 	delete _window;
 	_deInitSynchronizations();
@@ -150,6 +151,7 @@ void Renderer::_endRender(std::vector<VkSemaphore> waitSemaphores)
 	presentInfo.pImageIndices = &_activeSwapchainImageId;
 	presentInfo.pResults = &presentResult;
 	ErrorCheck(vkQueuePresentKHR(_queue, &presentInfo));
+    vkQueueWaitIdle(_queue);
 }
 
 void Renderer::_setupLayersAndExtensions()
@@ -388,8 +390,8 @@ void Renderer::_initGraphicsPipeline()
 	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
 	depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	//depthStencilStateCreateInfo.flags;
-	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-	depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+	depthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
 	//depthStencilStateCreateInfo.depthCompareOp;
 	//depthStencilStateCreateInfo.depthBoundsTestEnable;
 	//depthStencilStateCreateInfo.stencilTestEnable;
@@ -884,7 +886,7 @@ void Renderer::_initCommandBuffers()
 	for (size_t i = 0; i < _commandBuffers.size(); ++i) {
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0; // Optional
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
 		beginInfo.pInheritanceInfo = nullptr; // Optional
 
 		ErrorCheck(vkBeginCommandBuffer(_commandBuffers[i], &beginInfo));
@@ -897,9 +899,16 @@ void Renderer::_initCommandBuffers()
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = _swapchainExtent;
 
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		renderPassInfo.clearValueCount = 4;
-		renderPassInfo.pClearValues = &clearColor;
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].depthStencil.depth = 0.0f;
+        clearValues[0].depthStencil.stencil = 0;
+
+        clearValues[1].color.float32[0] = 0.0;
+        clearValues[1].color.float32[1] = 0.0;
+        clearValues[1].color.float32[2] = 0.0;
+        clearValues[1].color.float32[3] = 1.0f;
+		renderPassInfo.clearValueCount = clearValues.size();
+		renderPassInfo.pClearValues = clearValues.data();
 
 		vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
