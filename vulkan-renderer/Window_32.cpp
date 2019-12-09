@@ -1,11 +1,13 @@
+
 #include "BUILD_OPTIONS.h"
 #include "Platform.h"
 #include "Window.h"
 #include <assert.h>
 #include "Renderer.h"
 #include "Shared.h"
-#ifdef VK_USE_PLATFORM_WIN32_KHR
 
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+#ifndef USE_GLFW
 // Microsoft Windows specific versions of window functions
 LRESULT CALLBACK WindowsEventHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -114,4 +116,5 @@ void Window::InitOSSurface(VkInstance instance, VkSurfaceKHR *surface)
 	vkCreateWin32SurfaceKHR(instance, &win32SurfaceCreateInfo, nullptr, surface);
 }
 
+#endif
 #endif

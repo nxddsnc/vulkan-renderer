@@ -1,5 +1,7 @@
 #include "Platform.h"
 #include <vector>
+
+const int MAX_FRAMES_IN_FLIGHT = 2;
 class Window;
 
 #pragma once

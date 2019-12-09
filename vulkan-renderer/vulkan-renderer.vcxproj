@@ -157,6 +157,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GlfwWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shared.cpp" />
