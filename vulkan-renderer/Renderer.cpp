@@ -10,9 +10,6 @@
 Renderer::Renderer(Window *window)
 {
 	_window = window;
-    glfwSetWindowSizeCallback(window->GetGLFWWindow(), [this]() {
-        this->Resize();
-    });
 
 	_setupLayersAndExtensions();
 	_setupDebug();
@@ -60,7 +57,7 @@ bool Renderer::Run()
 	return true;
 }
 
-void Renderer::Resize()
+void Renderer::Resize(GLFWwindow*, int, int)
 {
     vkDeviceWaitIdle(_device);
 

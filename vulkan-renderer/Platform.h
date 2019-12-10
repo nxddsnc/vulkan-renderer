@@ -4,7 +4,7 @@
 #define HEIGHT 600
 
 #ifdef _WIN32 
-#define USE_GLFW 1
+#define USE_GLFW 0
 #define VK_USE_PLATFORM_WIN32_KHR 1
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW\glfw3.h>

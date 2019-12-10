@@ -12,7 +12,7 @@ public:
 	~Renderer();
 
 	bool Run();
-    void Resize();
+    void Resize(GLFWwindow*, int, int);
 
 	VkInstance GetVulkanInstance();
 	VkPhysicalDevice GetPhysicalDevice();

@@ -33,6 +33,12 @@ VkExtent2D Window::GetWindowExtent()
 	return{ _width, _height };
 }
 
+void Window::SetWindowExtent(VkExtent2D extent)
+{
+    _width = extent.width;
+    _height = extent.height;
+}
+
 GLFWwindow * Window::GetGLFWWindow()
 {
     return _window;

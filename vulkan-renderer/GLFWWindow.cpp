@@ -4,7 +4,6 @@
 #include <assert.h>
 #include "Renderer.h"
 #include "Shared.h"
-#include <GLFW\glfw3.h>
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 #ifdef USE_GLFW
