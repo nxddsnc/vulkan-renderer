@@ -12,6 +12,7 @@ public:
 	~Renderer();
 
 	bool Run();
+    void Resize();
 
 	VkInstance GetVulkanInstance();
 	VkPhysicalDevice GetPhysicalDevice();
@@ -40,6 +41,8 @@ private:
 
 	void _initSurface();
 	void _deInitSurface();
+
+    void _cleanupSwapchain();
 
 	void _initSwapchain();
 	void _deInitSwapchain();

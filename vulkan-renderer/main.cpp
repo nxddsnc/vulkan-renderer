@@ -3,6 +3,7 @@
 #include <array>
 #include <chrono>
 #include <iostream>
+#include <GLFW\glfw3.h>
 
 constexpr double PI = 3.14159265358979323846;
 constexpr double CIRCLE_RAD = PI * 2;
@@ -32,6 +33,8 @@ int main()
             std::cout << "FPS: " << fps << std::endl;
         }
 		renderer.DrawFrame();
+
+        glfwPollEvents();
 	}
 	//VkCommandPool commandPool;
 	//VkCommandPoolCreateInfo commandPoolCreateInfo = {};

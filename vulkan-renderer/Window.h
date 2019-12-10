@@ -17,6 +17,7 @@ public:
 
 	void InitOSSurface(VkInstance instance, VkSurfaceKHR *surface);
 	VkExtent2D GetWindowExtent();
+    GLFWwindow *GetGLFWWindow();
 private:
 	bool windowRunning;
 

@@ -10,6 +10,10 @@
 Renderer::Renderer(Window *window)
 {
 	_window = window;
+    glfwSetWindowSizeCallback(window->GetGLFWWindow(), [this]() {
+        this->Resize();
+    });
+
 	_setupLayersAndExtensions();
 	_setupDebug();
 	_initInstance();
@@ -54,6 +58,20 @@ bool Renderer::Run()
 		return _window->Update();
 	}
 	return true;
+}
+
+void Renderer::Resize()
+{
+    vkDeviceWaitIdle(_device);
+
+    _cleanupSwapchain();
+
+    _initSwapchain();
+    _initSwapchainImages();
+    _initRenderPass();
+    _initGraphicsPipeline();
+    _initFramebuffers();
+    _initCommandBuffers();
 }
 
 VkInstance Renderer::GetVulkanInstance()
@@ -474,6 +492,25 @@ void Renderer::_initSurface()
 void Renderer::_deInitSurface()
 {
 	vkDestroySurfaceKHR(_instance, _surface, nullptr);
+}
+
+void Renderer::_cleanupSwapchain()
+{
+    for (size_t i = 0; i < _framebuffers.size(); ++i) {
+        vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
+    }
+
+    vkFreeCommandBuffers(_device, _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+
+    vkDestroyPipeline(_device, _graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
+    vkDestroyRenderPass(_device, _renderPass, nullptr);
+
+    for (size_t i = 0; i < _swapchainImageViews.size(); ++i) {
+        vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
+    }
+
+    vkDestroySwapchainKHR(_device, _swapchain, nullptr);
 }
 
 VkShaderModule Renderer::_createShaderModule(const std::vector<char>& code)
