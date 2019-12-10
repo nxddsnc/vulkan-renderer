@@ -4,7 +4,7 @@
 #include <string>
 
 class Renderer;
-class GLFWwindow;
+struct GLFWwindow;
 
 class Window
 {
@@ -14,6 +14,7 @@ public:
 
 	void Close();
 	bool Update();
+	void Resize(int width, int height);
 
 	void InitOSSurface(VkInstance instance, VkSurfaceKHR *surface);
 	VkExtent2D GetWindowExtent();

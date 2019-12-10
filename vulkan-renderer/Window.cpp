@@ -28,6 +28,12 @@ bool Window::Update()
 	return windowRunning;
 }
 
+void Window::Resize(int width, int height)
+{
+	_width = width;
+	_height = height;
+}
+
 VkExtent2D Window::GetWindowExtent()
 {
 	return{ _width, _height };

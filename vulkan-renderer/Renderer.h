@@ -12,7 +12,7 @@ public:
 	~Renderer();
 
 	bool Run();
-    void Resize(GLFWwindow*, int, int);
+    void Resize(int width, int height);
 
 	VkInstance GetVulkanInstance();
 	VkPhysicalDevice GetPhysicalDevice();
@@ -92,8 +92,9 @@ private:
 	VkCommandPool						_commandPool;
 	std::vector<VkCommandBuffer>		_commandBuffers;
 
-	VkSemaphore							_imageAvailableSemaphore;
-	VkSemaphore							_renderFinishedSemaphore;
+	std::vector<VkSemaphore>		    _imageAvailableSemaphores;
+	std::vector<VkSemaphore>			_renderFinishedSemaphores;
+	size_t								_currentFrame = 0;
 
 	VkExtent2D							_swapchainExtent;
 

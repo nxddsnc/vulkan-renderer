@@ -10,7 +10,7 @@
 Renderer::Renderer(Window *window)
 {
 	_window = window;
-
+	_swapchainExtent = { WIDTH, HEIGHT };
 	_setupLayersAndExtensions();
 	_setupDebug();
 	_initInstance();
@@ -57,15 +57,24 @@ bool Renderer::Run()
 	return true;
 }
 
-void Renderer::Resize(GLFWwindow*, int, int)
+void Renderer::Resize(int width, int height)
 {
+	while(width == 0 || height == 0)
+	{
+		glfwGetFramebufferSize(_window->GetGLFWWindow(), &width, &height);
+		glfwWaitEvents();
+	}
     vkDeviceWaitIdle(_device);
 
+	_swapchainExtent.width = width;
+	_swapchainExtent.height = height;
+	_window->Resize(width, height);
     _cleanupSwapchain();
 
     _initSwapchain();
     _initSwapchainImages();
-    _initRenderPass();
+	_initDepthStencilImage();
+	_initRenderPass();
     _initGraphicsPipeline();
     _initFramebuffers();
     _initCommandBuffers();
@@ -128,7 +137,7 @@ void Renderer::DrawFrame()
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { _imageAvailableSemaphore };
+	VkSemaphore waitSemaphores[] = { _imageAvailableSemaphores[_currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
@@ -137,7 +146,7 @@ void Renderer::DrawFrame()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &_commandBuffers[_activeSwapchainImageId];
 
-	std::vector<VkSemaphore> signalSemaphores{ _renderFinishedSemaphore };
+	std::vector<VkSemaphore> signalSemaphores{ _renderFinishedSemaphores[_currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores.data();
 
@@ -148,7 +157,7 @@ void Renderer::DrawFrame()
 
 void Renderer::_beginRender()
 {
-	vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &_activeSwapchainImageId);
+	vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphores[_currentFrame], VK_NULL_HANDLE, &_activeSwapchainImageId);
 	//vkWaitForFences(_device, 1, &_swapchainImageAvailable, VK_TRUE, UINT64_MAX);
 	//vkResetFences(_device, 1, &_swapchainImageAvailable);
 	//vkQueueWaitIdle(_queue);
@@ -167,6 +176,7 @@ void Renderer::_endRender(std::vector<VkSemaphore> waitSemaphores)
 	presentInfo.pResults = &presentResult;
 	ErrorCheck(vkQueuePresentKHR(_queue, &presentInfo));
     vkQueueWaitIdle(_queue);
+	_currentFrame = (_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void Renderer::_setupLayersAndExtensions()
@@ -506,7 +516,7 @@ void Renderer::_cleanupSwapchain()
     for (size_t i = 0; i < _swapchainImageViews.size(); ++i) {
         vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
     }
-
+	_deInitDepthStencilImage();
     vkDestroySwapchainKHR(_device, _swapchain, nullptr);
 }
 
@@ -625,8 +635,6 @@ void Renderer::_initSwapchain()
 	{
 		_swapchainImageCount = _surfaceCapibilities.minImageCount;
 	}
-
-	_swapchainExtent = { WIDTH, HEIGHT };
 
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
 	{
@@ -789,8 +797,8 @@ void Renderer::_initDepthStencilImage()
 void Renderer::_deInitDepthStencilImage()
 {
 	vkDestroyImageView(_device, _depthStencilImageView, nullptr);
-	vkFreeMemory(_device, _depthStencilImageMemory, nullptr);
 	vkDestroyImage(_device, _depthStencilImage, nullptr);
+	vkFreeMemory(_device, _depthStencilImageMemory, nullptr);
 }
 
 void Renderer::_initRenderPass()
@@ -966,8 +974,14 @@ void Renderer::_initSynchronizations()
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-	vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_imageAvailableSemaphore);
-	vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_renderFinishedSemaphore);
+	_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_imageAvailableSemaphores[i]);
+		vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_renderFinishedSemaphores[i]);
+	}
 
 }
 
@@ -975,8 +989,11 @@ void Renderer::_deInitSynchronizations()
 {
 	vkDestroyFence(_device, _swapchainImageAvailable, nullptr);
 
-	vkDestroySemaphore(_device, _renderFinishedSemaphore, nullptr);
-	vkDestroySemaphore(_device, _imageAvailableSemaphore, nullptr);
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		vkDestroySemaphore(_device, _renderFinishedSemaphores[i], nullptr);
+		vkDestroySemaphore(_device, _imageAvailableSemaphores[i], nullptr);
+	}
 }
 
 
