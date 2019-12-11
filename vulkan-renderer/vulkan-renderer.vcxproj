@@ -160,6 +160,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Window_32.cpp" />
@@ -168,6 +169,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="BUILD_OPTIONS.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="Shared.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
