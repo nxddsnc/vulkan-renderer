@@ -25,6 +25,7 @@ Renderer::Renderer(Window *window)
 	_initGraphicsPipeline();
 	_initFramebuffers();
 	_initCommandBufferPool();
+	_initVertexBuffer();
 	_initCommandBuffers();
 	_initSynchronizations();
 }
@@ -36,6 +37,7 @@ Renderer::~Renderer()
 	delete _window;
 	_deInitSynchronizations();
 	_deInitCommandBuffers();
+	_deInitVertexBuffer();
 	_deInitCommandBufferPool();
 	_deInitFramebuffer();
 	_initGraphicsPipeline();
@@ -914,6 +916,46 @@ void Renderer::_deInitCommandBufferPool()
 	vkDestroyCommandPool(_device, _commandPool, nullptr);
 }
 
+void Renderer::_initVertexBuffer()
+{
+	const std::vector<Vertex> vertices = {
+		{ { 0.0f, -0.5f },{ 1.0f, 1.0f, 1.0f } },
+		{ { 0.5f, 0.5f },{ 0.0f, 1.0f, 0.0f } },
+		{ { -0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } }
+	};
+
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	ErrorCheck(vkCreateBuffer(_device, &bufferInfo, nullptr, &_vertexBuffer));
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(_device, _vertexBuffer, &memRequirements);
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = FindMemoryTypeIndex(&_gpuMemoryProperties, &memRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	vkAllocateMemory(_device, &allocInfo, nullptr, &_vertexBufferMemory);
+
+	vkBindBufferMemory(_device, _vertexBuffer, _vertexBufferMemory, 0);
+
+	void* data;
+	vkMapMemory(_device, _vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+	memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+	vkUnmapMemory(_device, _vertexBufferMemory);
+
+}
+
+void Renderer::_deInitVertexBuffer()
+{
+	vkDestroyBuffer(_device, _vertexBuffer, nullptr);
+	vkFreeMemory(_device, _vertexBufferMemory, nullptr);
+}
+
 void Renderer::_initCommandBuffers()
 {
 	_commandBuffers.resize(_swapchainImageCount);
@@ -958,7 +1000,13 @@ void Renderer::_initCommandBuffers()
 
 		vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
-		vkCmdDraw(_commandBuffers[i], 3, 1, 0, 0);
+		
+		VkBuffer vertexBuffers[] = { _vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+		vkCmdDraw(_commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
+
 		vkCmdEndRenderPass(_commandBuffers[i]);
 		ErrorCheck(vkEndCommandBuffer(_commandBuffers[i]));
 	}

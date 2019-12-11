@@ -62,6 +62,9 @@ private:
 	void _initCommandBufferPool();
 	void _deInitCommandBufferPool();
 
+	void _initVertexBuffer();
+	void _deInitVertexBuffer();
+
 	void _initCommandBuffers();
 	void _deInitCommandBuffers();
 
@@ -91,6 +94,9 @@ private:
 	VkPipeline							_graphicsPipeline;
 	VkCommandPool						_commandPool;
 	std::vector<VkCommandBuffer>		_commandBuffers;
+
+	VkBuffer							_vertexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory						_vertexBufferMemory;
 
 	std::vector<VkSemaphore>		    _imageAvailableSemaphores;
 	std::vector<VkSemaphore>			_renderFinishedSemaphores;
