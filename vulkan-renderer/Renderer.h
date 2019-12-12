@@ -98,6 +98,9 @@ private:
 	VkBuffer							_vertexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory						_vertexBufferMemory;
 
+	VkBuffer							_indexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory						_indexBufferMemory;
+
 	std::vector<VkSemaphore>		    _imageAvailableSemaphores;
 	std::vector<VkSemaphore>			_renderFinishedSemaphores;
 	size_t								_currentFrame = 0;

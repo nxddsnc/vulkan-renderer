@@ -40,7 +40,7 @@ Renderer::~Renderer()
 	_deInitVertexBuffer();
 	_deInitCommandBufferPool();
 	_deInitFramebuffer();
-	_initGraphicsPipeline();
+	_deInitGraphicPipeline();
 	_deInitRenderPass();
 	_deInitDepthStencilImage();
 	_deInitSwapchainImages();
@@ -919,41 +919,67 @@ void Renderer::_deInitCommandBufferPool()
 void Renderer::_initVertexBuffer()
 {
 	const std::vector<Vertex> vertices = {
-		{ { 0.0f, -0.5f },{ 1.0f, 1.0f, 1.0f } },
-		{ { 0.5f, 0.5f },{ 0.0f, 1.0f, 0.0f } },
-		{ { -0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } }
+		{ { -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f } },
+		{ { 0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } },
+		{ { -0.5f, 0.5f },{ 1.0f, 1.0f, 1.0f } }
 	};
 
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
+	VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	VkMemoryPropertyFlags memPropertiesFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-	ErrorCheck(vkCreateBuffer(_device, &bufferInfo, nullptr, &_vertexBuffer));
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(_device, _vertexBuffer, &memRequirements);
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryTypeIndex(&_gpuMemoryProperties, &memRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	vkAllocateMemory(_device, &allocInfo, nullptr, &_vertexBufferMemory);
-
-	vkBindBufferMemory(_device, _vertexBuffer, _vertexBufferMemory, 0);
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(_device, _vertexBufferMemory, 0, bufferInfo.size, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferInfo.size);
-	vkUnmapMemory(_device, _vertexBufferMemory);
+	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
+	memcpy(data, vertices.data(), (size_t)size);
+	vkUnmapMemory(_device, stagingBufferMemory);
 
+	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _vertexBuffer, _vertexBufferMemory);
+
+	copyBuffer(_device, _queue, _commandPool, stagingBuffer, _vertexBuffer, size);
+
+	vkDestroyBuffer(_device, stagingBuffer, nullptr);
+	vkFreeMemory(_device, stagingBufferMemory, nullptr);
+
+	const std::vector<uint16_t> indices = {
+		0, 1, 2, 2, 3, 0
+	};
+
+	size = sizeof(indices[0]) * indices.size();
+	usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	memPropertiesFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
+
+	data;
+	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
+	memcpy(data, indices.data(), (size_t)size);
+	vkUnmapMemory(_device, stagingBufferMemory);
+
+	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _indexBuffer, _indexBufferMemory);
+
+	copyBuffer(_device, _queue, _commandPool, stagingBuffer, _indexBuffer, size);
+
+	vkDestroyBuffer(_device, stagingBuffer, nullptr);
+	vkFreeMemory(_device, stagingBufferMemory, nullptr);
 }
 
 void Renderer::_deInitVertexBuffer()
 {
 	vkDestroyBuffer(_device, _vertexBuffer, nullptr);
 	vkFreeMemory(_device, _vertexBufferMemory, nullptr);
+	vkDestroyBuffer(_device, _indexBuffer, nullptr);
+	vkFreeMemory(_device, _indexBufferMemory, nullptr);
 }
 
 void Renderer::_initCommandBuffers()
@@ -1004,8 +1030,9 @@ void Renderer::_initCommandBuffers()
 		VkBuffer vertexBuffers[] = { _vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-		vkCmdDraw(_commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
+		vkCmdBindIndexBuffer(_commandBuffers[i], _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		
+		vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(6), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(_commandBuffers[i]);
 		ErrorCheck(vkEndCommandBuffer(_commandBuffers[i]));

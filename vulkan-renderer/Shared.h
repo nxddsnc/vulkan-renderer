@@ -20,6 +20,18 @@ Contributors:
 void ErrorCheck(VkResult result);
 #endif
 
-uint32_t FindMemoryTypeIndex(VkPhysicalDeviceMemoryProperties *gpuMemoryProperties, const VkMemoryRequirements *momoryRequiremenets, const VkMemoryPropertyFlags memoryProperties);
-
 std::vector<char> readFile(const std::string& filename);
+
+uint32_t FindMemoryTypeIndex(VkPhysicalDeviceMemoryProperties *gpuMemoryProperties, 
+	const VkMemoryRequirements *momoryRequiremenets, const VkMemoryPropertyFlags memoryProperties);
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+void createBuffer(VkDevice device, VkDeviceSize size,
+	VkPhysicalDeviceMemoryProperties *gpuMemoryProperties,
+	VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+	VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+
+void copyBuffer(VkDevice &device, VkQueue &graphicsQueue, VkCommandPool &commandPool, VkBuffer srcBuffer,
+	VkBuffer dstBuffer, VkDeviceSize size);
