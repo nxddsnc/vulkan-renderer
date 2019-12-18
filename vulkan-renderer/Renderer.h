@@ -5,6 +5,13 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 class Window;
 
 #pragma once
+
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 class Renderer
 {
 public:
@@ -28,6 +35,7 @@ public:
 private:
 	void _beginRender();
 	void _endRender(std::vector<VkSemaphore> waitSemaphores);
+	void _updateUniformBuffer();
 
 	void _setupLayersAndExtensions();
 	void _initInstance();
@@ -35,6 +43,9 @@ private:
 
 	void _initDevice();
 	void _deInitDevice();
+
+	void _initDescriptorSetLayout();
+	void _deInitDescriptorSetLayout();
 
 	void _initGraphicsPipeline();
 	void _deInitGraphicPipeline();
@@ -65,6 +76,15 @@ private:
 	void _initVertexBuffer();
 	void _deInitVertexBuffer();
 
+	void _initUniformBuffers();
+	void _deInitUniformBuffer();
+
+	void _initDescriptorPool();
+	void _deInitDescriptorPool();
+
+	void _initDescriptorSet();
+	void _deInitDescriptorSet();
+
 	void _initCommandBuffers();
 	void _deInitCommandBuffers();
 
@@ -76,6 +96,9 @@ private:
 	void _setupDebug();
 	void _initDebug();
 	void _deInitDebug();
+
+	UniformBufferObject					_ubo = {};
+	float								_time = 0.0;
 
 	VkInstance							_instance = VK_NULL_HANDLE;
 	VkPhysicalDevice					_gpu = VK_NULL_HANDLE;
@@ -91,6 +114,9 @@ private:
 	std::vector<VkImageView>			_swapchainImageViews;
 	std::vector<VkFramebuffer>			_framebuffers;
 	VkPipelineLayout					_pipelineLayout;
+	VkDescriptorSetLayout				_descriptorSetLayout;
+	std::vector<VkDescriptorSet>		_descriptorSets;
+	VkDescriptorPool					_descriptorPool;
 	VkPipeline							_graphicsPipeline;
 	VkCommandPool						_commandPool;
 	std::vector<VkCommandBuffer>		_commandBuffers;
@@ -100,6 +126,9 @@ private:
 
 	VkBuffer							_indexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory						_indexBufferMemory;
+
+	std::vector<VkBuffer>				_uniformBuffers;
+	std::vector<VkDeviceMemory>			_uniformBuffersMemory;
 
 	std::vector<VkSemaphore>		    _imageAvailableSemaphores;
 	std::vector<VkSemaphore>			_renderFinishedSemaphores;
