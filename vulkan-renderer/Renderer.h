@@ -73,6 +73,9 @@ private:
 	void _initCommandBufferPool();
 	void _deInitCommandBufferPool();
 
+	void _initTextureImage();
+	void _deInitTextureImage();
+
 	void _initVertexBuffer();
 	void _deInitVertexBuffer();
 
@@ -126,6 +129,9 @@ private:
 
 	VkBuffer							_indexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory						_indexBufferMemory;
+
+	VkImage								_textureImage;
+	VkDeviceMemory						_textureImageMemory;
 
 	std::vector<VkBuffer>				_uniformBuffers;
 	std::vector<VkDeviceMemory>			_uniformBuffersMemory;
