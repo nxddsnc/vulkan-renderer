@@ -12,6 +12,8 @@ struct UniformBufferObject {
 	glm::mat4 proj;
 };
 
+class ResourceManager;
+
 class Renderer
 {
 public:
@@ -43,6 +45,9 @@ private:
 
 	void _initDevice();
 	void _deInitDevice();
+
+	void _initResourceManager();
+	void _deInitResourceManager();
 
 	void _initDescriptorSetLayout();
 	void _deInitDescriptorSetLayout();
@@ -110,6 +115,8 @@ private:
 	VkPhysicalDeviceProperties			_gpuProperties;
 	VkPhysicalDeviceMemoryProperties	_gpuMemoryProperties;
 	uint32_t							_graphicFamilyIndex = 0;
+
+	ResourceManager					 *  _resourceManager;
 
 	VkSurfaceKHR					    _surface;
 	VkSurfaceCapabilitiesKHR			_surfaceCapibilities;
