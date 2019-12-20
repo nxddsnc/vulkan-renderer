@@ -39,13 +39,6 @@ private:
 	void _endRender(std::vector<VkSemaphore> waitSemaphores);
 	void _updateUniformBuffer();
 
-	void _setupLayersAndExtensions();
-	void _initInstance();
-	void _deInitInstance();
-
-	void _initDevice();
-	void _deInitDevice();
-
 	void _initResourceManager();
 	void _deInitResourceManager();
 
@@ -54,9 +47,6 @@ private:
 
 	void _initGraphicsPipeline();
 	void _deInitGraphicPipeline();
-
-	void _initSurface();
-	void _deInitSurface();
 
     void _cleanupSwapchain();
 
@@ -100,10 +90,6 @@ private:
 	void _deInitSynchronizations();
 
 	VkShaderModule _createShaderModule(const std::vector<char>& code);
-
-	void _setupDebug();
-	void _initDebug();
-	void _deInitDebug();
 
 	UniformBufferObject					_ubo = {};
 	float								_time = 0.0;
@@ -165,13 +151,5 @@ private:
 	VkFence								_swapchainImageAvailable;
 
 	Window * _window = nullptr;
-
-	std::vector<const char*> _instanceLayers;
-	std::vector<const char*> _instanceExtensions;
-	std::vector<const char*> _deviceLayers;
-	std::vector<const char*> _deviceExtensions;
-
-	VkDebugReportCallbackEXT _debugReport = VK_NULL_HANDLE;
-	VkDebugReportCallbackCreateInfoEXT _debugCallbackCreateInfo = {};
 };
 

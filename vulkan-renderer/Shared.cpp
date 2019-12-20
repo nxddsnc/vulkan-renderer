@@ -13,17 +13,17 @@ Contributors:
 #include <fstream>
 
 #ifdef BUILD_ENABLE_VULKAN_RUNTIME_DEBUG
-void ErrorCheck(VkResult result)
+void ErrorCheck(vk::Result result)
 {
 	if (result < 0) {
 		switch (result) {
-		case VK_ERROR_OUT_OF_HOST_MEMORY:
+        case vk::Result::eErrorOutOfHostMemory:
 			std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
 			break;
-		case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+        case vk::Result::eErrorOutOfDeviceMemory:
 			std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
 			break;
-		case VK_ERROR_INITIALIZATION_FAILED:
+		/*case VK_ERROR_INITIALIZATION_FAILED:
 			std::cout << "VK_ERROR_INITIALIZATION_FAILED" << std::endl;
 			break;
 		case VK_ERROR_DEVICE_LOST:
@@ -67,7 +67,7 @@ void ErrorCheck(VkResult result)
 			break;
 		case VK_ERROR_VALIDATION_FAILED_EXT:
 			std::cout << "VK_ERROR_VALIDATION_FAILED_EXT" << std::endl;
-			break;
+			break;*/
 		default:
 			break;
 		}

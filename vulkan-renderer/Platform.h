@@ -15,5 +15,5 @@
 #error Platform not supported
 #endif
 
-#include <vulkan/vulkan.h>
+#include "vulkan.hpp"
 #include <glm/glm.hpp>

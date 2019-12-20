@@ -17,7 +17,7 @@ Contributors:
 #include <vector>
 
 #ifdef BUILD_ENABLE_VULKAN_RUNTIME_DEBUG
-void ErrorCheck(VkResult result);
+void ErrorCheck(vk::Result result);
 #endif
 
 std::vector<char> readFile(const std::string& filename);
