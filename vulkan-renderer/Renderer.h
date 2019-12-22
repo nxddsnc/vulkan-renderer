@@ -1,5 +1,6 @@
 #include "Platform.h"
 #include <vector>
+#include "Context.h"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 class Window;
@@ -39,15 +40,6 @@ private:
 	void _endRender(std::vector<VkSemaphore> waitSemaphores);
 	void _updateUniformBuffer();
 
-	void _initResourceManager();
-	void _deInitResourceManager();
-
-	void _initDescriptorSetLayout();
-	void _deInitDescriptorSetLayout();
-
-	void _initGraphicsPipeline();
-	void _deInitGraphicPipeline();
-
     void _cleanupSwapchain();
 
 	void _initSwapchain();
@@ -62,11 +54,14 @@ private:
 	void _initRenderPass();
 	void _deInitRenderPass();
 
+	void _initDescriptorSetLayout();
+	void _deInitDescriptorSetLayout();
+
+	void _initGraphicsPipeline();
+	void _deInitGraphicPipeline();
+
 	void _initFramebuffers();
 	void _deInitFramebuffer();
-
-	void _initCommandBufferPool();
-	void _deInitCommandBufferPool();
 
 	void _initTextureImage();
 	void _deInitTextureImage();
@@ -91,23 +86,25 @@ private:
 
 	VkShaderModule _createShaderModule(const std::vector<char>& code);
 
+	VulkanContext						_context;
+
 	UniformBufferObject					_ubo = {};
 	float								_time = 0.0;
 
-	VkInstance							_instance = VK_NULL_HANDLE;
-	VkPhysicalDevice					_gpu = VK_NULL_HANDLE;
-	VkDevice							_device = VK_NULL_HANDLE;
-	VkQueue								_queue = VK_NULL_HANDLE;
-	VkPhysicalDeviceProperties			_gpuProperties;
-	VkPhysicalDeviceMemoryProperties	_gpuMemoryProperties;
+	vk::Instance						_instance;
+	vk::PhysicalDevice					_gpu;
+	vk::Device							_device;
+	vk::Queue							_queue;
+	vk::PhysicalDeviceProperties		_gpuProperties;
+	vk::PhysicalDeviceMemoryProperties	_gpuMemoryProperties;
 	uint32_t							_graphicFamilyIndex = 0;
 
 	ResourceManager					 *  _resourceManager;
 
-	VkSurfaceKHR					    _surface;
+	vk::SurfaceKHR					    _surface;
 	VkSurfaceCapabilitiesKHR			_surfaceCapibilities;
-	std::vector<VkImage>				_swapchainImages;
-	std::vector<VkImageView>			_swapchainImageViews;
+	std::vector<vk::Image>				_swapchainImages;
+	std::vector<vk::ImageView>			_swapchainImageViews;
 	std::vector<VkFramebuffer>			_framebuffers;
 	VkPipelineLayout					_pipelineLayout;
 	VkDescriptorSetLayout				_descriptorSetLayout;

@@ -15,7 +15,7 @@ Contributors:
 #ifdef BUILD_ENABLE_VULKAN_RUNTIME_DEBUG
 void ErrorCheck(vk::Result result)
 {
-	if (result < 0) {
+	if (result != vk::Result::eSuccess) {
 		switch (result) {
         case vk::Result::eErrorOutOfHostMemory:
 			std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
@@ -141,7 +141,7 @@ void createBuffer(VkDevice device, VkDeviceSize size,
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
-void copyBuffer(VkDevice &device, VkQueue &graphicsQueue, VkCommandPool &commandPool, VkBuffer srcBuffer, 
+void copyBuffer(vk::Device &device, vk::Queue &graphicsQueue, VkCommandPool &commandPool, VkBuffer srcBuffer, 
 	VkBuffer dstBuffer, VkDeviceSize size) 
 {
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -292,7 +292,7 @@ void transitionImageLayout(VkDevice &device, VkCommandPool &commandPool, VkQueue
 }
 
 void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+	/*VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
 	VkBufferImageCopy region = {};
 	region.bufferOffset = 0;
@@ -311,5 +311,5 @@ void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t 
 		1
 	};
 
-	endSingleTimeCommands(commandBuffer);
+	endSingleTimeCommands(commandBuffer);*/
 }

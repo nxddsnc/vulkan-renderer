@@ -107,7 +107,7 @@ void Window::_updateOSWindow()
 	}
 }
 
-void Window::InitOSSurface(VkInstance instance, VkSurfaceKHR *surface)
+void Window::InitOSSurface(vk::Instance instance, VkSurfaceKHR *surface)
 {
 	VkWin32SurfaceCreateInfoKHR win32SurfaceCreateInfo = {};
 	win32SurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;

@@ -31,7 +31,7 @@ void Window::_updateOSWindow()
 
 }
 
-void Window::InitOSSurface(VkInstance instance, VkSurfaceKHR *surface)
+void Window::InitOSSurface(vk::Instance instance, VkSurfaceKHR *surface)
 {
     glfwCreateWindowSurface(instance, _window, nullptr, surface);
 }

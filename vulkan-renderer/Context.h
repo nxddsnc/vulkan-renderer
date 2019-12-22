@@ -1,13 +1,36 @@
 #include "Platform.h"
+#include <vector>
 
 #pragma once
 class Window;
 
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> present_modes;
+
+	static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+};
+
+
 class VulkanContext 
 {
 public:
+	VulkanContext();
     VulkanContext(Window *window);
     ~VulkanContext();
+
+public:
+	Window							   * GetWindow();
+	vk::Instance						 GetInstance();
+	vk::PhysicalDevice					 GetPhysicalDevice();
+	vk::Device						     GetLogicalDevice();
+	vk::Queue						     GetDeviceQueue();
+	VkPhysicalDeviceProperties			 GetPhyscialDeivceProperties();
+	vk::PhysicalDeviceMemoryProperties   GetPhysicalDeviceMemoryProperties();
+	vk::SurfaceKHR						 GetSuface();
+	vk::CommandPool						 GetCommandPool();
 
 private: 
     void _initVulkan();
@@ -27,8 +50,8 @@ private:
 	void _initSurface();
 	void _deInitSurface();
 
-	void findQueueFamilyIndices();
-	void createCommandPools();
+	void _initCommandPool();
+	void _deInitCommandPool();
 
 private:
     VkDebugReportCallbackEXT _debugReport = VK_NULL_HANDLE;
@@ -43,9 +66,11 @@ private:
 	vk::PhysicalDeviceMemoryProperties	_gpuMemoryProperties;
 	uint32_t							_graphicFamilyIndex = 0;
 	vk::SurfaceKHR					    _surface;
+	vk::SurfaceFormatKHR				_surfaceFormat;
+	vk::CommandPool						_commandPool;
 
     std::vector<const char*>            _instanceLayers;
     std::vector<const char*>            _instanceExtensions;
     std::vector<const char*>            _deviceLayers;
-    std::vector<const char*>            _deviceExtensions;
+	std::vector<const char*>            _deviceExtensions;
 }

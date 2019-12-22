@@ -16,7 +16,7 @@ public:
 	bool Update();
 	void Resize(int width, int height);
 
-	void InitOSSurface(VkInstance instance, VkSurfaceKHR *surface);
+	void InitOSSurface(vk::Instance instance, VkSurfaceKHR *surface);
 	VkExtent2D GetWindowExtent();
     void SetWindowExtent(VkExtent2D extent);
     GLFWwindow *GetGLFWWindow();
