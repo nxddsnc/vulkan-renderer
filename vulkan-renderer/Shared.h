@@ -28,15 +28,15 @@ uint32_t FindMemoryTypeIndex(VkPhysicalDeviceMemoryProperties *gpuMemoryProperti
 /************************************************************************/
 /*                                                                      */
 /************************************************************************/
-void createBuffer(VkDevice device, VkDeviceSize size,
-	VkPhysicalDeviceMemoryProperties *gpuMemoryProperties,
-	VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-	VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+void createBuffer(vk::Device device, vk::DeviceSize size,
+	vk::PhysicalDeviceMemoryProperties *gpuMemoryProperties,
+	vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
+	vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
 
-void copyBuffer(VkDevice &device, VkQueue &graphicsQueue, VkCommandPool &commandPool, VkBuffer srcBuffer,
-	VkBuffer dstBuffer, VkDeviceSize size);
+void copyBuffer(vk::Device &device, vk::Queue &graphicsQueue, vk::CommandPool &commandPool, vk::Buffer srcBuffer,
+	vk::Buffer dstBuffer, vk::DeviceSize size);
 
-void createImage(VkDevice &device, VkPhysicalDeviceMemoryProperties * gpuMemoryProperties,
+void createImage(vk::Device &device, vk::PhysicalDeviceMemoryProperties * gpuMemoryProperties,
 	uint32_t width, uint32_t height, VkFormat format,
-	VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-	VkImage& image, VkDeviceMemory& imageMemory);
+	vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+	vk::Image& image, vk::DeviceMemory& imageMemory);
