@@ -27,6 +27,11 @@ Renderer::Renderer(Window *window)
 	//compute_queue = vulkan_context.getComputeQueue();
 	//graphics_command_pool = vulkan_context.getGraphicsCommandPool();
 	//compute_command_pool = vulkan_context.getComputeCommandPool();
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.physicalDevice = _gpu;
+    allocatorInfo.device = _device;
+
+    vmaCreateAllocator(&allocatorInfo, &_memoryAllocator);
 
 	_initSwapchain();
 	_initSwapchainImages();
@@ -37,6 +42,7 @@ Renderer::Renderer(Window *window)
 	_initFramebuffers();
 	//_initTextureImage();
 	_initVertexBuffer();
+    _initIndexBuffer();
 	_initUniformBuffers();
 	_initDescriptorPool();
 	_initDescriptorSet();
@@ -54,6 +60,7 @@ Renderer::~Renderer()
 	_deInitDescriptorSet();
 	_deInitDescriptorPool(); 
 	_deInitUniformBuffer();
+    _deInitIndexBuffer();
 	_deInitVertexBuffer();
 	//_deInitTextureImage();
 	_deInitFramebuffer();
@@ -63,7 +70,8 @@ Renderer::~Renderer()
 	//_deInitDepthStencilImage();
 	_deInitSwapchainImages();
 	_deInitSwapchain();
-	_deInitResourceManager();
+
+    vmaDestroyAllocator(_memoryAllocator);
 }
 
 bool Renderer::Run()
@@ -216,9 +224,9 @@ void Renderer::_updateUniformBuffer()
 	ubo.proj[1][1] *= -1;
 
 	void* data;
-	vkMapMemory(_device, _uniformBuffersMemory[_activeSwapchainImageId], 0, sizeof(ubo), 0, &data);
+	vmaMapMemory(_memoryAllocator, _uniformBuffersMemory[_activeSwapchainImageId], &data);
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(_device, _uniformBuffersMemory[_activeSwapchainImageId]);
+    vmaUnmapMemory(_memoryAllocator, _uniformBuffersMemory[_activeSwapchainImageId]);
 }
 
 void Renderer::_cleanupSwapchain()
@@ -251,7 +259,7 @@ VkShaderModule Renderer::_createShaderModule(const std::vector<char>& code)
 	createInfo.codeSize = code.size();
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 	VkShaderModule shaderModule;
-	ErrorCheck(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule));
+	vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule);
 	return shaderModule;
 }
 
@@ -281,6 +289,23 @@ void Renderer::_initSwapchain()
 			}
 		}
 	}
+
+    //VULKAN_HPP_NAMESPACE::SwapchainCreateFlagsKHR flags_ = {},
+    //    VULKAN_HPP_NAMESPACE::SurfaceKHR surface_ = {},
+    //    uint32_t minImageCount_ = {},
+    //    VULKAN_HPP_NAMESPACE::Format imageFormat_ = {},
+    //    VULKAN_HPP_NAMESPACE::ColorSpaceKHR imageColorSpace_ = {},
+    //    VULKAN_HPP_NAMESPACE::Extent2D imageExtent_ = {},
+    //    uint32_t imageArrayLayers_ = {},
+    //    VULKAN_HPP_NAMESPACE::ImageUsageFlags imageUsage_ = {},
+    //    VULKAN_HPP_NAMESPACE::SharingMode imageSharingMode_ = {},
+    //    uint32_t queueFamilyIndexCount_ = {},
+    //    const uint32_t* pQueueFamilyIndices_ = {},
+    //    VULKAN_HPP_NAMESPACE::SurfaceTransformFlagBitsKHR preTransform_ = {},
+    //    VULKAN_HPP_NAMESPACE::CompositeAlphaFlagBitsKHR compositeAlpha_ = {},
+    //    VULKAN_HPP_NAMESPACE::PresentModeKHR presentMode_ = {},
+    //    VULKAN_HPP_NAMESPACE::Bool32 clipped_ = {},
+    //    VULKAN_HPP_NAMESPACE::SwapchainKHR oldSwapchain_ = {}
 
 	vk::SwapchainCreateInfoKHR createInfo({
 		{},
@@ -407,7 +432,7 @@ void Renderer::_initDepthStencilImage()
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = imageMemoryRequirements.size;
 	allocateInfo.memoryTypeIndex = memoryIndex;
-	ErrorCheck(vkAllocateMemory(_device, &allocateInfo, nullptr, &_depthStencilImageMemory));
+	vkAllocateMemory(_device, &allocateInfo, nullptr, &_depthStencilImageMemory);
 	vkBindImageMemory(_device, _depthStencilImage, _depthStencilImageMemory, 0);
 
 	VkImageViewCreateInfo imageViewCreateInfo = {};
@@ -643,7 +668,7 @@ void Renderer::_initGraphicsPipeline()
 	pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout; // Optional
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-	ErrorCheck(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_pipelineLayout));
+	vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_pipelineLayout);
 
 	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
 	depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -676,7 +701,7 @@ void Renderer::_initGraphicsPipeline()
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	pipelineInfo.basePipelineIndex = -1; // Optional
 
-	ErrorCheck(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline));
+	vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline);
 
 	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
@@ -750,6 +775,42 @@ void Renderer::_deInitTextureImage()
 
 }
 
+void Renderer::_copyBuffer(vk::CommandPool &commandPool, vk::Buffer srcBuffer,
+    vk::Buffer dstBuffer, vk::DeviceSize size)
+{
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = commandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferCopy copyRegion = {};
+    copyRegion.srcOffset = 0; // Optional
+    copyRegion.dstOffset = 0; // Optional
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(_queue);
+
+    vkFreeCommandBuffers(_device, commandPool, 1, &commandBuffer);
+}
+
 void Renderer::_initVertexBuffer()
 {
 	const std::vector<Vertex> vertices = {
@@ -760,60 +821,77 @@ void Renderer::_initVertexBuffer()
 	};
 
 	VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
-	VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	VkMemoryPropertyFlags memPropertiesFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = size;
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &_vertexBuffer, &_vertexBufferMemory, nullptr);
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+    VmaAllocation stagingBufferMemory;
 
-	void* data;
-	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
-	memcpy(data, vertices.data(), (size_t)size);
-	vkUnmapMemory(_device, stagingBufferMemory);
+    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    stagingBufferInfo.size = size;
+    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
+    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
 
-	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _vertexBuffer, _vertexBufferMemory);
+    void* data;
+    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
+    memcpy(data, vertices.data(), (size_t)size);
+    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-	copyBuffer(_device, _queue, _commandPool, stagingBuffer, _vertexBuffer, size);
+	_copyBuffer(_commandPool, stagingBuffer, _vertexBuffer, size);
 
-	vkDestroyBuffer(_device, stagingBuffer, nullptr);
-	vkFreeMemory(_device, stagingBufferMemory, nullptr);
-
-	const std::vector<uint16_t> indices = {
-		0, 1, 2, 2, 3, 0
-	};
-
-	size = sizeof(indices[0]) * indices.size();
-	usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	memPropertiesFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
-	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
-
-	data;
-	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
-	memcpy(data, indices.data(), (size_t)size);
-	vkUnmapMemory(_device, stagingBufferMemory);
-
-	createBuffer(_device, size, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _indexBuffer, _indexBufferMemory);
-
-	copyBuffer(_device, _queue, _commandPool, stagingBuffer, _indexBuffer, size);
-
-	vkDestroyBuffer(_device, stagingBuffer, nullptr);
-	vkFreeMemory(_device, stagingBufferMemory, nullptr);
+    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
 
 void Renderer::_deInitVertexBuffer()
 {
-	vkDestroyBuffer(_device, _vertexBuffer, nullptr);
-	vkFreeMemory(_device, _vertexBufferMemory, nullptr);
-	vkDestroyBuffer(_device, _indexBuffer, nullptr);
-	vkFreeMemory(_device, _indexBufferMemory, nullptr);
+    vmaDestroyBuffer(_memoryAllocator, _vertexBuffer, _vertexBufferMemory);
+}
+
+void Renderer::_initIndexBuffer()
+{
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
+    VkDeviceSize size = sizeof(indices[0]) * indices.size();
+
+    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = size;
+    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &_indexBuffer, &_indexBufferMemory, nullptr);
+
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingBufferMemory;
+
+    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    stagingBufferInfo.size = size;
+    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
+    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
+
+    void* data;
+    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
+    memcpy(data, indices.data(), (size_t)size);
+    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
+
+    _copyBuffer(_commandPool, stagingBuffer, _indexBuffer, size);
+
+    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+}
+
+void Renderer::_deInitIndexBuffer()
+{
+    vmaDestroyBuffer(_memoryAllocator, _indexBuffer, _indexBufferMemory);
 }
 
 void Renderer::_initUniformBuffers()
@@ -824,10 +902,12 @@ void Renderer::_initUniformBuffers()
 	_uniformBuffersMemory.resize(_swapchainImages.size());
 
 	for (size_t i = 0; i < _swapchainImages.size(); i++) {
-		createBuffer(_device, bufferSize, &_gpuMemoryProperties,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			_uniformBuffers[i], _uniformBuffersMemory[i]);
+        VkBufferCreateInfo createInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+        createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        createInfo.size = bufferSize;
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        vmaCreateBuffer(_memoryAllocator, &createInfo, &allocInfo, &_uniformBuffers[i], &_uniformBuffersMemory[i], nullptr);
 	}
 }
 
@@ -835,8 +915,7 @@ void Renderer::_deInitUniformBuffer()
 {
 	for (size_t i = 0; i < _swapchainImages.size(); i++)
 	{
-		vkDestroyBuffer(_device, _uniformBuffers[i], nullptr);
-		vkFreeMemory(_device, _uniformBuffersMemory[i], nullptr);
+        vmaDestroyBuffer(_memoryAllocator, _uniformBuffers[i], _uniformBuffersMemory[i]);
 	}
 }
 
@@ -851,7 +930,7 @@ void Renderer::_initDescriptorPool()
 	poolInfo.poolSizeCount = 1;
 	poolInfo.pPoolSizes = &poolSize;
 	poolInfo.maxSets = static_cast<uint32_t>(_swapchainImages.size());;
-	ErrorCheck(vkCreateDescriptorPool(_device, &poolInfo, nullptr, &_descriptorPool));
+	vkCreateDescriptorPool(_device, &poolInfo, nullptr, &_descriptorPool);
 }
 
 void Renderer::_deInitDescriptorPool()
@@ -869,7 +948,7 @@ void Renderer::_initDescriptorSet()
 	allocInfo.pSetLayouts = layouts.data();
 
 	_descriptorSets.resize(_swapchainImages.size());
-	ErrorCheck(vkAllocateDescriptorSets(_device, &allocInfo, _descriptorSets.data()));
+	vkAllocateDescriptorSets(_device, &allocInfo, _descriptorSets.data());
 
 	for (size_t i = 0; i < _swapchainImages.size(); i++) {
 		VkDescriptorBufferInfo bufferInfo = {};
@@ -889,8 +968,6 @@ void Renderer::_initDescriptorSet()
 		descriptorWrite.pTexelBufferView = nullptr; // Optional
 		vkUpdateDescriptorSets(_device, 1, &descriptorWrite, 0, nullptr);
 	}
-
-	
 }
 
 void Renderer::_deInitDescriptorSet()
@@ -908,7 +985,7 @@ void Renderer::_initCommandBuffers()
 		commandBufferAllocateInfo.commandPool = _commandPool;
 		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		commandBufferAllocateInfo.commandBufferCount = 1;
-		ErrorCheck(vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer));
+		vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer);
 		_commandBuffers[i]= commandBuffer;
 	}
 
@@ -918,7 +995,7 @@ void Renderer::_initCommandBuffers()
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
 		beginInfo.pInheritanceInfo = nullptr; // Optional
 
-		ErrorCheck(vkBeginCommandBuffer(_commandBuffers[i], &beginInfo));
+		vkBeginCommandBuffer(_commandBuffers[i], &beginInfo);
 		
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -952,7 +1029,7 @@ void Renderer::_initCommandBuffers()
 		vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(6), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(_commandBuffers[i]);
-		ErrorCheck(vkEndCommandBuffer(_commandBuffers[i]));
+		vkEndCommandBuffer(_commandBuffers[i]);
 	}
 }
 

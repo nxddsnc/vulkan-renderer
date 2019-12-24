@@ -42,6 +42,9 @@ private:
 
     void _cleanupSwapchain();
 
+    void _copyBuffer(vk::CommandPool &commandPool, vk::Buffer srcBuffer,
+        vk::Buffer dstBuffer, vk::DeviceSize size);
+
 	void _initSwapchain();
 	void _deInitSwapchain();
 
@@ -69,6 +72,9 @@ private:
 	void _initVertexBuffer();
 	void _deInitVertexBuffer();
 
+    void _initIndexBuffer();
+    void _deInitIndexBuffer();
+
 	void _initUniformBuffers();
 	void _deInitUniformBuffer();
 
@@ -95,9 +101,12 @@ private:
 	vk::PhysicalDevice					_gpu;
 	vk::Device							_device;
 	vk::Queue							_queue;
-	vk::PhysicalDeviceProperties		_gpuProperties;
+    vk::CommandPool						_commandPool;
+    vk::PhysicalDeviceProperties		_gpuProperties;
 	vk::PhysicalDeviceMemoryProperties	_gpuMemoryProperties;
 	uint32_t							_graphicFamilyIndex = 0;
+
+    VmaAllocator                        _memoryAllocator;
 
 	ResourceManager					 *  _resourceManager;
 
@@ -111,20 +120,19 @@ private:
 	std::vector<VkDescriptorSet>		_descriptorSets;
 	VkDescriptorPool					_descriptorPool;
 	VkPipeline							_graphicsPipeline;
-	VkCommandPool						_commandPool;
 	std::vector<VkCommandBuffer>		_commandBuffers;
 
 	VkBuffer							_vertexBuffer = VK_NULL_HANDLE;
-	VkDeviceMemory						_vertexBufferMemory;
+    VmaAllocation						_vertexBufferMemory;
 
 	VkBuffer							_indexBuffer = VK_NULL_HANDLE;
-	VkDeviceMemory						_indexBufferMemory;
+    VmaAllocation						_indexBufferMemory;
 
 	VkImage								_textureImage;
 	VkDeviceMemory						_textureImageMemory;
 
 	std::vector<VkBuffer>				_uniformBuffers;
-	std::vector<VkDeviceMemory>			_uniformBuffersMemory;
+	std::vector<VmaAllocation>			_uniformBuffersMemory;
 
 	std::vector<VkSemaphore>		    _imageAvailableSemaphores;
 	std::vector<VkSemaphore>			_renderFinishedSemaphores;

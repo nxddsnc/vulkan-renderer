@@ -17,3 +17,6 @@
 
 #include "vulkan.hpp"
 #include <glm/glm.hpp>
+
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"

@@ -33,9 +33,6 @@ void createBuffer(vk::Device device, vk::DeviceSize size,
 	vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
 	vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
 
-void copyBuffer(vk::Device &device, vk::Queue &graphicsQueue, vk::CommandPool &commandPool, vk::Buffer srcBuffer,
-	vk::Buffer dstBuffer, vk::DeviceSize size);
-
 void createImage(vk::Device &device, vk::PhysicalDeviceMemoryProperties * gpuMemoryProperties,
 	uint32_t width, uint32_t height, VkFormat format,
 	vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
