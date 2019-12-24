@@ -308,7 +308,7 @@ void Renderer::_initSwapchain()
     //    VULKAN_HPP_NAMESPACE::SwapchainKHR oldSwapchain_ = {}
 
 	vk::SwapchainCreateInfoKHR createInfo({
-		{},
+        vk::SwapchainCreateFlagsKHR::B,
 		_surface,
 		_swapchainImageCount,
 		_surfaceFormat.format,
