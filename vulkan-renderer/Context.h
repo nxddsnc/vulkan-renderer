@@ -1,3 +1,4 @@
+#include "vk_mem_alloc.h"
 #include "Platform.h"
 #include <vector>
 
@@ -31,6 +32,7 @@ public:
 	vk::PhysicalDeviceMemoryProperties   GetPhysicalDeviceMemoryProperties();
 	vk::SurfaceKHR						 GetSuface();
 	vk::CommandPool						 GetCommandPool();
+    vk::SurfaceFormatKHR                 GetSurfaceFormat();
 
 private: 
     void _initVulkan();
@@ -73,4 +75,4 @@ private:
     std::vector<const char*>            _instanceExtensions;
     std::vector<const char*>            _deviceLayers;
 	std::vector<const char*>            _deviceExtensions;
-}
+};

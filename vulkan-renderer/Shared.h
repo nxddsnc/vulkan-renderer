@@ -28,10 +28,6 @@ uint32_t FindMemoryTypeIndex(VkPhysicalDeviceMemoryProperties *gpuMemoryProperti
 /************************************************************************/
 /*                                                                      */
 /************************************************************************/
-void createBuffer(vk::Device device, vk::DeviceSize size,
-	vk::PhysicalDeviceMemoryProperties *gpuMemoryProperties,
-	vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
-	vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
 
 void createImage(vk::Device &device, vk::PhysicalDeviceMemoryProperties * gpuMemoryProperties,
 	uint32_t width, uint32_t height, VkFormat format,

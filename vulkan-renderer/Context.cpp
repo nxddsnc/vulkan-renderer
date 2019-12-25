@@ -64,6 +64,11 @@ vk::CommandPool VulkanContext::GetCommandPool()
 	return _commandPool;
 }
 
+vk::SurfaceFormatKHR VulkanContext::GetSurfaceFormat()
+{
+    return _surfaceFormat;
+}
+
 void VulkanContext::_setupLayersAndExtensions()
 {
 	_instanceExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME );
@@ -166,9 +171,9 @@ void VulkanContext::_initInstance()
 	vk::InstanceCreateInfo instanceCreateInfo({
 		{},
 		&applicationInfo,
-		_instanceLayers.size(),
+		(uint32_t)_instanceLayers.size(),
 		_instanceLayers.data(),
-		_instanceExtensions.size(),
+		(uint32_t)_instanceExtensions.size(),
 		_instanceExtensions.data()
 	});
 	instanceCreateInfo.pNext = &_debugCallbackCreateInfo;
@@ -262,9 +267,9 @@ void VulkanContext::_initDevice()
 		{},
 		1,
 		&deviceQueueCreateInfo,
-		_deviceLayers.size(),
+		(uint32_t)_deviceLayers.size(),
 		_deviceLayers.data(),
-		_deviceExtensions.size(),
+		(uint32_t)_deviceExtensions.size(),
 		_deviceExtensions.data(),
 		{}
 	});
@@ -299,7 +304,6 @@ void VulkanContext::_initSurface()
 	//}
 
 	{
-		uint32_t surfaceFormatCount;
 		std::vector<vk::SurfaceFormatKHR> surfaceFormats = _gpu.getSurfaceFormatsKHR(_surface);
 		if (surfaceFormats.size() == 0)
 		{

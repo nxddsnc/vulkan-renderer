@@ -17,7 +17,7 @@ public:
 	void Resize(int width, int height);
 
 	void InitOSSurface(vk::Instance instance, VkSurfaceKHR *surface);
-	VkExtent2D GetWindowExtent();
+	vk::Extent2D GetWindowExtent();
     void SetWindowExtent(VkExtent2D extent);
     GLFWwindow *GetGLFWWindow();
 private:

@@ -111,38 +111,6 @@ uint32_t FindMemoryTypeIndex(vk::PhysicalDeviceMemoryProperties * gpuMemoryPrope
 	return UINT32_MAX;
 }
 
-void createBuffer(vk::Device device, vk::DeviceSize size,
-	vk::PhysicalDeviceMemoryProperties *gpuMemoryProperties,
-	vk::BufferUsageFlagBits usage, vk::MemoryPropertyFlags properties,
-	vk::Buffer& buffer, vk::DeviceMemory& bufferMemory) {
-
-	vk::BufferCreateInfo bufferInfo({
-		{},
-		size,
-		usage,
-		vk::SharingMode::eExclusive,
-		{},
-		{}
-	});
-
-	buffer = device.createBuffer(bufferInfo);
-
-	vk::MemoryRequirements memRequirements;
-	memRequirements = device.getBufferMemoryRequirements(buffer);
-
-	vk::MemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryTypeIndex(gpuMemoryProperties, &memRequirements, properties);
-
-	if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate buffer memory!");
-	}
-
-	vkBindBufferMemory(device, buffer, bufferMemory, 0);
-}
-
-
 //void createImage(vk::Device &device, vk::PhysicalDeviceMemoryProperties * gpuMemoryProperties,
 //	uint32_t width, uint32_t height, VkFormat format,
 //	vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,

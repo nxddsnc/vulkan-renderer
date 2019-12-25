@@ -1,3 +1,4 @@
+
 #include "Platform.h"
 #include <vector>
 #include "Context.h"
@@ -138,17 +139,17 @@ private:
 	std::vector<VkSemaphore>			_renderFinishedSemaphores;
 	size_t								_currentFrame = 0;
 
-	VkExtent2D							_swapchainExtent;
+	vk::Extent2D							_swapchainExtent;
 
 	VkImage								_depthStencilImage = VK_NULL_HANDLE;
-	VkDeviceMemory						_depthStencilImageMemory = VK_NULL_HANDLE;
+    VmaAllocation						_depthStencilImageMemory = VK_NULL_HANDLE;
 	VkImageView							_depthStencilImageView = VK_NULL_HANDLE;
-	VkFormat							_depthStencilFormat = VK_FORMAT_UNDEFINED;
+	vk::Format							_depthStencilFormat;
 	boolean								_stencilAvailable = false;
 
 	VkRenderPass						_renderPass = VK_NULL_HANDLE;
 
-	VkSurfaceFormatKHR					_surfaceFormat;
+	vk::SurfaceFormatKHR				_surfaceFormat;
 	VkSwapchainKHR						_swapchain = VK_NULL_HANDLE;
 	uint32_t							_swapchainImageCount;
 	uint32_t							_activeSwapchainImageId = UINT32_MAX;

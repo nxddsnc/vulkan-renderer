@@ -9,7 +9,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW\glfw3.h>
 #define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
-#include <windows.h>
+//#include <windows.h>
 
 #elif
 #error Platform not supported
@@ -18,5 +18,4 @@
 #include "vulkan.hpp"
 #include <glm/glm.hpp>
 
-#define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
