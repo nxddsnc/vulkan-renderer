@@ -17,21 +17,24 @@ Renderer::Renderer(Window *window)
 {
 	_window				= window;
 	_swapchainExtent	= { WIDTH, HEIGHT };
-	_context			= VulkanContext(window);
+	_context			= new VulkanContext(window);
 
-	_gpu				= _context.GetPhysicalDevice();
-	_device			    = _context.GetLogicalDevice();
-	_queue			    = _context.GetDeviceQueue();
-	_surface            = _context.GetSuface();
-	_commandPool	    = _context.GetCommandPool();
-    _surfaceFormat      = _context.GetSurfaceFormat();
+	_gpu				= _context->GetPhysicalDevice();
+	_device			    = _context->GetLogicalDevice();
+	_instance			= _context->GetInstance();
+	_queue			    = _context->GetDeviceQueue();
+	_surface            = _context->GetSuface();
+	_commandPool	    = _context->GetCommandPool();
+	_surface			= _context->GetSuface();
+    _surfaceFormat      = _context->GetSurfaceFormat();
 	//present_queue = vulkan_context.getPresentQueue();
 	//compute_queue = vulkan_context.getComputeQueue();
 	//graphics_command_pool = vulkan_context.getGraphicsCommandPool();
 	//compute_command_pool = vulkan_context.getComputeCommandPool();
     VmaAllocatorCreateInfo allocatorInfo = {};
-    allocatorInfo.physicalDevice = _gpu;
-    allocatorInfo.device = _device;
+    allocatorInfo.physicalDevice = VkPhysicalDevice(_gpu);
+    allocatorInfo.device = VkDevice(_device);
+	allocatorInfo.instance = VkInstance(_instance);
 
     vmaCreateAllocator(&allocatorInfo, &_memoryAllocator);
 
@@ -74,6 +77,8 @@ Renderer::~Renderer()
 	_deInitSwapchain();
 
     vmaDestroyAllocator(_memoryAllocator);
+
+	delete _context;
 }
 
 bool Renderer::Run()
@@ -267,13 +272,14 @@ VkShaderModule Renderer::_createShaderModule(const std::vector<char>& code)
 
 void Renderer::_initSwapchain()
 {
-	if (_swapchainImageCount > _surfaceCapibilities.maxImageCount)
+	vk::SurfaceCapabilitiesKHR surfaceCapibilities = _gpu.getSurfaceCapabilitiesKHR(_surface);
+	if (_swapchainImageCount > surfaceCapibilities.maxImageCount)
 	{
-		_swapchainImageCount = _surfaceCapibilities.maxImageCount;
+		_swapchainImageCount = surfaceCapibilities.maxImageCount;
 	}
-	if (_swapchainImageCount < _surfaceCapibilities.minImageCount)
+	if (_swapchainImageCount < surfaceCapibilities.minImageCount)
 	{
-		_swapchainImageCount = _surfaceCapibilities.minImageCount;
+		_swapchainImageCount = surfaceCapibilities.minImageCount;
 	}
 
 	vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
@@ -779,13 +785,13 @@ void Renderer::_deInitTextureImage()
 
 }
 
-void Renderer::_copyBuffer(vk::CommandPool &commandPool, vk::Buffer srcBuffer,
+void Renderer::_copyBuffer(vk::Buffer srcBuffer,
     vk::Buffer dstBuffer, vk::DeviceSize size)
 {
     VkCommandBufferAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = _commandPool;
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
@@ -812,7 +818,7 @@ void Renderer::_copyBuffer(vk::CommandPool &commandPool, vk::Buffer srcBuffer,
     vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(_queue);
 
-    vkFreeCommandBuffers(_device, commandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 }
 
 void Renderer::_initVertexBuffer()
@@ -848,7 +854,7 @@ void Renderer::_initVertexBuffer()
     memcpy(data, vertices.data(), (size_t)size);
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-	_copyBuffer(_commandPool, stagingBuffer, _vertexBuffer, size);
+	_copyBuffer(stagingBuffer, _vertexBuffer, size);
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
@@ -888,7 +894,7 @@ void Renderer::_initIndexBuffer()
     memcpy(data, indices.data(), (size_t)size);
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-    _copyBuffer(_commandPool, stagingBuffer, _indexBuffer, size);
+    _copyBuffer(stagingBuffer, _indexBuffer, size);
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }

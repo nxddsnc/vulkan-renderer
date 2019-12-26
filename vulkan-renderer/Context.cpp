@@ -149,10 +149,14 @@ void VulkanContext::_initVulkan()
     _initInstance();
 	_initDebug();
 	_initDevice();
+	_initSurface();
+	_initCommandPool();
 }
 
 void VulkanContext::_deInitVulkan()
 {
+	_deInitCommandPool();
+	_deInitSurface();
     _deInitDevice();
     _deInitDebug();
     _deInitInstance();
@@ -296,7 +300,12 @@ void VulkanContext::_initSurface()
 		assert(1 && "WSI not supported.");
 		exit(-1);
 	}
-	//vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_gpu, _surface, &_surfaceCapibilities);
+
+	vk::SurfaceCapabilitiesKHR surfaceCapibilities = _gpu.getSurfaceCapabilitiesKHR(_surface);
+	if (surfaceCapibilities.currentExtent.width < UINT32_MAX)
+	{
+
+	}
 	//if (_surfaceCapibilities.currentExtent.width < UINT32_MAX)
 	//{
 	//	//_surface_size_x = _surfaceCapibilities.currentExtent.width;

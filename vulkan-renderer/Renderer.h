@@ -43,7 +43,7 @@ private:
 
     void _cleanupSwapchain();
 
-    void _copyBuffer(vk::CommandPool &commandPool, vk::Buffer srcBuffer,
+    void _copyBuffer(vk::Buffer srcBuffer,
         vk::Buffer dstBuffer, vk::DeviceSize size);
 
 	void _initSwapchain();
@@ -93,7 +93,7 @@ private:
 
 	VkShaderModule _createShaderModule(const std::vector<char>& code);
 
-	VulkanContext						_context;
+	VulkanContext					*	_context;
 
 	UniformBufferObject					_ubo = {};
 	float								_time = 0.0;
@@ -112,7 +112,6 @@ private:
 	ResourceManager					 *  _resourceManager;
 
 	vk::SurfaceKHR					    _surface;
-	VkSurfaceCapabilitiesKHR			_surfaceCapibilities;
 	std::vector<vk::Image>				_swapchainImages;
 	std::vector<vk::ImageView>			_swapchainImageViews;
 	std::vector<VkFramebuffer>			_framebuffers;
@@ -139,7 +138,7 @@ private:
 	std::vector<VkSemaphore>			_renderFinishedSemaphores;
 	size_t								_currentFrame = 0;
 
-	vk::Extent2D							_swapchainExtent;
+	vk::Extent2D						_swapchainExtent;
 
 	VkImage								_depthStencilImage = VK_NULL_HANDLE;
     VmaAllocation						_depthStencilImageMemory = VK_NULL_HANDLE;
