@@ -43,8 +43,9 @@ private:
 
     void _cleanupSwapchain();
 
-    void _copyBuffer(vk::Buffer srcBuffer,
-        vk::Buffer dstBuffer, vk::DeviceSize size);
+    void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
+    vk::CommandBuffer _beginSingleTimeCommand();
+    void _endSingleTimeCommand(vk::CommandBuffer &commandBufer);
 
 	void _initSwapchain();
 	void _deInitSwapchain();
@@ -129,7 +130,7 @@ private:
     VmaAllocation						_indexBufferMemory;
 
 	VkImage								_textureImage;
-	VkDeviceMemory						_textureImageMemory;
+	VmaAllocation						_textureImageMemory;
 
 	std::vector<VkBuffer>				_uniformBuffers;
 	std::vector<VmaAllocation>			_uniformBuffersMemory;

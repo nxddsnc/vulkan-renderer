@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <array>
 
 Renderer::Renderer(Window *window)
 {
@@ -41,7 +42,7 @@ Renderer::Renderer(Window *window)
 	_initDescriptorSetLayout();
 	_initGraphicsPipeline();
 	_initFramebuffers();
-	//_initTextureImage();
+	_initTextureImage();
 	_initVertexBuffer();
     _initIndexBuffer();
 	_initUniformBuffers();
@@ -63,7 +64,7 @@ Renderer::~Renderer()
 	_deInitUniformBuffer();
     _deInitIndexBuffer();
 	_deInitVertexBuffer();
-	//_deInitTextureImage();
+	_deInitTextureImage();
 	_deInitFramebuffer();
 	_deInitGraphicPipeline();
 	_deInitDescriptorSetLayout();
@@ -387,20 +388,6 @@ void Renderer::_initDepthStencilImage()
 		}
 	}
 
-
-   /* VULKAN_HPP_NAMESPACE::ImageCreateFlags flags_ = {},
-        VULKAN_HPP_NAMESPACE::ImageType imageType_ = {},
-        VULKAN_HPP_NAMESPACE::Format format_ = {},
-        VULKAN_HPP_NAMESPACE::Extent3D extent_ = {},
-        uint32_t mipLevels_ = {},
-        uint32_t arrayLayers_ = {},
-        VULKAN_HPP_NAMESPACE::SampleCountFlagBits samples_ = {},
-        VULKAN_HPP_NAMESPACE::ImageTiling tiling_ = {},
-        VULKAN_HPP_NAMESPACE::ImageUsageFlags usage_ = {},
-        VULKAN_HPP_NAMESPACE::SharingMode sharingMode_ = {},
-        uint32_t queueFamilyIndexCount_ = {},
-        const uint32_t* pQueueFamilyIndices_ = {},
-        VULKAN_HPP_NAMESPACE::ImageLayout initialLayout_ = {}*/
     uint32_t graphicsQueueFamilyIndex = _context->GetGraphicsQueueFamilyIndex();
     vk::ImageCreateInfo createInfo({
         {},
@@ -744,7 +731,7 @@ void Renderer::_deInitFramebuffer()
 
 void Renderer::_initTextureImage()
 {
-	/*int texWidth, texHeight, texChannels;
+	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load("Textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
@@ -753,21 +740,46 @@ void Renderer::_initTextureImage()
 	}
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingBufferMemory;
 
-	createBuffer(_device, imageSize, &_gpuMemoryProperties, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    stagingBufferInfo.size = imageSize;
+    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
+    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
 
 	void* data;
-	vkMapMemory(_device, stagingBufferMemory, 0, imageSize, 0, &data);
+    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
 	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(_device, stagingBufferMemory);
+    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
 	stbi_image_free(pixels);
 
-	createImage(_device, &_gpuMemoryProperties, texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _textureImage, _textureImageMemory);*/
+    uint32_t graphicsQueueFamilyIndex = _context->GetGraphicsQueueFamilyIndex();
+    vk::ImageCreateInfo createInfo({
+        {},
+        vk::ImageType::e2D,
+        vk::Format::eR8G8B8Unorm,
+        vk::Extent3D({
+            _swapchainExtent.width,
+            _swapchainExtent.height,
+            1
+        }),
+        1,
+        1,
+        vk::SampleCountFlagBits::e1,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+        vk::SharingMode::eExclusive,
+        1,
+        &graphicsQueueFamilyIndex,
+        vk::ImageLayout::eUndefined
+    });
+    VmaAllocationCreateInfo allocationCreateInfo = {};
+    allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    vmaCreateImage(_memoryAllocator, &(VkImageCreateInfo(createInfo)), &allocationCreateInfo, &_textureImage, &_textureImageMemory, nullptr);
+
 }
 
 void Renderer::_deInitTextureImage()
@@ -775,40 +787,54 @@ void Renderer::_deInitTextureImage()
 
 }
 
+vk::CommandBuffer Renderer::_beginSingleTimeCommand()
+{
+    vk::CommandBufferAllocateInfo allocInfo({
+        _commandPool,
+        vk::CommandBufferLevel::ePrimary,
+        1
+    });
+    auto commandBuffers = _device.allocateCommandBuffers(allocInfo);
+
+    vk::CommandBufferBeginInfo beginInfo({
+        vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+        {}
+    });
+    commandBuffers[0].begin(&beginInfo);
+    return commandBuffers[0];
+}
+
+void Renderer::_endSingleTimeCommand(vk::CommandBuffer &commandBuffer)
+{
+    commandBuffer.end();
+
+    vk::SubmitInfo submitInfo({
+        {},
+        {},
+        {},
+        (uint32_t)1,
+        &commandBuffer,
+        {},
+        {}
+    });
+    _queue.submit((uint32_t)1, &submitInfo, nullptr);
+    _queue.waitIdle();
+    _device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
+}
+
 void Renderer::_copyBuffer(vk::Buffer srcBuffer,
     vk::Buffer dstBuffer, vk::DeviceSize size)
 {
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = _commandPool;
-    allocInfo.commandBufferCount = 1;
+    vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
+    
+    vk::BufferCopy copyRegion({
+        0,
+        0,
+        size
+    });
+    commandBuffer.copyBuffer(srcBuffer, dstBuffer, copyRegion);
 
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-    VkBufferCopy copyRegion = {};
-    copyRegion.srcOffset = 0; // Optional
-    copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-    vkEndCommandBuffer(commandBuffer);
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(_queue);
-
-    vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
+    _endSingleTimeCommand(commandBuffer);
 }
 
 void Renderer::_initVertexBuffer()
