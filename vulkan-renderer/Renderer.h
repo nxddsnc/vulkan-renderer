@@ -105,7 +105,7 @@ private:
     vk::CommandPool						_commandPool;
     vk::PhysicalDeviceProperties		_gpuProperties;
 	vk::PhysicalDeviceMemoryProperties	_gpuMemoryProperties;
-	uint32_t							_graphicFamilyIndex = 0;
+	uint32_t							_graphicsQueueFamilyIndex = 0;
 
     VmaAllocator                        _memoryAllocator;
 

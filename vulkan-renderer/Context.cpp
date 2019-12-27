@@ -69,6 +69,11 @@ vk::SurfaceFormatKHR VulkanContext::GetSurfaceFormat()
     return _surfaceFormat;
 }
 
+uint32_t VulkanContext::GetGraphicsQueueFamilyIndex()
+{
+    return _graphicsQueueFamilyIndex;
+}
+
 void VulkanContext::_setupLayersAndExtensions()
 {
 	_instanceExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME );
@@ -238,7 +243,7 @@ void VulkanContext::_initDevice()
 			if (familyPropertyList[i].queueFlags & vk::QueueFlagBits::eGraphics)
 			{
 				found = true;
-				_graphicFamilyIndex = i;
+				_graphicsQueueFamilyIndex = i;
 				break;
 			}
 		}
@@ -262,7 +267,7 @@ void VulkanContext::_initDevice()
 	float quePriorities[] = { 1.0f };
 	vk::DeviceQueueCreateInfo deviceQueueCreateInfo({
 		{},
-		_graphicFamilyIndex,
+		_graphicsQueueFamilyIndex,
 		1,
 		quePriorities
 	});
@@ -279,7 +284,7 @@ void VulkanContext::_initDevice()
 	});
 
 	_device = _gpu.createDevice(deviceCreateInfo);
-	_queue = _device.getQueue(_graphicFamilyIndex, 0);
+	_queue = _device.getQueue(_graphicsQueueFamilyIndex, 0);
 }
 
 void VulkanContext::_deInitDevice()
@@ -294,7 +299,7 @@ void VulkanContext::_initSurface()
 	_window->InitOSSurface(_instance, &temp_surface);
 	_surface = vk::SurfaceKHR(temp_surface);
 
-	VkBool32 isSupported = _gpu.getSurfaceSupportKHR(_graphicFamilyIndex, _surface);
+	VkBool32 isSupported = _gpu.getSurfaceSupportKHR(_graphicsQueueFamilyIndex, _surface);
 	if (!isSupported)
 	{
 		assert(1 && "WSI not supported.");
@@ -342,7 +347,7 @@ void VulkanContext::_initCommandPool()
 {
 	vk::CommandPoolCreateInfo commandPoolCreateInfo({
 		vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-		_graphicFamilyIndex
+		_graphicsQueueFamilyIndex
 	});
 	_commandPool = _device.createCommandPool(commandPoolCreateInfo);
 }

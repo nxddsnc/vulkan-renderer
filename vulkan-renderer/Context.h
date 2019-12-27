@@ -22,6 +22,7 @@ public:
 	vk::SurfaceKHR						 GetSuface();
 	vk::CommandPool						 GetCommandPool();
     vk::SurfaceFormatKHR                 GetSurfaceFormat();
+    uint32_t                             GetGraphicsQueueFamilyIndex();
 
 private: 
     void _initVulkan();
@@ -55,7 +56,7 @@ private:
 	vk::Queue							_queue = nullptr;
 	VkPhysicalDeviceProperties		    _gpuProperties;
 	vk::PhysicalDeviceMemoryProperties	_gpuMemoryProperties;
-	uint32_t							_graphicFamilyIndex = 0;
+	uint32_t							_graphicsQueueFamilyIndex = 0;
 	vk::SurfaceKHR					    _surface;
 	vk::SurfaceFormatKHR				_surfaceFormat;
 	vk::CommandPool						_commandPool;

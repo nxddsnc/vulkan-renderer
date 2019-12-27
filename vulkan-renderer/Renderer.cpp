@@ -27,20 +27,16 @@ Renderer::Renderer(Window *window)
 	_commandPool	    = _context->GetCommandPool();
 	_surface			= _context->GetSuface();
     _surfaceFormat      = _context->GetSurfaceFormat();
-	//present_queue = vulkan_context.getPresentQueue();
-	//compute_queue = vulkan_context.getComputeQueue();
-	//graphics_command_pool = vulkan_context.getGraphicsCommandPool();
-	//compute_command_pool = vulkan_context.getComputeCommandPool();
+
     VmaAllocatorCreateInfo allocatorInfo = {};
     allocatorInfo.physicalDevice = VkPhysicalDevice(_gpu);
     allocatorInfo.device = VkDevice(_device);
 	allocatorInfo.instance = VkInstance(_instance);
-
     vmaCreateAllocator(&allocatorInfo, &_memoryAllocator);
 
 	_initSwapchain();
 	_initSwapchainImages();
-	//_initDepthStencilImage();
+	_initDepthStencilImage();
 	_initRenderPass();
 	_initDescriptorSetLayout();
 	_initGraphicsPipeline();
@@ -72,7 +68,7 @@ Renderer::~Renderer()
 	_deInitGraphicPipeline();
 	_deInitDescriptorSetLayout();
 	_deInitRenderPass();
-	//_deInitDepthStencilImage();
+	_deInitDepthStencilImage();
 	_deInitSwapchainImages();
 	_deInitSwapchain();
 
@@ -149,7 +145,7 @@ VkPhysicalDeviceMemoryProperties Renderer::GetPhysicalDeviceMemoryProperties()
 
 uint32_t Renderer::GetGraphicFamilyIndex()
 {
-	return _graphicFamilyIndex;
+	return _graphicsQueueFamilyIndex;
 }
 
 VkRenderPass Renderer::GetVulkanRenderPass()
@@ -295,25 +291,8 @@ void Renderer::_initSwapchain()
 		}
 	}
 
-    //VULKAN_HPP_NAMESPACE::SwapchainCreateFlagsKHR flags_ = {},
-    //    VULKAN_HPP_NAMESPACE::SurfaceKHR surface_ = {},
-    //    uint32_t minImageCount_ = {},
-    //    VULKAN_HPP_NAMESPACE::Format imageFormat_ = {},
-    //    VULKAN_HPP_NAMESPACE::ColorSpaceKHR imageColorSpace_ = {},
-    //    VULKAN_HPP_NAMESPACE::Extent2D imageExtent_ = {},
-    //    uint32_t imageArrayLayers_ = {},
-    //    VULKAN_HPP_NAMESPACE::ImageUsageFlags imageUsage_ = {},
-    //    VULKAN_HPP_NAMESPACE::SharingMode imageSharingMode_ = {},
-    //    uint32_t queueFamilyIndexCount_ = {},
-    //    const uint32_t* pQueueFamilyIndices_ = {},
-    //    VULKAN_HPP_NAMESPACE::SurfaceTransformFlagBitsKHR preTransform_ = {},
-    //    VULKAN_HPP_NAMESPACE::CompositeAlphaFlagBitsKHR compositeAlpha_ = {},
-    //    VULKAN_HPP_NAMESPACE::PresentModeKHR presentMode_ = {},
-    //    VULKAN_HPP_NAMESPACE::Bool32 clipped_ = {},
-    //    VULKAN_HPP_NAMESPACE::SwapchainKHR oldSwapchain_ = {}
-
 	vk::SwapchainCreateInfoKHR createInfo({
-        vk::SwapchainCreateFlagBitsKHR::eMutableFormat,
+        {},
 		_surface,
 		_swapchainImageCount,
 		_surfaceFormat.format,
@@ -350,15 +329,15 @@ void Renderer::_initSwapchainImages()
 			vk::ImageViewType::e2D,
 			_surfaceFormat.format,
 			vk::ComponentMapping({
-			vk::ComponentSwizzle::eR,
-			vk::ComponentSwizzle::eG,
-			vk::ComponentSwizzle::eB,
-			vk::ComponentSwizzle::eA
+			    vk::ComponentSwizzle::eR,
+			    vk::ComponentSwizzle::eG,
+			    vk::ComponentSwizzle::eB,
+			    vk::ComponentSwizzle::eA
 			}),
 			vk::ImageSubresourceRange({
 				vk::ImageAspectFlagBits::eColor,
 				0,
-				0,
+				1,
 				0,
 				1
 			})
@@ -408,6 +387,21 @@ void Renderer::_initDepthStencilImage()
 		}
 	}
 
+
+   /* VULKAN_HPP_NAMESPACE::ImageCreateFlags flags_ = {},
+        VULKAN_HPP_NAMESPACE::ImageType imageType_ = {},
+        VULKAN_HPP_NAMESPACE::Format format_ = {},
+        VULKAN_HPP_NAMESPACE::Extent3D extent_ = {},
+        uint32_t mipLevels_ = {},
+        uint32_t arrayLayers_ = {},
+        VULKAN_HPP_NAMESPACE::SampleCountFlagBits samples_ = {},
+        VULKAN_HPP_NAMESPACE::ImageTiling tiling_ = {},
+        VULKAN_HPP_NAMESPACE::ImageUsageFlags usage_ = {},
+        VULKAN_HPP_NAMESPACE::SharingMode sharingMode_ = {},
+        uint32_t queueFamilyIndexCount_ = {},
+        const uint32_t* pQueueFamilyIndices_ = {},
+        VULKAN_HPP_NAMESPACE::ImageLayout initialLayout_ = {}*/
+    uint32_t graphicsQueueFamilyIndex = _context->GetGraphicsQueueFamilyIndex();
     vk::ImageCreateInfo createInfo({
         {},
         vk::ImageType::e2D,
@@ -423,14 +417,16 @@ void Renderer::_initDepthStencilImage()
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::SharingMode::eExclusive,
-        0,
-        nullptr,
+        1,
+        &graphicsQueueFamilyIndex,
         vk::ImageLayout::eUndefined
     });
     _depthStencilImage = _device.createImage(createInfo);
 
-    VmaAllocationCreateInfo allocInfo;
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    allocInfo.pool = VK_NULL_HANDLE;
     vmaAllocateMemoryForImage(_memoryAllocator, _depthStencilImage, &allocInfo, &_depthStencilImageMemory, nullptr);
     vmaBindImageMemory(_memoryAllocator, _depthStencilImageMemory, _depthStencilImage);
 
@@ -458,7 +454,7 @@ void Renderer::_initDepthStencilImage()
 
 void Renderer::_deInitDepthStencilImage()
 {
-	vkDestroyImageView(_device, _depthStencilImageView, nullptr);
+    _device.destroyImageView(_depthStencilImageView);
     vmaDestroyImage(_memoryAllocator, _depthStencilImage, _depthStencilImageMemory);
 }
 
@@ -489,12 +485,14 @@ void Renderer::_initRenderPass()
 	});
 
 	vk::AttachmentReference subpassDepthStencilAttachment({
-		{},
+		1,
 		vk::ImageLayout::eDepthStencilAttachmentOptimal
 	});
 
+    std::array<vk::AttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+
 	std::array<vk::AttachmentReference, 1> subpassColorAttachments{};
-	subpassColorAttachments[0].attachment = 1;
+	subpassColorAttachments[0].attachment = 0;
 	subpassColorAttachments[0].layout = vk::ImageLayout::eColorAttachmentOptimal;
 
 	std::array<vk::SubpassDescription, 1> subpasses{};
@@ -505,25 +503,16 @@ void Renderer::_initRenderPass()
 	subpasses[0].pColorAttachments = subpassColorAttachments.data();
 	subpasses[0].pDepthStencilAttachment = &subpassDepthStencilAttachment;
 
-	// TODO: look into the documentation of subpass and subpass dependencies.
-    //uint32_t srcSubpass_ = {},
-    //    uint32_t dstSubpass_ = {},
-    //    VULKAN_HPP_NAMESPACE::PipelineStageFlags srcStageMask_ = {},
-    //    VULKAN_HPP_NAMESPACE::PipelineStageFlags dstStageMask_ = {},
-    //    VULKAN_HPP_NAMESPACE::AccessFlags srcAccessMask_ = {},
-    //    VULKAN_HPP_NAMESPACE::AccessFlags dstAccessMask_ = {},
-    //    VULKAN_HPP_NAMESPACE::DependencyFlags dependencyFlags_ = {}
 	vk::SubpassDependency dependency({
-		0,
+        VK_SUBPASS_EXTERNAL,
         0,
 		vk::PipelineStageFlagBits::eColorAttachmentOutput,
 		vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::AccessFlagBits::eDepthStencilAttachmentRead,
-        vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-        vk::DependencyFlagBits::eViewLocalKHR
+        {},
+        vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead,
+        {}
 	});
 
-	std::array<vk::AttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 	vk::RenderPassCreateInfo createInfo({
 		{},
 		2,
@@ -728,19 +717,20 @@ void Renderer::_initFramebuffers()
 	_framebuffers.resize(_swapchainImageCount);
 	for (uint32_t i = 0; i < _swapchainImageCount; ++i)
 	{
-		std::array<VkImageView, 2> attachments{};
-		attachments[0] = _depthStencilImageView;
-		attachments[1] = _swapchainImageViews[i];
+		std::array<vk::ImageView, 2> attachments{};
+        attachments[0] = _swapchainImageViews[i];
+		attachments[1] = _depthStencilImageView;
 
-		VkFramebufferCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		createInfo.renderPass = _renderPass;
-		createInfo.attachmentCount = attachments.size();
-		createInfo.pAttachments = attachments.data();
-		createInfo.width = _swapchainExtent.width;
-		createInfo.height = _swapchainExtent.height;
-		createInfo.layers = 1;
-		vkCreateFramebuffer(_device, &createInfo, nullptr, &_framebuffers[i]);
+        vk::FramebufferCreateInfo createInfo({
+            {},
+            _renderPass,
+            (uint32_t)attachments.size(),
+            attachments.data(),
+            _swapchainExtent.width,
+            _swapchainExtent.height,
+            uint32_t(1)
+        });
+        _framebuffers[i] = _device.createFramebuffer(createInfo);
 	}
 }
 
@@ -834,7 +824,7 @@ void Renderer::_initVertexBuffer()
 
     VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
     bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &_vertexBuffer, &_vertexBufferMemory, nullptr);
@@ -844,7 +834,7 @@ void Renderer::_initVertexBuffer()
 
     VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
     stagingBufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
     vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
@@ -874,7 +864,7 @@ void Renderer::_initIndexBuffer()
 
     VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
     bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &_indexBuffer, &_indexBufferMemory, nullptr);
@@ -884,7 +874,7 @@ void Renderer::_initIndexBuffer()
 
     VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
     stagingBufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
     vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
