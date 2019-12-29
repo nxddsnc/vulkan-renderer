@@ -772,8 +772,8 @@ void Renderer::_initTextureImage()
         vk::ImageType::e2D,
         vk::Format::eR8G8B8A8Unorm,
         vk::Extent3D({
-            _swapchainExtent.width,
-            _swapchainExtent.height,
+            static_cast<uint32_t>(texWidth),
+            static_cast<uint32_t>(texHeight),
             1
         }),
         1,
