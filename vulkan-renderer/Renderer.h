@@ -68,10 +68,10 @@ private:
 	void _deInitDescriptorSetLayout();
 
 	void _initGraphicsPipeline();
-	void _deInitGraphicPipeline();
+	void _deInitGraphicsPipeline();
 
 	void _initFramebuffers();
-	void _deInitFramebuffer();
+	void _deInitFramebuffers();
 
 	void _initTextureImage();
 	void _deInitTextureImage();
@@ -89,7 +89,7 @@ private:
     void _deInitIndexBuffer();
 
 	void _initUniformBuffers();
-	void _deInitUniformBuffer();
+	void _deInitUniformBuffers();
 
 	void _initDescriptorPool();
 	void _deInitDescriptorPool();

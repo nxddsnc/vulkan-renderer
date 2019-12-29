@@ -9,7 +9,6 @@
 #include <array>
 #include "Scene.h"
 #include <chrono>
-#include <glm/gtc/matrix_transform.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <array>
@@ -63,14 +62,14 @@ Renderer::~Renderer()
 	_deInitCommandBuffers();
 	_deInitDescriptorSet();
 	_deInitDescriptorPool(); 
-	_deInitUniformBuffer();
+	_deInitUniformBuffers();
     _deInitIndexBuffer();
 	_deInitVertexBuffer();
     _deInitTextureImageSampler();
     _deInitTextureImageView();
 	_deInitTextureImage();
-	_deInitFramebuffer();
-	_deInitGraphicPipeline();
+	_deInitFramebuffers();
+	_deInitGraphicsPipeline();
 	_deInitDescriptorSetLayout();
 	_deInitRenderPass();
 	_deInitDepthStencilImage();
@@ -112,7 +111,6 @@ void Renderer::Resize(int width, int height)
 	_initRenderPass();
     _initGraphicsPipeline();
     _initFramebuffers();
-	_initUniformBuffers();
 	_initDescriptorPool();
 	_initDescriptorSet(); 
 	_initCommandBuffers();
@@ -239,25 +237,16 @@ void Renderer::_updateUniformBuffer()
 
 void Renderer::_cleanupSwapchain()
 {
-    for (size_t i = 0; i < _framebuffers.size(); ++i) {
-        vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
-    }
-
-    vkFreeCommandBuffers(_device, _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
-
-    vkDestroyPipeline(_device, _graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
-    vkDestroyRenderPass(_device, _renderPass, nullptr);
-
-    for (size_t i = 0; i < _swapchainImageViews.size(); ++i) {
-        vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
-    }
-	_deInitDepthStencilImage();
-    vkDestroySwapchainKHR(_device, _swapchain, nullptr);
-
-	_deInitUniformBuffer();
-	_deInitDescriptorPool();
-	_deInitDescriptorSet();
+    _deInitSwapchainImages();
+    _deInitUniformBuffers();
+    _deInitDepthStencilImage();
+    _deInitRenderPass();
+    _deInitGraphicsPipeline();
+    _deInitFramebuffers();
+    _deInitDescriptorPool();
+    _deInitDescriptorSet();
+    _deInitCommandBuffers();
+    _deInitSwapchain();
 }
 
 VkShaderModule Renderer::_createShaderModule(const std::vector<char>& code)
@@ -635,7 +624,7 @@ void Renderer::_initGraphicsPipeline()
 	rasterizer.depthBiasClamp = 0.0f; // Optional
 	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
 
-											// Multisampling
+    // Multisampling
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
@@ -645,10 +634,7 @@ void Renderer::_initGraphicsPipeline()
 	multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
 	multisampling.alphaToOneEnable = VK_FALSE; // Optional
 
-											   // Depth and stencil testing
-											   // TODO: To be done
-
-											   // Color blending
+	// Color blending
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
@@ -670,7 +656,7 @@ void Renderer::_initGraphicsPipeline()
 	colorBlending.blendConstants[2] = 0.0f; // Optional
 	colorBlending.blendConstants[3] = 0.0f; // Optional
 
-											// Pipeline layout
+	// Pipeline layout
     VkDescriptorSetLayout descriptorSetLayout(_descriptorSetLayout);
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -680,18 +666,18 @@ void Renderer::_initGraphicsPipeline()
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 	vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_pipelineLayout);
 
+    // Depth and stencil testing
 	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {};
 	depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	//depthStencilStateCreateInfo.flags;
-	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
-	depthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
-	//depthStencilStateCreateInfo.depthCompareOp;
-	//depthStencilStateCreateInfo.depthBoundsTestEnable;
-	//depthStencilStateCreateInfo.stencilTestEnable;
-	//depthStencilStateCreateInfo.front;
-	//depthStencilStateCreateInfo.back;
-	//depthStencilStateCreateInfo.minDepthBounds;
-	//depthStencilStateCreateInfo.maxDepthBounds;
+    depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+    depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+    depthStencilStateCreateInfo.minDepthBounds = 0.0f; // Optional
+    depthStencilStateCreateInfo.maxDepthBounds = 1.0f; // Optional
+    depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+    depthStencilStateCreateInfo.front = {}; // Optional
+    depthStencilStateCreateInfo.back = {}; // Optional
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -717,7 +703,7 @@ void Renderer::_initGraphicsPipeline()
 	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
 }
 
-void Renderer::_deInitGraphicPipeline()
+void Renderer::_deInitGraphicsPipeline()
 {
 	vkDestroyPipeline(_device, _graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
@@ -745,7 +731,7 @@ void Renderer::_initFramebuffers()
 	}
 }
 
-void Renderer::_deInitFramebuffer()
+void Renderer::_deInitFramebuffers()
 {
 	for (uint32_t i = 0; i < _swapchainImageCount; ++i)
 	{
@@ -867,7 +853,7 @@ void Renderer::_initTextureImageSampler()
         vk::CompareOp::eAlways,
         0.0,
         0.0,
-        vk::BorderColor::eIntOpaqueBlack,
+        vk::BorderColor::eFloatOpaqueWhite,
         vk::Bool32(false)
     });
 
@@ -883,15 +869,6 @@ void Renderer::transitionImageLayout(vk::Image image, vk::Format format, vk::Ima
 {
 	vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
 
-	/*VULKAN_HPP_NAMESPACE::AccessFlags srcAccessMask_ = {},
-	VULKAN_HPP_NAMESPACE::AccessFlags dstAccessMask_ = {},
-	VULKAN_HPP_NAMESPACE::ImageLayout oldLayout_ = {},
-	VULKAN_HPP_NAMESPACE::ImageLayout newLayout_ = {},
-	uint32_t srcQueueFamilyIndex_ = {},
-	uint32_t dstQueueFamilyIndex_ = {},
-	VULKAN_HPP_NAMESPACE::Image image_ = {},
-	VULKAN_HPP_NAMESPACE::ImageSubresourceRange subresourceRange_ = {}
-	*/
 	vk::ImageMemoryBarrier barrier({
 		{},
 		{},
@@ -1017,10 +994,15 @@ void Renderer::_copyBuffer(vk::Buffer srcBuffer,
 void Renderer::_initVertexBuffer()
 {
 	const std::vector<Vertex> vertices = {
-        { { -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f },{ 1.0f, 0.0f } },
-        { { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f } },
-        { { 0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } },
-        { { -0.5f, 0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } }
+        { { -0.5f, -0.5f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } },
+        { { 0.5f, -0.5f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f } },
+        { { 0.5f, 0.5f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
+        { { -0.5f, 0.5f, 0.0f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
+
+        { { -0.5f, -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } },
+        { { 0.5f, -0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f } },
+        { { 0.5f, 0.5f, -0.5f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
+        { { -0.5f, 0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } }
 	};
 
 	VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
@@ -1060,7 +1042,8 @@ void Renderer::_deInitVertexBuffer()
 void Renderer::_initIndexBuffer()
 {
     const std::vector<uint16_t> indices = {
-        0, 1, 2, 2, 3, 0
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4
     };
 
     VkDeviceSize size = sizeof(indices[0]) * indices.size();
@@ -1114,7 +1097,7 @@ void Renderer::_initUniformBuffers()
 	}
 }
 
-void Renderer::_deInitUniformBuffer()
+void Renderer::_deInitUniformBuffers()
 {
 	for (size_t i = 0; i < _swapchainImages.size(); i++)
 	{
@@ -1224,13 +1207,14 @@ void Renderer::_initCommandBuffers()
 		renderPassInfo.renderArea.extent = _swapchainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].depthStencil.depth = 0.0f;
-        clearValues[0].depthStencil.stencil = 0;
+        clearValues[0].color.float32[0] = 0.0;
+        clearValues[0].color.float32[1] = 0.0;
+        clearValues[0].color.float32[2] = 0.0;
+        clearValues[0].color.float32[3] = 1.0f;
 
-        clearValues[1].color.float32[0] = 0.0;
-        clearValues[1].color.float32[1] = 0.0;
-        clearValues[1].color.float32[2] = 0.0;
-        clearValues[1].color.float32[3] = 1.0f;
+        clearValues[1].depthStencil.depth = 1.0f;
+        clearValues[1].depthStencil.stencil = 0;
+        
 		renderPassInfo.clearValueCount = clearValues.size();
 		renderPassInfo.pClearValues = clearValues.data();
 
@@ -1244,7 +1228,7 @@ void Renderer::_initCommandBuffers()
 		
 		vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
 
-		vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(6), 1, 0, 0, 0);
+		vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(12), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(_commandBuffers[i]);
 		vkEndCommandBuffer(_commandBuffers[i]);
