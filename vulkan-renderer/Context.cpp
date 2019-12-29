@@ -272,6 +272,8 @@ void VulkanContext::_initDevice()
 		quePriorities
 	});
 
+    vk::PhysicalDeviceFeatures physicalDeviceFeatures = {};
+    physicalDeviceFeatures.samplerAnisotropy = vk::Bool32(true);
 	vk::DeviceCreateInfo deviceCreateInfo({
 		{},
 		1,
@@ -280,7 +282,7 @@ void VulkanContext::_initDevice()
 		_deviceLayers.data(),
 		(uint32_t)_deviceExtensions.size(),
 		_deviceExtensions.data(),
-		{}
+        &physicalDeviceFeatures
 	});
 
 	_device = _gpu.createDevice(deviceCreateInfo);

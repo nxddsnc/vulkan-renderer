@@ -5,3 +5,5 @@ vulkan-renderer/x64
 .vs
 
  x64/
+
+*.spv

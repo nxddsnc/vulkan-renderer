@@ -45,6 +45,11 @@ private:
 
     void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
     vk::CommandBuffer _beginSingleTimeCommand();
+
+	void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+	
+	void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+
     void _endSingleTimeCommand(vk::CommandBuffer &commandBufer);
 
 	void _initSwapchain();
@@ -70,6 +75,12 @@ private:
 
 	void _initTextureImage();
 	void _deInitTextureImage();
+
+	void _initTextureImageView();
+	void _deInitTextureImageView();
+
+    void _initTextureImageSampler();
+    void _deInitTextureImageSampler();
 
 	void _initVertexBuffer();
 	void _deInitVertexBuffer();
@@ -117,7 +128,7 @@ private:
 	std::vector<vk::ImageView>			_swapchainImageViews;
 	std::vector<VkFramebuffer>			_framebuffers;
 	VkPipelineLayout					_pipelineLayout;
-	VkDescriptorSetLayout				_descriptorSetLayout;
+	vk::DescriptorSetLayout				_descriptorSetLayout;
 	std::vector<VkDescriptorSet>		_descriptorSets;
 	VkDescriptorPool					_descriptorPool;
 	VkPipeline							_graphicsPipeline;
@@ -129,8 +140,10 @@ private:
 	VkBuffer							_indexBuffer = VK_NULL_HANDLE;
     VmaAllocation						_indexBufferMemory;
 
-	VkImage								_textureImage;
+	vk::Image							_textureImage;
 	VmaAllocation						_textureImageMemory;
+    vk::ImageView                       _textureImageView;
+    vk::Sampler                         _textureImageSampler;
 
 	std::vector<VkBuffer>				_uniformBuffers;
 	std::vector<VmaAllocation>			_uniformBuffersMemory;
