@@ -7,6 +7,7 @@
 #include "Context.h"
 Renderer *renderer;
 Window *window;
+double mouseX, mouseY;
 
 void ResizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -18,13 +19,62 @@ void CloseCallback(GLFWwindow* _window)
 	window->Close();
 }
 
+void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_1)
+    {
+        if (action == GLFW_PRESS)
+        {
+            renderer->GetCamera()->keys.left = true;
+        }
+        else
+        {
+            renderer->GetCamera()->keys.left = false;
+        }
+    }
+    else if (button == GLFW_MOUSE_BUTTON_2)
+    {
+        if (action == GLFW_PRESS)
+        {
+            renderer->GetCamera()->keys.left = true;
+        }
+        else
+        {
+            renderer->GetCamera()->keys.left = false;
+        }
+    }
+}
+
+void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
+{
+    float wheelDelta = yoffset;
+    renderer->GetCamera()->translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f));
+}
+
+void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
+{
+    double dx = mouseX - xpos;
+    double dy = mouseY - ypos;
+
+    mouseX = xpos;
+    mouseY = ypos;
+    
+    Camera *camera = renderer->GetCamera();
+    if (camera->keys.left) {
+        camera->rotate(glm::vec3(dy * camera->rotationSpeed, -dx * camera->rotationSpeed, 0.0f));
+    }
+}
+
 int main()
 {
 	window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
 	renderer = new Renderer(window);
-
-	glfwSetWindowSizeCallback(window->GetGLFWWindow(), ResizeCallback);
-	glfwSetWindowCloseCallback(window->GetGLFWWindow(), CloseCallback);
+    GLFWwindow *_window = window->GetGLFWWindow();
+	glfwSetWindowSizeCallback(_window, ResizeCallback);
+	glfwSetWindowCloseCallback(_window, CloseCallback);
+    glfwSetMouseButtonCallback(_window, MouseButtonCallback);
+    glfwSetScrollCallback(_window, MouseScrollCallback);
+    glfwSetCursorPosCallback(_window, MouseMoveCallback);
 
     auto timer = std::chrono::steady_clock();
     auto last_time = timer.now();

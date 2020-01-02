@@ -170,6 +170,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h" />
+    <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Renderer.h" />

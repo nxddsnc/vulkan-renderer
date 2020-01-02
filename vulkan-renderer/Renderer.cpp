@@ -18,6 +18,11 @@ Renderer::Renderer(Window *window)
 	_window				= window;
 	_swapchainExtent	= { WIDTH, HEIGHT };
 	_context			= new VulkanContext(window);
+    _camera             = new Camera();
+    _camera->type = Camera::CameraType::lookat;
+    _camera->setPosition(glm::vec3(0, 0, 0));
+    _camera->setRotation(glm::vec3(-45, 0, 45));
+    _camera->setPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 10.0f);
 
 	_gpu				= _context->GetPhysicalDevice();
 	_device			    = _context->GetLogicalDevice();
@@ -77,7 +82,8 @@ Renderer::~Renderer()
 	_deInitSwapchain();
 
     vmaDestroyAllocator(_memoryAllocator);
-
+    
+    delete _camera;
 	delete _context;
 }
 
@@ -166,6 +172,11 @@ uint32_t Renderer::GetSwapchainImageCount()
 	return uint32_t();
 }
 
+Camera * Renderer::GetCamera()
+{
+    return _camera;
+}
+
 void Renderer::DrawFrame()
 {
 	_beginRender();
@@ -224,10 +235,15 @@ void Renderer::_updateUniformBuffer()
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo = {};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), _swapchainExtent.width / (float)_swapchainExtent.height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;
+	//ubo.model = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+	//ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//ubo.proj = glm::perspective(glm::radians(45.0f), _swapchainExtent.width / (float)_swapchainExtent.height, 0.1f, 10.0f);
+	//ubo.proj[1][1] *= -1;
+
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = _camera->matrices.view;
+    ubo.proj = _camera->matrices.perspective;
+    ubo.proj[1][1] *= -1;
 
 	void* data;
 	vmaMapMemory(_memoryAllocator, _uniformBuffersMemory[_activeSwapchainImageId], &data);

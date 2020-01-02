@@ -2,10 +2,11 @@
 #include "Platform.h"
 #include <vector>
 #include "Context.h"
+#include "Camera.hpp"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 class Window;
-
+class Camera;
 #pragma once
 
 struct UniformBufferObject {
@@ -35,6 +36,7 @@ public:
 	VkRenderPass GetVulkanRenderPass();
 	VkFramebuffer GetActiveFramebuffer();
 	uint32_t GetSwapchainImageCount();
+    Camera *GetCamera();
 	void DrawFrame();
 private:
 	void _beginRender();
@@ -169,6 +171,8 @@ private:
 
 	VkFence								_swapchainImageAvailable;
 
-	Window * _window = nullptr;
+	Window                            * _window = nullptr;
+
+    Camera                            * _camera;
 };
 
