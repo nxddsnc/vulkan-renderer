@@ -108,13 +108,13 @@
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions);NOMINMAX </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(GLFW)\lib-vc2015;$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories);$(VcpkgRoot)debug\lib;$(VcpkgRoot)debug\lib\manual-link</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib; glfw3.lib; kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(GLFW)\lib-vc2015;$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories);$(VcpkgRoot)debug\lib;$(VcpkgRoot)debug\lib\manual-link;third-party/libs</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc140-mtd.lib;vulkan-1.lib; glfw3.lib; kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>glslc Shaders/basic.vert -o Shaders/basic_vert.spv
@@ -155,12 +155,16 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>./third-party/libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MyMesh.cpp" />
+    <ClCompile Include="ModelLoader.cpp" />
+    <ClCompile Include="MyNode.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -172,6 +176,9 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="BUILD_OPTIONS.h" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Context.h" />
+    <ClInclude Include="MyMesh.h" />
+    <ClInclude Include="ModelLoader.h" />
+    <ClInclude Include="MyNode.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="ResourceManager.h" />
