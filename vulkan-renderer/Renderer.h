@@ -3,10 +3,13 @@
 #include <vector>
 #include "Context.h"
 #include "Camera.hpp"
+#include <memory.h>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 class Window;
 class Camera;
+struct RenderNode;
+struct Vertex;
 #pragma once
 
 struct UniformBufferObject {
@@ -38,6 +41,8 @@ public:
 	uint32_t GetSwapchainImageCount();
     Camera *GetCamera();
 	void DrawFrame();
+
+    void addRenderNodes(std::vector<std::shared_ptr<RenderNode>> nodes);
 private:
 	void _beginRender();
 	void _endRender(std::vector<VkSemaphore> waitSemaphores);
@@ -104,6 +109,10 @@ private:
 
 	void _initSynchronizations();
 	void _deInitSynchronizations();
+
+    VkBuffer _createVertexBuffer(std::vector<Vertex> &vertices);
+    VkBuffer _createIndexBuffer(std::vector<uint32_t> &indices);
+    void     _createCommandBuffers(std::vector<std::shared_ptr<RenderNode>> &nodes);
 
 	VkShaderModule _createShaderModule(const std::vector<char>& code);
 

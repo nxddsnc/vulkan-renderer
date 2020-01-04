@@ -1,17 +1,20 @@
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
-#include "Mesh.h"
+#include "MyMesh.h"
+#include "MyMaterial.h"
+#include <memory.h>
+#include "Platform.h"
 #pragma once
 /************************************************************************/
 /* Minimum renderable node.*/
 /************************************************************************/
-class MyNode
+struct RenderNode
 {
-public:
-    MyNode(glm::mat4 matrix);
-    ~MyNode();
+    glm::mat4                     matrix;
+    std::shared_ptr<MyMesh>       mesh;
+    std::shared_ptr<MyMaterial>   material;
+    VkBuffer                      vertexBuffer;
+    VkBuffer                      indexBuffer;
 
-private:
-    glm::mat4 m_matrix;
 };
 

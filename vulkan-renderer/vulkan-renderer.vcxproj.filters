@@ -51,6 +51,12 @@
     <ClCompile Include="MyMesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="MyMaterial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MyTexture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -87,6 +93,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MyMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MyMaterial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MyTexture.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

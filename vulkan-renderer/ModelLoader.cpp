@@ -4,8 +4,12 @@
 #include <assimp/postprocess.h>     // Post processing flags
 #include <iostream>
 #include "Platform.h"
+#include "MyMesh.h"
+#include "MyMaterial.h"
+#include "MyTexture.h"
+#include "MyNode.h"
 
-ModelLoader::ModelLoader(Scene *scene)
+ModelLoader::ModelLoader(MyScene *scene)
 {
     m_scene = scene;
 }
@@ -34,11 +38,6 @@ bool ModelLoader::load(const char * filepath)
         return false;
     }
 
-    double scalingFactor;
-    _scene->mMetaData->Get("UnitScaleFactor", scalingFactor);
-    ai_int upAxis = -1;
-    _scene->mMetaData->Get("UpAxis", upAxis);
-
     _parseScene(_scene);
     return true;
 }
@@ -50,21 +49,25 @@ void ModelLoader::_parseScene(const aiScene * scene)
     _extractNode(root, identity);
 }
 
-void ModelLoader::_extractNode(aiNode * node, glm::mat4 &transform)
+void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
 {
     glm::mat4  matrix;
     _extractTransform(matrix, &(node->mTransformation));
-    matrix = matrix * transform;
+    matrix = matrix * parentTransform;
+
+    for (int i = 0; i < node->mNumMeshes; ++i)
+    {
+        // extract mesh
+        auto mesh = _extractMesh(node->mMeshes[i]);
+        std::shared_ptr<RenderNode> myNode = std::make_shared<RenderNode>();
+        myNode->mesh = mesh;
+        myNode->matrix = matrix;
+        m_scene->AddNode(myNode);
+    }
 
     for (int i = 0; i < node->mNumChildren; ++i)
     {
         aiNode *child = node->mChildren[i];
-
-        for (int j = 0; j < child->mNumMeshes; ++j)
-        {
-            // extract mesh
-            _extractMesh(_scene->mMeshes[child->mMeshes[i]]);
-        }
 
         for (int j = 0; j < child->mNumChildren; ++j)
         {
@@ -83,10 +86,91 @@ void ModelLoader::_extractTransform(glm::mat4 & transform, void * aiMatrix)
     transform[0][3] = _matrix->a4; transform[1][3] = _matrix->b4; transform[2][3] = _matrix->c4; transform[3][3] = _matrix->d4;
 }
 
-void ModelLoader::_extractMesh(aiMesh * mesh)
+std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
 {
-    _scene->mMaterials[mesh->mMaterialIndex];
-  
+    if (_meshMap.count(idx) > 0)
+    {
+        return _meshMap.at(idx);
+    }
+    else
+    {
+        std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>();
+        
+        aiMesh *_mesh = _scene->mMeshes[idx];
+
+        bool hasNormal = _mesh->HasNormals();
+        bool hasUV = _mesh->HasTextureCoords(0);
+       
+        mesh->m_vertices.resize(_mesh->mNumVertices);
+        mesh->m_indices.resize(_mesh->mNumFaces * 3);
+        
+        for (size_t i = 0; i < _mesh->mNumVertices; ++i)
+        {
+            aiVector3D vertex = _mesh->mVertices[i];
+            aiVector3D normal = _mesh->mNormals[i];
+            mesh->m_vertices[i].pos.x = vertex.x;
+            mesh->m_vertices[i].pos.y = vertex.y;
+            mesh->m_vertices[i].pos.z = vertex.z;
+        
+            mesh->m_vertices[i].normal.x = normal.x;
+            mesh->m_vertices[i].normal.y = normal.y;
+            mesh->m_vertices[i].normal.z = normal.z;
+        
+            if (hasUV)
+            {
+                aiVector3D uv = _mesh->mTextureCoords[0][i];
+                mesh->m_vertices[i].texCoord.x = uv.x;
+                mesh->m_vertices[i].texCoord.y = uv.y;
+            }
+            else
+            {
+                // TODO: conditional compile.
+                mesh->m_vertices[i].texCoord.x = 0.0;
+                mesh->m_vertices[i].texCoord.y = 0.0;
+            }
+        }
+
+        for (size_t i = 0; i < _mesh->mNumFaces; ++i)
+        {
+            aiFace face = _mesh->mFaces[i];
+            mesh->m_indices[i * 3 + 0] = face.mIndices[0];
+            mesh->m_indices[i * 3 + 1] = face.mIndices[1];
+            mesh->m_indices[i * 3 + 2] = face.mIndices[2];
+        }
+
+        _meshMap.insert(std::make_pair(idx, mesh));
+        return mesh;
+    }
+}
+
+std::shared_ptr<MyMaterial> ModelLoader::_extractMaterial(unsigned int idx)
+{
+    if (_materialMap.count(idx) > 0)
+    {
+        return _materialMap.at(idx);
+    }
+    else
+    {
+        std::shared_ptr<MyMaterial> material = std::make_shared<MyMaterial>();
+
+        /*aiMaterial *material = _scene->mMaterials[mesh->mMaterialIndex];
+        aiString materialName;
+        material->Get(AI_MATKEY_NAME, materialName);
+        sprintf_s(myMaterial->name, "%s_%d", materialName.data, m_materialMap.size());
+
+        printf("%s\n", myMaterial->name);
+        aiColor3D diffuse;
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+        material->Get(AI_MATKEY_OPACITY, myMaterial->tr);
+        myMaterial->kd[0] = diffuse.r;
+        myMaterial->kd[1] = diffuse.g;
+        myMaterial->kd[2] = diffuse.b;
+*/
+        _materialMap.insert(std::make_pair(idx, material));
+
+        return material;
+    }
+
 }
 
 
