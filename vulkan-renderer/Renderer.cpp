@@ -12,6 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <array>
+#include "ResourceManager.h"
 
 Renderer::Renderer(Window *window)
 {
@@ -32,12 +33,15 @@ Renderer::Renderer(Window *window)
 	_commandPool	    = _context->GetCommandPool();
 	_surface			= _context->GetSuface();
     _surfaceFormat      = _context->GetSurfaceFormat();
+    _graphicsQueueFamilyIndex = _context->GetGraphicsQueueFamilyIndex();
 
     VmaAllocatorCreateInfo allocatorInfo = {};
     allocatorInfo.physicalDevice = VkPhysicalDevice(_gpu);
     allocatorInfo.device = VkDevice(_device);
 	allocatorInfo.instance = VkInstance(_instance);
     vmaCreateAllocator(&allocatorInfo, &_memoryAllocator);
+
+    _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator);
 
 	_initSwapchain();
 	_initSwapchainImages();
@@ -64,7 +68,7 @@ Renderer::~Renderer()
 	vkQueueWaitIdle(_queue);
 	delete _window;
 	_deInitSynchronizations();
-	_deInitCommandBuffers();
+	//_deInitCommandBuffers();
 	_deInitDescriptorSet();
 	_deInitDescriptorPool(); 
 	_deInitUniformBuffers();
@@ -81,6 +85,7 @@ Renderer::~Renderer()
 	_deInitSwapchainImages();
 	_deInitSwapchain();
 
+    delete _resourceManager;
     vmaDestroyAllocator(_memoryAllocator);
     
     delete _camera;
@@ -1119,7 +1124,6 @@ void Renderer::_initSynchronizations()
 		vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_imageAvailableSemaphores[i]);
 		vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_renderFinishedSemaphores[i]);
 	}
-
 }
 
 void Renderer::_deInitSynchronizations()
@@ -1131,76 +1135,6 @@ void Renderer::_deInitSynchronizations()
 		vkDestroySemaphore(_device, _renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(_device, _imageAvailableSemaphores[i], nullptr);
 	}
-}
-
-VkBuffer Renderer::_createVertexBuffer(std::vector<Vertex>& vertices)
-{
-    VkBuffer vertexBuffer;
-    VmaAllocation vertexBufferMemory;
-    VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
-
-    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &vertexBuffer, &vertexBufferMemory, nullptr);
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingBufferMemory;
-
-    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    stagingBufferInfo.size = size;
-    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
-    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
-
-    void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, vertices.data(), (size_t)size);
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
-
-    _copyBuffer(stagingBuffer, vertexBuffer, size);
-
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
-
-    return vertexBuffer;
-}
-
-VkBuffer Renderer::_createIndexBuffer(std::vector<uint32_t> &indices)
-{
-    VkBuffer indexBuffer;
-    VmaAllocation indexBufferMemory;
-
-    VkDeviceSize size = sizeof(indices[0]) * indices.size();
-
-    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &indexBuffer, &indexBufferMemory, nullptr);
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingBufferMemory;
-
-    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    stagingBufferInfo.size = size;
-    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
-    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
-
-    void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, indices.data(), (size_t)size);
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
-
-    _copyBuffer(stagingBuffer, indexBuffer, size);
-
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
-    return indexBuffer;
 }
 
 void Renderer::_createCommandBuffers(std::vector<std::shared_ptr<RenderNode>>& nodes)
@@ -1254,12 +1188,23 @@ void Renderer::_createCommandBuffers(std::vector<std::shared_ptr<RenderNode>>& n
             VkBuffer vertexBuffers[] = { node->vertexBuffer };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-            //TODO: use uint8 or uint16
-            vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+            switch (node->mesh->m_indexType)
+            {
+            case 1:
+                vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT8_EXT);
+                break;
+            case 2:
+                vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+                break;
+            case 4:
+                vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                break;
+            }
 
             vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
 
-            vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(node->mesh->m_indices.size() / 3), 1, 0, 0, 0);
+            vkCmdDrawIndexed(_commandBuffers[i], node->mesh->m_indexNum, 1, 0, 0, 0);
         }
 
 
@@ -1267,8 +1212,6 @@ void Renderer::_createCommandBuffers(std::vector<std::shared_ptr<RenderNode>>& n
         vkEndCommandBuffer(_commandBuffers[i]);
     }
 }
-
-
 
 void Renderer::_initVertexBuffer()
 {
@@ -1358,6 +1301,7 @@ void Renderer::_deInitIndexBuffer()
 {
     vmaDestroyBuffer(_memoryAllocator, _indexBuffer, _indexBufferMemory);
 }
+
 void Renderer::_initCommandBuffers()
 {
     _commandBuffers.resize(_swapchainImageCount);
@@ -1427,8 +1371,7 @@ void Renderer::addRenderNodes(std::vector<std::shared_ptr<RenderNode>> nodes)
 {
     for (auto node : nodes)
     {
-        node->vertexBuffer = _createVertexBuffer(node->mesh->m_vertices);
-        node->indexBuffer = _createIndexBuffer(node->mesh->m_indices);
+        _resourceManager->createNodeResource(node);
     }
 
     _createCommandBuffers(nodes);

@@ -7,7 +7,7 @@
 #include "MyMesh.h"
 #include "MyMaterial.h"
 #include "MyTexture.h"
-#include "MyNode.h"
+#include "RenderNode.h"
 
 ModelLoader::ModelLoader(MyScene *scene)
 {
@@ -94,16 +94,12 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
     }
     else
     {
-        std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>();
-        
         aiMesh *_mesh = _scene->mMeshes[idx];
+        std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(_mesh->mNumVertices, _mesh->mNumFaces * 3);
 
         bool hasNormal = _mesh->HasNormals();
         bool hasUV = _mesh->HasTextureCoords(0);
        
-        mesh->m_vertices.resize(_mesh->mNumVertices);
-        mesh->m_indices.resize(_mesh->mNumFaces * 3);
-        
         for (size_t i = 0; i < _mesh->mNumVertices; ++i)
         {
             aiVector3D vertex = _mesh->mVertices[i];
@@ -130,12 +126,39 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
             }
         }
 
-        for (size_t i = 0; i < _mesh->mNumFaces; ++i)
+        if(mesh->m_indexType == 1)
         {
-            aiFace face = _mesh->mFaces[i];
-            mesh->m_indices[i * 3 + 0] = face.mIndices[0];
-            mesh->m_indices[i * 3 + 1] = face.mIndices[1];
-            mesh->m_indices[i * 3 + 2] = face.mIndices[2];
+            uint8_t *indexPtr = reinterpret_cast<uint8_t*>(mesh->m_indices);
+            for (size_t i = 0; i < _mesh->mNumFaces; ++i)
+            {
+                aiFace face = _mesh->mFaces[i];
+                indexPtr[i * 3 + 0] = face.mIndices[0];
+                indexPtr[i * 3 + 1] = face.mIndices[1];
+                indexPtr[i * 3 + 2] = face.mIndices[2];
+            }
+        }
+        else if (mesh->m_indexType == 2)
+        {
+
+            uint16_t *indexPtr = reinterpret_cast<uint16_t*>(mesh->m_indices);
+            for (size_t i = 0; i < _mesh->mNumFaces; ++i)
+            {
+                aiFace face = _mesh->mFaces[i];
+                indexPtr[i * 3 + 0] = face.mIndices[0];
+                indexPtr[i * 3 + 1] = face.mIndices[1];
+                indexPtr[i * 3 + 2] = face.mIndices[2];
+            }
+        }
+        else 
+        {
+            uint32_t *indexPtr = reinterpret_cast<uint32_t*>(mesh->m_indices);
+            for (size_t i = 0; i < _mesh->mNumFaces; ++i)
+            {
+                aiFace face = _mesh->mFaces[i];
+                indexPtr[i * 3 + 0] = face.mIndices[0];
+                indexPtr[i * 3 + 1] = face.mIndices[1];
+                indexPtr[i * 3 + 2] = face.mIndices[2];
+            }
         }
 
         _meshMap.insert(std::make_pair(idx, mesh));

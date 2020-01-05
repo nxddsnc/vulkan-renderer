@@ -47,11 +47,14 @@ struct Vertex {
 class MyMesh
 {
 public:
-    MyMesh();
+    MyMesh(uint32_t vertexSize, uint32_t indexSize);
     ~MyMesh();
 
-public:
+    int getIndexSize();
+    int                     m_indexType;
     std::vector<Vertex>     m_vertices;
-    std::vector<uint32_t>   m_indices;
+    void                  * m_indices;
+    uint32_t                m_vertexNum;
+    uint32_t                m_indexNum;
 };
 

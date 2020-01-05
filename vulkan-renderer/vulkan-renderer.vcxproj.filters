@@ -45,9 +45,6 @@
     <ClCompile Include="ModelLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MyNode.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="MyMesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -55,6 +52,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MyTexture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,9 +89,6 @@
     <ClInclude Include="ModelLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MyNode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MyMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -99,6 +96,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MyTexture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderNode.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

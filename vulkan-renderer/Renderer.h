@@ -110,8 +110,6 @@ private:
 	void _initSynchronizations();
 	void _deInitSynchronizations();
 
-    VkBuffer _createVertexBuffer(std::vector<Vertex> &vertices);
-    VkBuffer _createIndexBuffer(std::vector<uint32_t> &indices);
     void     _createCommandBuffers(std::vector<std::shared_ptr<RenderNode>> &nodes);
 
 	VkShaderModule _createShaderModule(const std::vector<char>& code);
@@ -132,7 +130,7 @@ private:
 
     VmaAllocator                        _memoryAllocator;
 
-	ResourceManager					 *  _resourceManager;
+	ResourceManager                 *   _resourceManager;
 
 	vk::SurfaceKHR					    _surface;
 	std::vector<vk::Image>				_swapchainImages;

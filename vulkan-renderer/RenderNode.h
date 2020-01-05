@@ -13,8 +13,9 @@ struct RenderNode
     glm::mat4                     matrix;
     std::shared_ptr<MyMesh>       mesh;
     std::shared_ptr<MyMaterial>   material;
-    VkBuffer                      vertexBuffer;
-    VkBuffer                      indexBuffer;
-
+    vk::Buffer                    vertexBuffer;
+    VmaAllocation                 vertexBufferMemory;
+    vk::Buffer                    indexBuffer;
+    VmaAllocation                 indexBufferMemory;
 };
 

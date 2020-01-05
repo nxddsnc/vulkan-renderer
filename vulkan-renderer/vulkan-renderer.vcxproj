@@ -165,7 +165,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClCompile Include="MyMaterial.cpp" />
     <ClCompile Include="MyMesh.cpp" />
     <ClCompile Include="ModelLoader.cpp" />
-    <ClCompile Include="MyNode.cpp" />
+    <ClCompile Include="RenderNode.cpp" />
     <ClCompile Include="MyTexture.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
@@ -181,7 +181,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />
     <ClInclude Include="ModelLoader.h" />
-    <ClInclude Include="MyNode.h" />
+    <ClInclude Include="RenderNode.h" />
     <ClInclude Include="MyTexture.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Renderer.h" />
