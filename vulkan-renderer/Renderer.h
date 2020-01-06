@@ -89,12 +89,6 @@ private:
     void _initTextureImageSampler();
     void _deInitTextureImageSampler();
 
-	void _initVertexBuffer();
-	void _deInitVertexBuffer();
-
-    void _initIndexBuffer();
-    void _deInitIndexBuffer();
-
 	void _initUniformBuffers();
 	void _deInitUniformBuffers();
 
@@ -103,9 +97,6 @@ private:
 
 	void _initDescriptorSet();
 	void _deInitDescriptorSet();
-
-	void _initCommandBuffers();
-	void _deInitCommandBuffers();
 
 	void _initSynchronizations();
 	void _deInitSynchronizations();
@@ -142,12 +133,6 @@ private:
 	VkDescriptorPool					_descriptorPool;
 	VkPipeline							_graphicsPipeline;
 	std::vector<VkCommandBuffer>		_commandBuffers;
-
-	VkBuffer							_vertexBuffer = VK_NULL_HANDLE;
-    VmaAllocation						_vertexBufferMemory;
-
-	VkBuffer							_indexBuffer = VK_NULL_HANDLE;
-    VmaAllocation						_indexBufferMemory;
 
 	vk::Image							_textureImage;
 	VmaAllocation						_textureImageMemory;

@@ -86,7 +86,7 @@ int main()
 
     MyScene myScene;
     ModelLoader modelLoader(&myScene);
-    if (!modelLoader.load("./TestModel/Avocado/Avocado.gltf"))
+    if (!modelLoader.load("./TestModel/DamagedHelmet/DamagedHelmet.gltf"))
     {
         return -1;
     } 

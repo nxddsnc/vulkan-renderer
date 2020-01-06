@@ -53,12 +53,9 @@ Renderer::Renderer(Window *window)
 	_initTextureImage();
 	_initTextureImageView();
     _initTextureImageSampler();
-	//_initVertexBuffer();
- //   _initIndexBuffer();
 	_initUniformBuffers();
 	_initDescriptorPool();
 	_initDescriptorSet();
-	//_initCommandBuffers();
 	_initSynchronizations();
 }
 
@@ -68,12 +65,9 @@ Renderer::~Renderer()
 	vkQueueWaitIdle(_queue);
 	delete _window;
 	_deInitSynchronizations();
-	//_deInitCommandBuffers();
 	_deInitDescriptorSet();
 	_deInitDescriptorPool(); 
 	_deInitUniformBuffers();
- //   _deInitIndexBuffer();
-	//_deInitVertexBuffer();
     _deInitTextureImageSampler();
     _deInitTextureImageView();
 	_deInitTextureImage();
@@ -124,7 +118,6 @@ void Renderer::Resize(int width, int height)
     _initFramebuffers();
 	_initDescriptorPool();
 	_initDescriptorSet(); 
-	_initCommandBuffers();
 }
 
 VkInstance Renderer::GetVulkanInstance()
@@ -266,7 +259,6 @@ void Renderer::_cleanupSwapchain()
     _deInitFramebuffers();
     _deInitDescriptorPool();
     _deInitDescriptorSet();
-    _deInitCommandBuffers();
     _deInitSwapchain();
 }
 
@@ -1207,164 +1199,9 @@ void Renderer::_createCommandBuffers(std::vector<std::shared_ptr<RenderNode>>& n
             vkCmdDrawIndexed(_commandBuffers[i], node->mesh->m_indexNum, 1, 0, 0, 0);
         }
 
-
         vkCmdEndRenderPass(_commandBuffers[i]);
         vkEndCommandBuffer(_commandBuffers[i]);
     }
-}
-
-void Renderer::_initVertexBuffer()
-{
-    const std::vector<Vertex> vertices = {
-        { { -0.5f, -0.5f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } },
-        { { 0.5f, -0.5f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f } },
-        { { 0.5f, 0.5f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
-        { { -0.5f, 0.5f, 0.0f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
-
-        { { -0.5f, -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } },
-        { { 0.5f, -0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f } },
-        { { 0.5f, 0.5f, -0.5f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
-        { { -0.5f, 0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } }
-    };
-
-    VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
-
-    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &_vertexBuffer, &_vertexBufferMemory, nullptr);
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingBufferMemory;
-
-    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    stagingBufferInfo.size = size;
-    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
-    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
-
-    void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, vertices.data(), (size_t)size);
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
-
-    _copyBuffer(stagingBuffer, _vertexBuffer, size);
-
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
-}
-
-void Renderer::_deInitVertexBuffer()
-{
-    vmaDestroyBuffer(_memoryAllocator, _vertexBuffer, _vertexBufferMemory);
-}
-
-void Renderer::_initIndexBuffer()
-{
-    const std::vector<uint16_t> indices = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4
-    };
-
-    VkDeviceSize size = sizeof(indices[0]) * indices.size();
-
-    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &bufferInfo, &allocInfo, &_indexBuffer, &_indexBufferMemory, nullptr);
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingBufferMemory;
-
-    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    stagingBufferInfo.size = size;
-    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
-    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
-
-    void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, indices.data(), (size_t)size);
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
-
-    _copyBuffer(stagingBuffer, _indexBuffer, size);
-
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
-}
-
-void Renderer::_deInitIndexBuffer()
-{
-    vmaDestroyBuffer(_memoryAllocator, _indexBuffer, _indexBufferMemory);
-}
-
-void Renderer::_initCommandBuffers()
-{
-    _commandBuffers.resize(_swapchainImageCount);
-    for (uint32_t i = 0; i < _commandBuffers.size(); ++i)
-    {
-        VkCommandBuffer commandBuffer = {};
-        VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        commandBufferAllocateInfo.commandPool = _commandPool;
-        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocateInfo.commandBufferCount = 1;
-        vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer);
-        _commandBuffers[i] = commandBuffer;
-    }
-
-    for (size_t i = 0; i < _commandBuffers.size(); ++i) {
-        VkCommandBufferBeginInfo beginInfo = {};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
-        beginInfo.pInheritanceInfo = nullptr; // Optional
-
-        vkBeginCommandBuffer(_commandBuffers[i], &beginInfo);
-
-        VkRenderPassBeginInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = _renderPass;
-        renderPassInfo.framebuffer = _framebuffers[i];
-
-        renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = _swapchainExtent;
-
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color.float32[0] = 0.0;
-        clearValues[0].color.float32[1] = 0.0;
-        clearValues[0].color.float32[2] = 0.0;
-        clearValues[0].color.float32[3] = 1.0f;
-
-        clearValues[1].depthStencil.depth = 1.0f;
-        clearValues[1].depthStencil.stencil = 0;
-
-        renderPassInfo.clearValueCount = clearValues.size();
-        renderPassInfo.pClearValues = clearValues.data();
-
-        vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
-
-        VkBuffer vertexBuffers[] = { _vertexBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(_commandBuffers[i], _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
-        vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
-
-        vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(12), 1, 0, 0, 0);
-
-        vkCmdEndRenderPass(_commandBuffers[i]);
-        vkEndCommandBuffer(_commandBuffers[i]);
-    }
-}
-
-void Renderer::_deInitCommandBuffers()
-{
-    // The command buffers are allocated from the commandBufferPool, so no need to clean up the memory.
 }
 
 void Renderer::addRenderNodes(std::vector<std::shared_ptr<RenderNode>> nodes)
