@@ -71,9 +71,6 @@ private:
 	void _initRenderPass();
 	void _deInitRenderPass();
 
-	void _initDescriptorSetLayout();
-	void _deInitDescriptorSetLayout();
-
 	void _initGraphicsPipeline();
 	void _deInitGraphicsPipeline();
 
@@ -91,6 +88,9 @@ private:
 
 	void _initUniformBuffers();
 	void _deInitUniformBuffers();
+
+    void _initDescriptorSetLayout();
+    void _deInitDescriptorSetLayout();
 
 	void _initDescriptorPool();
 	void _deInitDescriptorPool();
@@ -130,7 +130,7 @@ private:
 	VkPipelineLayout					_pipelineLayout;
 	vk::DescriptorSetLayout				_descriptorSetLayout;
 	std::vector<VkDescriptorSet>		_descriptorSets;
-	VkDescriptorPool					_descriptorPool;
+	vk::DescriptorPool					_descriptorPool;
 	VkPipeline							_graphicsPipeline;
 	std::vector<VkCommandBuffer>		_commandBuffers;
 

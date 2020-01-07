@@ -524,47 +524,6 @@ void Renderer::_deInitRenderPass()
 	_device.destroyRenderPass(_renderPass);
 }
 
-void Renderer::_initDescriptorSetLayout()
-{
-/*
-    uint32_t binding_ = {},
-        VULKAN_HPP_NAMESPACE::DescriptorType descriptorType_ = {},
-        uint32_t descriptorCount_ = {},
-        VULKAN_HPP_NAMESPACE::ShaderStageFlags stageFlags_ = {},
-        const VULKAN_HPP_NAMESPACE::Sampler* pImmutableSamplers_ = {}
-*/
-    vk::DescriptorSetLayoutBinding uboLayoutBinding({
-        0,
-        vk::DescriptorType::eUniformBuffer,
-        1, 
-        vk::ShaderStageFlagBits::eVertex,
-        {}
-    });
-
-    vk::DescriptorSetLayoutBinding samplerLayoutBinding({
-        1,
-        vk::DescriptorType::eCombinedImageSampler,
-        1,
-        vk::ShaderStageFlagBits::eFragment,
-        {}
-    });
-
-    std::array<vk::DescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({
-        {},
-        static_cast<uint32_t>(bindings.size()),
-        bindings.data()
-    });
-    
-    _descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
-}
-
-void Renderer::_deInitDescriptorSetLayout()
-{
-	vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
-}
-
 void Renderer::_initGraphicsPipeline()
 {
 	auto vertShaderCode = readFile("Shaders/basic_vert.spv");
@@ -1029,20 +988,53 @@ void Renderer::_deInitUniformBuffers()
 	}
 }
 
+void Renderer::_initDescriptorSetLayout()
+{
+    vk::DescriptorSetLayoutBinding uboLayoutBinding({
+        0,
+        vk::DescriptorType::eUniformBuffer,
+        1,
+        vk::ShaderStageFlagBits::eVertex,
+        {}
+    });
+
+    vk::DescriptorSetLayoutBinding samplerLayoutBinding({
+        1,
+        vk::DescriptorType::eCombinedImageSampler,
+        1,
+        vk::ShaderStageFlagBits::eFragment,
+        {}
+    });
+
+    std::array<vk::DescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({
+        {},
+        static_cast<uint32_t>(bindings.size()),
+        bindings.data()
+    });
+
+    _descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
+}
+
+void Renderer::_deInitDescriptorSetLayout()
+{
+    vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
+}
+
 void Renderer::_initDescriptorPool()
 {
-    std::array<VkDescriptorPoolSize, 2> poolSizes = {};
-	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    std::array<vk::DescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(_swapchainImages.size());
-    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(_swapchainImages.size());
 
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = poolSizes.size();
-	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(_swapchainImages.size());;
-	vkCreateDescriptorPool(_device, &poolInfo, nullptr, &_descriptorPool);
+    vk::DescriptorPoolCreateInfo poolInfo({
+        {},
+        static_cast<uint32_t>(_swapchainImages.size()),
+        static_cast<uint32_t>(poolSizes.size()),
+        poolSizes.data()
+    });
+    _descriptorPool = _device.createDescriptorPool(poolInfo);
 }
 
 void Renderer::_deInitDescriptorPool()
