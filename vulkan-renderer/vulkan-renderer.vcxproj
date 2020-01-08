@@ -170,6 +170,9 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
+    <ClCompile Include="Vulkan\GraphicsPipeline.cpp" />
+    <ClCompile Include="Vulkan\RenderPass.cpp" />
+    <ClCompile Include="Vulkan\RenderQueue.cpp" />
     <ClCompile Include="Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Window_32.cpp" />
@@ -188,6 +191,9 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />
+    <ClInclude Include="Vulkan\GraphicsPipeline.h" />
+    <ClInclude Include="Vulkan\RenderPass.h" />
+    <ClInclude Include="Vulkan\RenderQueue.h" />
     <ClInclude Include="Vulkan\VulkanRenderer.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
