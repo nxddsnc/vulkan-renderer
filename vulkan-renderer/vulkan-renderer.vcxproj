@@ -108,7 +108,7 @@
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions);NOMINMAX </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/assimp;Vulkan;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -165,12 +165,12 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClCompile Include="MyMaterial.cpp" />
     <ClCompile Include="MyMesh.cpp" />
     <ClCompile Include="ModelLoader.cpp" />
-    <ClCompile Include="RenderNode.cpp" />
-    <ClCompile Include="MyTexture.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="MyTexture.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
-    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
+    <ClCompile Include="Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Window_32.cpp" />
   </ItemGroup>
@@ -181,13 +181,14 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />
     <ClInclude Include="ModelLoader.h" />
-    <ClInclude Include="RenderNode.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Drawable.h" />
     <ClInclude Include="MyTexture.h" />
     <ClInclude Include="Platform.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="Scene.h" />
+    <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />
+    <ClInclude Include="Vulkan\VulkanRenderer.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

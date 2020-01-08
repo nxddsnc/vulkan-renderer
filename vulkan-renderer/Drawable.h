@@ -8,14 +8,14 @@
 /************************************************************************/
 /* Minimum renderable node.*/
 /************************************************************************/
-struct RenderNode
+struct Drawable
 {
     glm::mat4                     matrix;
     std::shared_ptr<MyMesh>       mesh;
     std::shared_ptr<MyMaterial>   material;
-    vk::Buffer                    vertexBuffer;
-    VmaAllocation                 vertexBufferMemory;
-    vk::Buffer                    indexBuffer;
-    VmaAllocation                 indexBufferMemory;
+    //vk::Buffer                    vertexBuffer;
+    //VmaAllocation                 vertexBufferMemory;
+    //vk::Buffer                    indexBuffer;
+    //VmaAllocation                 indexBufferMemory;
 };
 

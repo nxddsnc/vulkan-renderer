@@ -7,7 +7,7 @@
 #include "MyMesh.h"
 #include "MyMaterial.h"
 #include "MyTexture.h"
-#include "RenderNode.h"
+#include "Drawable.h"
 
 ModelLoader::ModelLoader(MyScene *scene)
 {
@@ -59,10 +59,10 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
     {
         // extract mesh
         auto mesh = _extractMesh(node->mMeshes[i]);
-        std::shared_ptr<RenderNode> myNode = std::make_shared<RenderNode>();
+        std::shared_ptr<Drawable> myNode = std::make_shared<Drawable>();
         myNode->mesh = mesh;
         myNode->matrix = matrix;
-        m_scene->AddNode(myNode);
+        m_scene->AddDrawable(myNode);
     }
 
     for (int i = 0; i < node->mNumChildren; ++i)

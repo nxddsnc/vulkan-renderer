@@ -1,4 +1,4 @@
-#include "Scene.h"
+#include "MyScene.h"
 #include <unordered_map>
 #include <memory.h>
 #pragma once
@@ -28,7 +28,6 @@ private:
 private:
     const aiScene     *_scene;
     MyScene           *m_scene;
-
 
     std::unordered_map<unsigned int, std::shared_ptr<MyMesh>> _meshMap;
     std::unordered_map<unsigned int, std::shared_ptr<MyMaterial>> _materialMap;

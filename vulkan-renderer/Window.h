@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-class Renderer;
+class VulkanRenderer;
 struct GLFWwindow;
 
 class Window
@@ -28,7 +28,7 @@ private:
 	void _deInitOSWindow();
 	void _updateOSWindow();
 
-	Renderer                        *   _renderer;
+	VulkanRenderer                        *   _renderer;
 	uint32_t							_width = 512;
 	uint32_t							_height = 512;
 	std::string							_windowName;

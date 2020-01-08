@@ -1,14 +1,14 @@
-#include "renderer.h"
+#include "VulkanRenderer.h"
 #include "Window.h"
 #include <array>
 #include <chrono>
 #include <iostream>
 #include <GLFW\glfw3.h>
 #include "Context.h"
-#include "Scene.h"
+#include "MyScene.h"
 #include "ModelLoader.h"
 
-Renderer *renderer;
+VulkanRenderer *renderer;
 Window *window;
 double mouseX, mouseY;
 
@@ -71,7 +71,7 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
 int main()
 {
 	window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
-	renderer = new Renderer(window);
+	renderer = new VulkanRenderer(window);
     GLFWwindow *_window = window->GetGLFWWindow();
 	glfwSetWindowSizeCallback(_window, ResizeCallback);
 	glfwSetWindowCloseCallback(_window, CloseCallback);
@@ -92,7 +92,7 @@ int main()
     } 
     else
     {
-        renderer->addRenderNodes(myScene.GetNodes());
+        //renderer->addRenderNodes(myScene.GetNodes());
     }
 
 	while (renderer->Run())

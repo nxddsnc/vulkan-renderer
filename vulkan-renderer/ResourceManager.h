@@ -6,17 +6,17 @@
 /************************************************************************/
 /* Meant to Control the gpu resource allocation.*/
 /************************************************************************/
-struct RenderNode;
+struct Drawable;
 class ResourceManager
 {
 public:
 	ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue, uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator);
 	~ResourceManager();
 
-    void createNodeResource(std::shared_ptr<RenderNode> node);
+    void createNodeResource(std::shared_ptr<Drawable> node);
 private:
-    void _createVertexBuffer(std::shared_ptr<RenderNode> node);
-    void _createIndexBuffer(std::shared_ptr<RenderNode> node);
+    void _createVertexBuffer(std::shared_ptr<Drawable> node);
+    void _createIndexBuffer(std::shared_ptr<Drawable> node);
     vk::CommandBuffer _beginSingleTimeCommand();
     void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
@@ -27,6 +27,6 @@ private:
 	vk::CommandPool				                    _commandPool;
     uint32_t                                        _graphicsQueueFamilyIndex;
     VmaAllocator                                    _memoryAllocator;
-    std::vector<std::shared_ptr<RenderNode>>        _nodes;
+    std::vector<std::shared_ptr<Drawable>>        _nodes;
 };
 
