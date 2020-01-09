@@ -52,7 +52,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
 	_initFramebuffers();
 	_initTextureImage();
 	_initTextureImageView();
-    _initTextureImageSampler();
+  _initTextureImageSampler();
 	_initUniformBuffers();
 	_initDescriptorPool();
 	_initDescriptorSet();
