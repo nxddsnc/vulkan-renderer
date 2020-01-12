@@ -9,3 +9,5 @@ x64/
 *.spv
 
 vulkan-renderer/TestModel/
+
+vulkan-renderer/third-party/libs/shaderc_combined.lib

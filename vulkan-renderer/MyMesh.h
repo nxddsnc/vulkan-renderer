@@ -1,47 +1,24 @@
 #include "Platform.h"
 #include <vector>
 #pragma once
-enum VertexAttribute
+
+struct VertexBits
 {
-    POSITION = 1,
-    NORMAL   = 2,
-    UV       = 4,
-    COLOR    = 8
-};
+    VertexBits()  : hasNormal(true), hasTangent(false), hasTexCoord1(false),  hasTexCoord2(false), hasColr(false) {}
+    bool hasNormal    : 1;
+    bool hasTangent   : 1;
+    bool hasTexCoord1 : 1;
+    bool hasTexCoord2 : 1;
+    bool hasColor     : 1;
+}
 
-struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 normal;
-    glm::vec2 texCoord;
-
-    static VkVertexInputBindingDescription GetBindingDescription() {
-        VkVertexInputBindingDescription bindingDescription = {};
-        bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(Vertex);
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-        return bindingDescription;
-    }
-
-    static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
-
-        attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-        attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].location = 1;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, normal);
-
-        attributeDescriptions[2].binding = 0;
-        attributeDescriptions[2].location = 2;
-        attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-        attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-
-        return attributeDescriptions;
-    }
+enum class Mode : uint8_t {
+    Points = 0,        ///< Each vertex defines a separate point
+    Lines = 1,         ///< The first two vertices define the first segment, with subsequent pairs of vertices each defining one more segment
+    LineStrip = 3,     ///< The first vertex specifies the first segment’s start point while the second vertex specifies the first segment’s endpoint and the second segment’s start point
+    Triangles = 4,     ///<
+    TriangleStrip = 5, ///<
+    TriangleFan = 6    ///<
 };
 
 class MyMesh
@@ -52,9 +29,17 @@ public:
 
     int getIndexSize();
     int                     m_indexType;
-    std::vector<Vertex>     m_vertices;
+    VertexBits              m_vertexBits;
+    std::vector<glm::vec3>  m_positions;
+    std::vector<glm::vec3>  m_normals;
+    std::vector<glm::vec3>  m_tangents;
+    std::vector<glm::vec2>  m_texCoords1;
+    std::vector<glm::vec2>  m_texCoords2;
+    std::vector<glm::vec3>  m_colors;
     void                  * m_indices;
     uint32_t                m_vertexNum;
     uint32_t                m_indexNum;
+
+    Mode                    m_mode;
 };
 

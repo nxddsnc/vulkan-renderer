@@ -97,35 +97,34 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
         aiMesh *_mesh = _scene->mMeshes[idx];
         std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(_mesh->mNumVertices, _mesh->mNumFaces * 3);
 
-        bool hasNormal = _mesh->HasNormals();
-        bool hasUV = _mesh->HasTextureCoords(0);
+        VertexBits vertexBits;
+        vertexBits.hasNormal    = _mesh->HasNormals();
+        // vertexBits.hasTangent   = _mesh->HasTangents();
+        // vertexBits.hasTexCoord1 = _mesh->HasTextureCoords(0);
        
         for (size_t i = 0; i < _mesh->mNumVertices; ++i)
         {
             aiVector3D vertex = _mesh->mVertices[i];
-            aiVector3D normal = _mesh->mNormals[i];
-            mesh->m_vertices[i].pos.x = vertex.x;
-            mesh->m_vertices[i].pos.y = vertex.y;
-            mesh->m_vertices[i].pos.z = vertex.z;
-        
-            mesh->m_vertices[i].normal.x = normal.x;
-            mesh->m_vertices[i].normal.y = normal.y;
-            mesh->m_vertices[i].normal.z = normal.z;
-        
-            if (hasUV)
+            mesh->m_positions[i].x = vertex.x;
+            mesh->m_positions[i].y = vertex.y;
+            mesh->m_positions[i].z = vertex.z;
+        }
+        if (vertexBits.hasNormal) 
+        {
+            for (size_t i = 0; i < _mesh->mNumVertices; ++i)
             {
-                aiVector3D uv = _mesh->mTextureCoords[0][i];
-                mesh->m_vertices[i].texCoord.x = uv.x;
-                mesh->m_vertices[i].texCoord.y = uv.y;
-            }
-            else
-            {
-                // TODO: conditional compile.
-                mesh->m_vertices[i].texCoord.x = 0.0;
-                mesh->m_vertices[i].texCoord.y = 0.0;
+                aiVector3D normal = _mesh->mNormals[i];
+                mesh->m_normals[i].x = normal.x;
+                mesh->m_normals[i].y = normal.y;
+                mesh->m_normals[i].z = normal.z;
             }
         }
-
+        // if (vertexBits.hasTexCoord1)
+        // {
+        //     aiVector3D uv = _mesh->mTextureCoords[0][i];
+        //     mesh->m_vertices[i].texCoord.x = uv.x;
+        //     mesh->m_vertices[i].texCoord.y = uv.y;
+        // }
         if(mesh->m_indexType == 1)
         {
             uint8_t *indexPtr = reinterpret_cast<uint8_t*>(mesh->m_indices);

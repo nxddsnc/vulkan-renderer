@@ -31,3 +31,8 @@ Camera * Renderer::GetCamera()
 void Renderer::OnSceneChanged()
 {
 }
+
+void Renderer::GetExtendSize(uint32_t &width, uint32_t &height)
+{
+
+}

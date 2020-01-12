@@ -1,61 +1,317 @@
 #include "Pipeline.h"
 #include "ShaderModule.h"
-
-Pipeline::Pipeline(PipelineId id)
+#include "Renderer.h"
+#include "VulkanRenderer.h"
+#include "RenderPass.h" 
+Pipeline::Pipeline(Renderer* renderer, PipelineId id)
 {
   this._id = id;
+  this._renderer = renderer;
 }
 
 Pipeline::~Pipeline()
 {
 }
 
-Pipleline::InitModel()
+void Pipeline::_addInputBinding(uint32_t stride, vk::VertexInputRate inputRate) 
 {
-  ShaderModule vertexShader;
-  vertexShader.LoadFromFile("Shaders/basic_vert.spv");
-  vertexShader.build();
+    const vk::VertexInputBindingDescription inputBinding({
+        _inputBindings.size(),
+        stride,
+        inputRate
+    });
+    _inputBindings.push_back(std::move(inputBinding));
+}
 
-  ShaderModule fragmentShader;
-  fragmentShader.LoadFromFile("Sahders/basic_frag.spv");
-  fragmentShader.build();
+void Pipeline::_addAttributes(uint32_t location, vk::Format format, uint32_t offset) 
+{
+    const vk::VertexInputAttributeDescription inputAttribute({
+      location,
+      format,
+      offset, 
+    });
+    _inputAttributes.push_back(inputAttribute);
+}
 
-	vk::GraphicsPipelineCreateInfo createInfo({
+vk::DescriptorSetLayout Pipeline::_createDescriptorSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings)
+{
+  vk::DescriptorSetLayoutCreateInfo layoutInfo({
+        {},
+        static_cast<uint32_t>(bindings.size()),
+        bindings.data()
+    });
+    return _device.createDescriptorSetLayout(layoutinfo);
+}
+  
+void Pipleline::InitModel()
+{
+  // set shader state
+  {
+    ShaderModule vertexShader;
+    vertexShader.LoadFromFile("Shaders/basic_vert.spv");
+    vertexShader.build();
+
+    ShaderModule fragmentShader;
+    fragmentShader.LoadFromFile("Sahders/basic_frag.spv");
+    fragmentShader.build();
+
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+    shaderStages.push_back(vertexShader.GetShaderStage());
+    shaderStages.push_back(fragmentShader.GetShaderStage());
+  }
+
+  // set vertex input state
+  {
+    _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+    _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+
+    // We always have normal
+    _addInputBinding(sizeof(Math::Vec3f), vk::VertexInputRate::eVertex);
+    addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+
+    // Set vertex data attributes for dynamic attributes
+    if (_id.model.primitivePart.info.bits.tangentVertexData)
+    {
+      _addInputBinding(sizeof(Math::Vec3f), vk::VertexInputRate::eVertex);
+      _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+    }
+
+    for (uint8_t i = 0; i < primitivePart.countTexCoord; ++i)
+    {
+      _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
+      // _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+    }
+
+    for (uint8_t i = 0; i < primitivePart.countColor; ++i)
+    {
+      _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+      _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+    }
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo({
+      {},
+      _inputBindings.size(),
+      _inputBindings.data(),
+      _inputAttributes.size(),
+      _inputAttributes.data()
+    });
+  }
+
+    // Set input assembly state
+    vk::PipelineInputAssemblyStateCreateInfo assemblyInfo;
+    vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
+    switch(_id.model.primitivePart.info.bits.primitiveMode) {
+        case Render::Mesh::PrimitiveSet::Mode::Points:
+            assemblyInfo = vk::PrimitiveTopology::ePointList;
+            polygonMode  = vk::PolygonMode::ePoint;
+            break;
+        case Render::Mesh::PrimitiveSet::Mode::Lines:
+            assemblyInfo = vk::PrimitiveTopology::eLineList;
+            polygonMode  = vk::PolygonMode::eLine;
+            break;
+        case Render::Mesh::PrimitiveSet::Mode::LineStrip:
+            assemblyInfo = vk::PrimitiveTopology::eLineStrip;
+            polygonMode  = vk::PolygonMode::eLine;
+            break;
+        case Render::Mesh::PrimitiveSet::Mode::Triangles:
+            assemblyInfo = vk::PrimitiveTopology::eTriangleList;
+            break;
+        case Render::Mesh::PrimitiveSet::Mode::TriangleStrip:
+            assemblyInfo = vk::PrimitiveTopology::eTriangleStip;
+            break;
+        case Render::Mesh::PrimitiveSet::Mode::TriangleFan:
+            assemblyInfo = vk::PrimitiveTopology::eTriangleFan;
+            break;
+    }
+
+    uint32_t width, height;
+    _renderer.GetExtendSize(width, height);
+    // Set viewport state
+    const vk::Viewport viewport{
+        /* viewport.x */ 0.0f,
+        /* viewport.y */ 0.0f,
+        /* viewport.width */ width,
+        /* viewport.height */ height,
+        /* viewport.minDepth */ 0.0f,
+        /* viewport.maxDepth */ 1.0f,
+    };
+
+    const vk::Rect2D scissor{
+        /* scissor.offset */ {0, 0},
+        /* scissor.extent */ {width, height}
+    };
+
+	  vk::PipelineViewportStateCreateInfo viewportState({
+      {},
+      1,
+      &viewport,
+      1,
+      &sissor
+    });
+
+	// Rasterizer
+	vk::PipelineRasterizationStateCreateInfo rasterizerState({
     {},
-    uint32_t stageCount_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineShaderStageCreateInfo* pStages_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineVertexInputStateCreateInfo* pVertexInputState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineInputAssemblyStateCreateInfo* pInputAssemblyState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineTessellationStateCreateInfo* pTessellationState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineViewportStateCreateInfo* pViewportState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineRasterizationStateCreateInfo* pRasterizationState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineMultisampleStateCreateInfo* pMultisampleState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineDepthStencilStateCreateInfo* pDepthStencilState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineColorBlendStateCreateInfo* pColorBlendState_ = {},
-    const VULKAN_HPP_NAMESPACE::PipelineDynamicStateCreateInfo* pDynamicState_ = {},
-    VULKAN_HPP_NAMESPACE::PipelineLayout layout_ = {},
-    VULKAN_HPP_NAMESPACE::RenderPass renderPass_ = {},
-    uint32_t subpass_ = {},
-    VULKAN_HPP_NAMESPACE::Pipeline basePipelineHandle_ = {},
-    int32_t basePipelineIndex_ = {} 
+    std::static_cast<vk::Bool32>(false),
+    std::static_cast<Bool32>(false),
+    polygonMode,
+    vk::CullModeFlagBits::eBack,
+    vk::FrontFace::eCounterClockwise,
+    std::static_cast<Bool32>(false),
+    0.0f,
+    0.0f,
+    0.0f,
+    1.0f 
   });
-  pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = &depthStencilStateCreateInfo; // Optional
-	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr; // Optional
-	pipelineInfo.layout = _pipelineLayout;
-	pipelineInfo.renderPass = _renderPass;
-	pipelineInfo.subpass = 0;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-	pipelineInfo.basePipelineIndex = -1; // Optional
+  
+  // Multisampling
+	vk::PipelineMultisampleStateCreateInfo multisampling({
+    {},
+    vk::SampleCountFlagBits::e1,
+    std::static_cast<vk::Bool32>(false),
+    float minSampleShading_ = {},
+    {},
+    std::static_cast<vk::Bool32>(false),
+    std::static_cast<vk::Bool32>(false) 
+  });
 
-	vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline);
+	// Color blending
+  vk::PipelineColorBlendAttachmentState colorBlendAttachment({
+    std::static_cast<vk::Bool32>(false),
+    vk::BlendFactor::eOne,
+    vk::BlendFactor::eZero,
+    vk::BlendOp::eAdd,
+    vk::BlendFactor::eOne,
+    vk::BlendFactor::eZero,
+    vk::BlendOp::eAdd,
+    vk::ColorComponentFlagBits::eR || vk::ColorComponentFlagBits::eG || vk::ColorComponentFlagBits::eB || vk::ColorComponentFlagBits::eA 
+  });
+
+  std::array<float,4> blendConsts = { 0, 0, 0, 0 };
+  vk::PipelineColorBlendStateCreateInfo colorBlending({
+    {},
+    std::static_cast<vk::Bool32>(false),
+    vk::LogicOp::eCopy,
+    1,
+    &colorBlendAttachment,
+    blendConsts
+  });
+
+    // Depth and stencil testing
+	vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({
+    vk::PipelineDepthStencilStateCreateFlags flags_ = {},
+    std::static_cast<vk::Bool32>(true),
+    std::static_cast<vk::Bool32>(true),
+    vk::CompareOp::eLess,
+    std::static_cast<vk::Bool32>(false),
+    std::static_cast<vk::Bool32>(false),
+    {},
+    {},
+    0.0f,
+    1.0f 
+  });
+
+  // descriptor set layout 
+  {
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayout;
+    // camera uniform buffer
+    vk::DescriptorSetLayoutBinding cameraBinding({
+      0,
+      vk::DescriptorType::eUniformBuffer,
+      1,
+      vk::ShaderStageFlagBits::eVertex,
+      {}
+    });
+   
+    descriptorSetLayout.push_back(_createDescriptorSetLayout({ cameraBinding }));
+
+    {
+      if (_id.model.materialPart.info.bits.baseColorInfo) 
+      {
+          vk::DescriptorSetLayoutBinding materialUniformBinding({
+          0,
+          vk::DescriptorType::eUniformBuffer,
+          1,
+          vk::ShaderStageFlagBits::eFragment,
+          {}
+        });
+        descriptorSetLayout.push_back(_createDescriptorSetLayout({ materialUniformBinding }));
+      }
+
+      if (_id.model.materialPart.info.bits.metallicRoughnessInfo) 
+      {
+
+      }
+      if (_id.model.materialPart.info.bits.normalInfo) 
+      {
+
+      }
+      if (_id.model.materialPart.info.bits.occlusionInfo) 
+      {
+
+      }
+      if (_id.model.materialPart.info.bits.emissiveInfo) 
+      {
+
+      }
+    }
+  }
+  
+    // pipeline layout
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo({
+      {},
+      descriptorSetLayout.size(),
+      descriptorSetLayout.data(),
+      0,
+      {} 
+    });
+    auto piplelineLayout = _device.createPipelineLayout(pipelineInfo);
+
+  vk::AttachmentDescription colorAttachment({
+		{},
+		_context.GetSurfaceFormat().format,
+		vk::SampleCountFlagBits::e1,
+		vk::AttachmentLoadOp::eClear,
+		vk::AttachmentStoreOp::eStore,
+		vk::AttachmentLoadOp::eDontCare,
+		vk::AttachmentStoreOp::eDontCare,
+		vk::ImageLayout::eUndefined,
+		vk::ImageLayout::ePresentSrcKHR
+	});
+
+	vk::AttachmentDescription depthAttachment({
+		{},
+		_renderer.GetDepthFormat(),
+		vk::SampleCountFlagBits::e1,
+		vk::AttachmentLoadOp::eClear,
+		vk::AttachmentStoreOp::eDontCare,
+		vk::AttachmentLoadOp::eDontCare,
+		vk::AttachmentStoreOp::eStore,
+		vk::ImageLayout::eUndefined,
+		vk::ImageLayout::eDepthStencilAttachmentOptimal
+	});
+  _renderPass.AddAttachment(colorAttachment);
+  _renderPass.AddAttachment(depthAttachment);
+
+	vk::GraphicsPipelineCreateInfo pipelineInfo({
+    {},
+    shaderStages.size(),
+    shaderStages.data(),
+    &vertexInputInfo,
+    &assemblyInfo,
+    {},
+    &viewportState,
+    &rasterizerState,
+    &multiSampling,
+    &depthStencilStateCreateInfo,
+    colorBlending,
+    {},
+    pipelineLayout,
+    _renderPass.Get(),
+    uint32_t subpass_ = {},
+    {},
+    {}
+  });
+
+  _graphicsPipeline = _device.createGraphicsPipeline(pipelineInfo);
 }

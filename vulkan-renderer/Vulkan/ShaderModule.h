@@ -8,9 +8,11 @@ public:
   ~ShaderModule();
 
   vk::ShaderModule Get() { return _shaderModule; };
+  vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() { return _stageCreateInfo; }
 private:
-    vk::ShaderModule      _shaderModule;
-    vk::Device           *_device;
+    vk::ShaderModule                        _shaderModule;
+    vk::PipelineShaderStageCreateInfo       _stageCreateInfo;
+    vk::Device                             *_device;
      
-    std::vector<char>     _data;
+    std::vector<char>                       _data;
 }

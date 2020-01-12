@@ -14,5 +14,6 @@ public:
     virtual void Resize(int width, int height);
     virtual Camera * GetCamera();
     virtual void OnSceneChanged();
+    virtual void GetExtendSize(uint32_t &width, uint32_t &height);
 };
 
