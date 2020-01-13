@@ -5,7 +5,8 @@
 #include "Camera.hpp"
 #include <memory.h>
 #include "Renderer.h"
-
+#include "PipelineManager.h"
+#include "Pipeline.h"
 class Window;
 class Camera;
 struct Drawable;
@@ -94,7 +95,7 @@ private:
 	void _initSynchronizations();
 	void _deInitSynchronizations();
 
-  void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> &nodes);
+  void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
 
 	VulkanContext				            	*   _context;
 
@@ -114,6 +115,8 @@ private:
 
 	ResourceManager                 *   	_resourceManager;
 
+	PipelineManager 										*	_pipelineManager;
+
 	vk::SurfaceKHR					    					_surface;
 	std::vector<vk::Image>								_swapchainImages;
 	std::vector<vk::ImageView>						_swapchainImageViews;
@@ -121,8 +124,9 @@ private:
 	std::vector<VkFramebuffer>						_framebuffers;
 	std::vector<VkDescriptorSet>					_descriptorSets;
 	vk::DescriptorPool										_descriptorPool;
-	VkPipeline														_graphicsPipeline;
 	std::vector<VkCommandBuffer>					_commandBuffers;
+
+	std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>> _drawableMap;
 
 	std::vector<VkBuffer>									_uniformBuffers;
 	std::vector<VmaAllocation>						_uniformBuffersMemory;

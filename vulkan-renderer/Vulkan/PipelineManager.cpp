@@ -1,11 +1,13 @@
 #include "PiplelineManager.h"
 
-PiplelineManager::PiplelineManager(/* args */)
+PiplelineManager::PiplelineManager(VulkanRenderer *vulkanRenderer)
 {
+  _renderer =  vulkanRenderer;
 }
 
 PiplelineManager::~PiplelineManager()
 {
+  
 }
 
 std::shared_ptr<Pipeline> PiplelineManager::_createPipeline(PipelineId id)

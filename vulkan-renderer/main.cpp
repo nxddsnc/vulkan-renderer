@@ -92,7 +92,7 @@ int main()
     } 
     else
     {
-        //renderer->addRenderNodes(myScene.GetNodes());
+        renderer->AddRenderNodes(myScene.GetDrawables());
     }
 
 	while (renderer->Run())

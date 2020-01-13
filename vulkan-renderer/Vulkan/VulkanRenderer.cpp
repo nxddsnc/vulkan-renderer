@@ -25,6 +25,8 @@ VulkanRenderer::VulkanRenderer(Window *window)
 	_camera->setRotation(glm::vec3(-45, 0, 45));
 	_camera->setPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 10.0f);
 
+	_pipelineManager = PipelineManager(this);
+
 	_gpu = _context->GetPhysicalDevice();
 	_device = _context->GetLogicalDevice();
 	_instance = _context->GetInstance();
@@ -85,27 +87,27 @@ bool VulkanRenderer::Run()
 
 void VulkanRenderer::Resize(int width, int height)
 {
-	while(width == 0 || height == 0)
+	while (width == 0 || height == 0)
 	{
 		glfwGetFramebufferSize(_window->GetGLFWWindow(), &width, &height);
 		glfwWaitEvents();
 	}
-    vkDeviceWaitIdle(_device);
+	vkDeviceWaitIdle(_device);
 
 	_swapchainExtent.width = width;
 	_swapchainExtent.height = height;
 	_window->Resize(width, height);
-    _cleanupSwapchain();
+	_cleanupSwapchain();
 
-    _initSwapchain();
-    _initSwapchainImages();
+	_initSwapchain();
+	_initSwapchainImages();
 	_initUniformBuffers();
 	_initDepthStencilImage();
 	_initRenderPass();
-    _initGraphicsPipeline();
-    _initFramebuffers();
+	_initGraphicsPipeline();
+	_initFramebuffers();
 	_initDescriptorPool();
-	_initDescriptorSet(); 
+	_initDescriptorSet();
 }
 
 VkInstance VulkanRenderer::GetVulkanInstance()
@@ -328,6 +330,7 @@ void VulkanRenderer::_initSwapchain()
 
     _framesData.resize(_swapchainImageCount);
 }
+
 void VulkanRenderer::_deInitSwapchain()
 {
 	vkDestroySwapchainKHR(_device, _swapchain, nullptr);
@@ -362,6 +365,7 @@ void VulkanRenderer::_initSwapchainImages()
 		_swapchainImageViews[i] = _device.createImageView(createInfo);
 	}
 }
+
 void VulkanRenderer::_deInitSwapchainImages()
 {
 	for (uint32_t i = 0; i < _swapchainImageCount; ++i)
@@ -480,7 +484,7 @@ void VulkanRenderer::_initFramebuffers()
             uint32_t(1)
         });
         _framebuffers[i] = _device.createFramebuffer(createInfo);
-	}
+	} 
 }
 
 void VulkanRenderer::_deInitFramebuffers()
@@ -612,89 +616,114 @@ void VulkanRenderer::_deInitSynchronizations()
 	}
 }
 
-void VulkanRenderer::_createCommandBuffers(std::vector<std::shared_ptr<Drawable>>& nodes)
+void VulkanRenderer::_createCommandBuffers()
 {
-    //_commandBuffers.resize(_swapchainImageCount);
-    //for (uint32_t i = 0; i < _commandBuffers.size(); ++i)
-    //{
-    //    VkCommandBuffer commandBuffer = {};
-    //    VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-    //    commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    //    commandBufferAllocateInfo.commandPool = _commandPool;
-    //    commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    //    commandBufferAllocateInfo.commandBufferCount = 1;
-    //    vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer);
-    //    _commandBuffers[i] = commandBuffer;
-    //}
-
-    //for (size_t i = 0; i < _commandBuffers.size(); ++i) {
-    //    VkCommandBufferBeginInfo beginInfo = {};
-    //    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    //    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
-    //    beginInfo.pInheritanceInfo = nullptr; // Optional
-
-    //    vkBeginCommandBuffer(_commandBuffers[i], &beginInfo);
-
-    //    VkRenderPassBeginInfo renderPassInfo = {};
-    //    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    //    renderPassInfo.renderPass = _renderPass;
-    //    renderPassInfo.framebuffer = _framebuffers[i];
-
-    //    renderPassInfo.renderArea.offset = { 0, 0 };
-    //    renderPassInfo.renderArea.extent = _swapchainExtent;
-
-    //    std::array<VkClearValue, 2> clearValues{};
-    //    clearValues[0].color.float32[0] = 0.0;
-    //    clearValues[0].color.float32[1] = 0.0;
-    //    clearValues[0].color.float32[2] = 0.0;
-    //    clearValues[0].color.float32[3] = 1.0f;
-
-    //    clearValues[1].depthStencil.depth = 1.0f;
-    //    clearValues[1].depthStencil.stencil = 0;
-
-    //    renderPassInfo.clearValueCount = clearValues.size();
-    //    renderPassInfo.pClearValues = clearValues.data();
-
-    //    vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    //    vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
-
-    //    for (auto node : nodes)
-    //    {
-    //        VkBuffer vertexBuffers[] = { node->vertexBuffer };
-    //        VkDeviceSize offsets[] = { 0 };
-    //        vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-    //        switch (node->mesh->m_indexType)
-    //        {
-    //        case 1:
-    //            vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT8_EXT);
-    //            break;
-    //        case 2:
-    //            vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-    //            break;
-    //        case 4:
-    //            vkCmdBindIndexBuffer(_commandBuffers[i], node->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    //            break;
-    //        }
-
-    //        vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
-
-    //        vkCmdDrawIndexed(_commandBuffers[i], node->mesh->m_indexNum, 1, 0, 0, 0);
-    //    }
-
-    //    vkCmdEndRenderPass(_commandBuffers[i]);
-    //    vkEndCommandBuffer(_commandBuffers[i]);
-    //}
-}
-
-void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> nodes)
-{
-   /* for (auto node : nodes)
+    _commandBuffers.resize(_swapchainImageCount);
+    for (uint32_t i = 0; i < _commandBuffers.size(); ++i)
     {
-        _resourceManager->createNodeResource(node);
+       VkCommandBuffer commandBuffer = {};
+       VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
+       commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+       commandBufferAllocateInfo.commandPool = _commandPool;
+       commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+       commandBufferAllocateInfo.commandBufferCount = 1;
+       vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer);
+       _commandBuffers[i] = commandBuffer;
     }
 
-    _createCommandBuffers(nodes);*/
+    for (size_t i = 0; i < _commandBuffers.size(); ++i) {
+       VkCommandBufferBeginInfo beginInfo = {};
+       beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+       beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
+       beginInfo.pInheritanceInfo = nullptr; // Optional
+
+       vkBeginCommandBuffer(_commandBuffers[i], &beginInfo);
+
+       VkRenderPassBeginInfo renderPassInfo = {};
+       renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+       renderPassInfo.renderPass = _renderPass;
+       renderPassInfo.framebuffer = _framebuffers[i];
+
+       renderPassInfo.renderArea.offset = { 0, 0 };
+       renderPassInfo.renderArea.extent = _swapchainExtent;
+
+       std::array<VkClearValue, 2> clearValues{};
+       clearValues[0].color.float32[0] = 0.0;
+       clearValues[0].color.float32[1] = 0.0;
+       clearValues[0].color.float32[2] = 0.0;
+       clearValues[0].color.float32[3] = 1.0f;
+
+       clearValues[1].depthStencil.depth = 1.0f;
+       clearValues[1].depthStencil.stencil = 0;
+
+       renderPassInfo.clearValueCount = clearValues.size();
+       renderPassInfo.pClearValues = clearValues.data();
+
+       vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+       vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it.first.GetPipeline());
+
+			for (auto it : _drawableMap)
+			{
+				for (auto drawable in it.second) 
+				{
+					VkBuffer vertexBuffers[] = { drawable->vertexBuffer };
+           VkDeviceSize offsets[] = { 0 };
+           vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+           switch (drawable->mesh->m_indexType)
+           {
+           case 1:
+               vkCmdBindIndexBuffer(_commandBuffers[i], drawable->indexBuffer, 0, VK_INDEX_TYPE_UINT8_EXT);
+               break;
+           case 2:
+               vkCmdBindIndexBuffer(_commandBuffers[i], drawable->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+               break;
+           case 4:
+               vkCmdBindIndexBuffer(_commandBuffers[i], drawable->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+               break;
+           }
+
+           vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
+
+           vkCmdDrawIndexed(_commandBuffers[i], drawable->mesh->m_indexNum, 1, 0, 0, 0);
+				}
+			}
+
+       vkCmdEndRenderPass(_commandBuffers[i]);
+       vkEndCommandBuffer(_commandBuffers[i]);
+    }
+}
+
+void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawables)
+{
+	for (int i = 0; i < drawables.size(); ++i) 
+	{
+		std::vector<std::shared_ptr<Drawable>> drawable = drawables[i];
+		_resourceManager.createNodeResource(drawable);
+
+		PipelineId id;
+
+		id.model.primitivePart.info.bits.positionVertexData = 1;
+		id.model.primitivePart.info.bits.normalVertexData = 1;
+		id.model.primitivePart.info.bits.tangentVertexData = drawable->mesh.m_vertexBits.hasTangent;
+		id.model.primitivePart.info.bits.countTexCoord = 0;
+		id.model.primitivePart.info.bits.countColor = drawable->mesh.m_vertexBits.hasColor;
+		id.model.materialPart.info.bits.baseColorInfo = 1;
+
+		if (_drawableMap.count(id) == 0) 
+		{
+			std::vector<std::shared_ptr<Drawable>> drawables_;
+			drawables_.push_back(drawable);
+			_drawableMap.insert(std::make_pair(id, drawables_));
+			_pipelineManager.GetPipeline(id);
+		}
+		else 
+		{
+			_drawableMap.at(id).push_back(drawable);
+		}
+	}
+
+	_createCommandBuffers();
 }
 
 
