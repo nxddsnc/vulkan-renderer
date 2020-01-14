@@ -26,7 +26,9 @@ struct FrameData
 {
     vk::Semaphore                   renderFinishedSemaphore{};
     std::vector<vk::Semaphore>      imageReadySemaphores{};
+	std::vector<vk::DescriptorSet>  descriptorSets;
     std::vector<vk::CommandBuffer>  cmdBuffers;
+	std::unordered_map<PipelineId, vk::Framebuffer> framebuffers;
 };
 
 class VulkanRenderer : public Renderer
@@ -77,6 +79,7 @@ private:
 	void _initDepthStencilImage();
 	void _deInitDepthStencilImage();
 
+    vk::Framebuffer _createFramebuffer(vk::RenderPass renderPass); 
 	void _initFramebuffers();
 	void _deInitFramebuffers();
 

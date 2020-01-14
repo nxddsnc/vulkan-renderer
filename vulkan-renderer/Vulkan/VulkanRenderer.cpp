@@ -13,6 +13,7 @@
 #include "stb_image.h"
 #include <array>
 #include "ResourceManager.h"
+#include "PipelineManager.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -465,26 +466,20 @@ void VulkanRenderer::_deInitDepthStencilImage()
     vmaDestroyImage(_memoryAllocator, _depthStencilImage, _depthStencilImageMemory);
 }
 
-void VulkanRenderer::_initFramebuffers()
+vk::Framebuffer VulkanRenderer::_createFramebuffer(vk::RenderPass renderPass) 
 {
-	_framebuffers.resize(_swapchainImageCount);
-	for (uint32_t i = 0; i < _swapchainImageCount; ++i)
-	{
-		std::array<vk::ImageView, 2> attachments{};
-        attachments[0] = _swapchainImageViews[i];
-		attachments[1] = _depthStencilImageView;
+	std::array<vk::ImageView, 2> attachments{};
+	attachments[0] = _swapchainImageViews[i];
+	attachments[1] = _depthStencilImageView;
 
-        vk::FramebufferCreateInfo createInfo({
-            {},
-            _renderPass,
-            (uint32_t)attachments.size(),
-            attachments.data(),
-            _swapchainExtent.width,
-            _swapchainExtent.height,
-            uint32_t(1)
-        });
-        _framebuffers[i] = _device.createFramebuffer(createInfo);
-	} 
+	vk::FramebufferCreateInfo createInfo({{},
+										  renderPass,
+										  (uint32_t)attachments.size(),
+										  attachments.data(),
+										  _swapchainExtent.width,
+										  _swapchainExtent.height,
+										  uint32_t(1)});
+	return _framesData[i].frameBuffer = _device.createFramebuffer(createInfo);
 }
 
 void VulkanRenderer::_deInitFramebuffers()
@@ -618,79 +613,91 @@ void VulkanRenderer::_deInitSynchronizations()
 
 void VulkanRenderer::_createCommandBuffers()
 {
-    _commandBuffers.resize(_swapchainImageCount);
-    for (uint32_t i = 0; i < _commandBuffers.size(); ++i)
+    for (uint32_t i = 0; i < _swapchainImageCount.size(); ++i)
     {
-       VkCommandBuffer commandBuffer = {};
-       VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-       commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-       commandBufferAllocateInfo.commandPool = _commandPool;
-       commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-       commandBufferAllocateInfo.commandBufferCount = 1;
-       vkAllocateCommandBuffers(_device, &commandBufferAllocateInfo, &commandBuffer);
-       _commandBuffers[i] = commandBuffer;
-    }
+	   PipelineId lastPipelineId = nullptr;
+	   std::shared_ptr<vk::Pipeline> pipeline = nullptr;
+	   for (auto it : _drawablesMap)
+	   {
+		   PipelineId pipelineId = it.first;
+		   if (lastPipelineId != pipelineId)
+		   {
+			   pipeline = _pipelineManager->GetPipeline(pipelineId);
+			   lastPipelineId =  pipelineId;
 
-    for (size_t i = 0; i < _commandBuffers.size(); ++i) {
-       VkCommandBufferBeginInfo beginInfo = {};
-       beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-       beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
-       beginInfo.pInheritanceInfo = nullptr; // Optional
+			   vk::CommandBufferAllocateInfo commandBufferAllocateInfo({
+				   _commandPool
+                   vk::CommandBufferLevel::ePrimary,
+                   std::static_cast<uint32_t>(1)
+			   });
+			   vk::CommandBuffer commandBuffer = _device.allocateCommandBuffers(&commandBufferAllocateInfo);
 
-       vkBeginCommandBuffer(_commandBuffers[i], &beginInfo);
+			   vk::CommandBufferBeginInfo beginInfo({
+				vk::CommandBufferUsageFlagBits::eSimultaneousUse,
+				nullptr   
+			   });
 
-       VkRenderPassBeginInfo renderPassInfo = {};
-       renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-       renderPassInfo.renderPass = _renderPass;
-       renderPassInfo.framebuffer = _framebuffers[i];
+			   vk::beginCommandBuffer(commandBuffer, &beginInfo);
 
-       renderPassInfo.renderArea.offset = { 0, 0 };
-       renderPassInfo.renderArea.extent = _swapchainExtent;
-
-       std::array<VkClearValue, 2> clearValues{};
-       clearValues[0].color.float32[0] = 0.0;
-       clearValues[0].color.float32[1] = 0.0;
-       clearValues[0].color.float32[2] = 0.0;
-       clearValues[0].color.float32[3] = 1.0f;
-
-       clearValues[1].depthStencil.depth = 1.0f;
-       clearValues[1].depthStencil.stencil = 0;
-
-       renderPassInfo.clearValueCount = clearValues.size();
-       renderPassInfo.pClearValues = clearValues.data();
-
-       vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-       vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it.first.GetPipeline());
-
-			for (auto it : _drawableMap)
-			{
-				for (auto drawable in it.second) 
+				vk::RenderPass renderPass = pipeline->GetRenderPass();
+				vk::Framebuffer framebuffer = nullptr;
+				if (_framesData[i].framebuffers.count(pipelineId) == 0)
 				{
-					VkBuffer vertexBuffers[] = { drawable->vertexBuffer };
-           VkDeviceSize offsets[] = { 0 };
-           vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-           switch (drawable->mesh->m_indexType)
-           {
-           case 1:
-               vkCmdBindIndexBuffer(_commandBuffers[i], drawable->indexBuffer, 0, VK_INDEX_TYPE_UINT8_EXT);
-               break;
-           case 2:
-               vkCmdBindIndexBuffer(_commandBuffers[i], drawable->indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-               break;
-           case 4:
-               vkCmdBindIndexBuffer(_commandBuffers[i], drawable->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-               break;
-           }
-
-           vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
-
-           vkCmdDrawIndexed(_commandBuffers[i], drawable->mesh->m_indexNum, 1, 0, 0, 0);
+					framebuffer = _createFramebuffer(renderPass);
+					_framesData[i].framebuffers.insert(std::make_pair(pipelineId, framebuffer));
 				}
-			}
+				else
+				{
+					framebuffer = _framesData[i].framebuffers.at(pipelineId);
+				}
 
-       vkCmdEndRenderPass(_commandBuffers[i]);
-       vkEndCommandBuffer(_commandBuffers[i]);
+				std::array<vk::ClearValue, 2> clearValues{};
+				clearValues[0].color.float32[0] = 0.0;
+				clearValues[0].color.float32[1] = 0.0;
+				clearValues[0].color.float32[2] = 0.0;
+				clearValues[0].color.float32[3] = 1.0f;
+
+				clearValues[1].depthStencil.depth = 1.0f;
+				clearValues[1].depthStencil.stencil = 0;
+
+				vk::RenderPassBeginInfo renderPassInfo({renderPass,
+														framebuffer,
+														vk::Rect2D({vk::Offset2D({0, 0})
+																	_swapchainExtent}),
+														2,
+														&clearValues);
+				
+				commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
+
+				commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
+		   }
+		   for (auto drawable in it.second)
+		   {
+			   commandBuffer.bindVertexBuffers(0, 1, drawable->vertexBuffer, vk::DeviceSize(0));
+
+			   switch (drawable->mesh->m_indexType)
+			   {
+			   case 1:
+				   commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, eUint8EXT);
+				   break;
+			   case 2:
+				   commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0,  eUint16);
+				   break;
+			   case 4:
+				   commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, eUint32);
+				   break;
+			   }
+
+			   commandBuffer.bindDescriptorSets(eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_descriptorSets[i], 0, nullptr);
+
+			   drawable.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
+		   }
+
+			_framesData[i].cmdBuffers.push_back(commandBuffer);
+	   }
+
+	   commandBuffer.endRenderPass();
+       commandBuffer.endCommandBuffer();
     }
 }
 

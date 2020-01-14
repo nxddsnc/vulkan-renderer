@@ -21,38 +21,19 @@ void RenderPass::AddSubPass(vk::SubpassDescription subpass)
 
 vk::RenderPass RenderPass::Get() 
 {
-  if (_renderPass) 
-  {
-    return _renderPass;
-  }
-  
-	vk::AttachmentReference subpassDepthStencilAttachment({
-		1,
-		vk::ImageLayout::eDepthStencilAttachmentOptimal
-	});
-
-    std::array<vk::AttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-	std::array<vk::AttachmentReference, 1> subpassColorAttachments{};
-	subpassColorAttachments[0].attachment = 0;
-	subpassColorAttachments[0].layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-	std::array<vk::SubpassDescription, 1> subpasses{};
-	subpasses[0].pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	subpasses[0].inputAttachmentCount = 0;
-	subpasses[0].pInputAttachments = VK_NULL_HANDLE;
-	subpasses[0].colorAttachmentCount = subpassColorAttachments.size();
-	subpasses[0].pColorAttachments = subpassColorAttachments.data();
-	subpasses[0].pDepthStencilAttachment = &subpassDepthStencilAttachment;
+	if (_renderPass) 
+	{
+	  return _renderPass;
+	}
 
 	vk::SubpassDependency dependency({
-        VK_SUBPASS_EXTERNAL,
-        0,
+	    VK_SUBPASS_EXTERNAL,
+	    0,
 		vk::PipelineStageFlagBits::eColorAttachmentOutput,
 		vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        {},
-        vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead,
-        {}
+	    {},
+	    vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead,
+	    {}
 	});
 
 	vk::RenderPassCreateInfo createInfo({
@@ -66,5 +47,5 @@ vk::RenderPass RenderPass::Get()
 	});
 
 	_renderPass = _device.createRenderPass(createInfo);
-  return _renderPass;
+	return _renderPass;
 }
