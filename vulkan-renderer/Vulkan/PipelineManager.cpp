@@ -34,7 +34,7 @@ std::shared_ptr<Pipeline> PiplelineManager::GetPipeline(PipelineId id)
   }
   else 
   {
-    auto pipeline = _createPipeline(id);
+  auto pipeline = _createPipeline(id);
     _pipelines.insert(std::make_pair(id, pipeline));
     return pipeline;
   }

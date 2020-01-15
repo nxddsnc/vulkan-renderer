@@ -14,6 +14,7 @@
 #include <array>
 #include "ResourceManager.h"
 #include "PipelineManager.h"
+#inlcude "RenderPass.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -169,6 +170,11 @@ vk::SurfaceFormatKHR VulkanRenderer::GetSurfaceFormat()
 vk::Format VulkanRenderer::GetDepthFormat()
 {
 	return _depthStencilFormat;
+}
+
+vk::RenderPass GetRenderPass() 
+{
+	return _renderPass;
 }
 
 Camera * VulkanRenderer::GetCamera()
@@ -468,12 +474,16 @@ void VulkanRenderer::_deInitDepthStencilImage()
 
 vk::Framebuffer VulkanRenderer::_createFramebuffer(vk::RenderPass renderPass) 
 {
+	RenderPass renderPass;
+	renderPass.AddAttachment(colorAttachment);
+	renderPass.AddAttachment(depthAttachment);
+	_renderPass = renderPass.Get();
 	std::array<vk::ImageView, 2> attachments{};
 	attachments[0] = _swapchainImageViews[i];
 	attachments[1] = _depthStencilImageView;
 
 	vk::FramebufferCreateInfo createInfo({{},
-										  renderPass,
+										  _renderPass,
 										  (uint32_t)attachments.size(),
 										  attachments.data(),
 										  _swapchainExtent.width,
@@ -521,10 +531,10 @@ void VulkanRenderer::_initDescriptorPool()
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(_swapchainImages.size());
 	poolSizes[1].descriptorCount = static_cast<uint32_t>(_swapchainImages.size());
 
-	vk::DescriptorPoolCreateInfo poolInfo({{},
-																				 static_cast<uint32_t>(_swapchainImages.size()),
-																				 static_cast<uint32_t>(poolSizes.size()),
-																				 poolSizes.data()});
+vk::DescriptorPoolCreateInfo poolInfo({{},
+										   static_cast<uint32_t>(_swapchainImages.size()),
+										   static_cast<uint32_t>(poolSizes.size()),
+										   poolSizes.data()});
 	_descriptorPool = _device.createDescriptorPool(poolInfo);
 }
 
@@ -639,30 +649,18 @@ void VulkanRenderer::_createCommandBuffers()
 
 			   vk::beginCommandBuffer(commandBuffer, &beginInfo);
 
-				vk::RenderPass renderPass = pipeline->GetRenderPass();
-				vk::Framebuffer framebuffer = nullptr;
-				if (_framesData[i].framebuffers.count(pipelineId) == 0)
-				{
-					framebuffer = _createFramebuffer(renderPass);
-					_framesData[i].framebuffers.insert(std::make_pair(pipelineId, framebuffer));
-				}
-				else
-				{
-					framebuffer = _framesData[i].framebuffers.at(pipelineId);
-				}
+			   std::array<vk::ClearValue, 2> clearValues{};
+			   clearValues[0].color.float32[0] = 0.0;
+			   clearValues[0].color.float32[1] = 0.0;
+			   clearValues[0].color.float32[2] = 0.0;
+			   clearValues[0].color.float32[3] = 1.0f;
 
-				std::array<vk::ClearValue, 2> clearValues{};
-				clearValues[0].color.float32[0] = 0.0;
-				clearValues[0].color.float32[1] = 0.0;
-				clearValues[0].color.float32[2] = 0.0;
-				clearValues[0].color.float32[3] = 1.0f;
+			   clearValues[1].depthStencil.depth = 1.0f;
+			   clearValues[1].depthStencil.stencil = 0;
 
-				clearValues[1].depthStencil.depth = 1.0f;
-				clearValues[1].depthStencil.stencil = 0;
-
-				vk::RenderPassBeginInfo renderPassInfo({renderPass,
-														framebuffer,
-														vk::Rect2D({vk::Offset2D({0, 0})
+				vk::RenderPassBeginInfo renderPassInfo({_renderPass,
+														_framesData[i].framebuffer,
+														vk::Rect2D({vk::Offset2D({0, 0}),
 																	_swapchainExtent}),
 														2,
 														&clearValues);
@@ -688,6 +686,7 @@ void VulkanRenderer::_createCommandBuffers()
 				   break;
 			   }
 
+			   //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
 			   commandBuffer.bindDescriptorSets(eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_descriptorSets[i], 0, nullptr);
 
 			   drawable.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
@@ -722,7 +721,8 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
 			std::vector<std::shared_ptr<Drawable>> drawables_;
 			drawables_.push_back(drawable);
 			_drawableMap.insert(std::make_pair(id, drawables_));
-			_pipelineManager.GetPipeline(id);
+			auto pipeline = _pipelineManager.GetPipeline(id);
+			drawable.pipeline = pipeline;
 		}
 		else 
 		{
@@ -730,6 +730,7 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
 		}
 	}
 
+	_resourceManager.createDrawableDescriptorSet(drawable);
 	_createCommandBuffers();
 }
 

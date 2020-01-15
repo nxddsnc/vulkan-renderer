@@ -51,16 +51,18 @@ public:
     vk::RenderPass GetRenderPass();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
-
+    vk::DescriptorSetLayout GetFrameDescriptorSetLayout();
+    vk::DescriptorSetLayout GetMaterialDescritporSetLayout();
+    vk::DescriptorSetLayout GetMaterialImageDescriptorSetLayout();
     _addAttributes(uint32_t location, vk::Format format, uint32_t offset);
 private:
     PipelineId _id;
-
     VulkanRenderer    * renderer;
-  
     vk::RenderPass      _renderPass;
     vk::Pipeline        _graphicsPipeline;
     vk::PipelineLayout  _pipelineLayout;
+    vk::DescriptorSetLayout _materialDescriptorSetLayout;
+    vk::DescriptorSetLayout _materialImageDescriptorSetLayout;
 
     // Vertex input state
     std::vector<vk::VertexInputBindingDescription> _inputBindings;

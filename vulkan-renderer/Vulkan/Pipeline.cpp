@@ -39,6 +39,21 @@ vk::DescriptorSetLayout Pipeline::_createDescriptorSetLayout(std::vector<vk::Des
   return _device.createDescriptorSetLayout(layoutinfo);
 }
 
+vk::DescriptorSetLayout Pipeline::GetFrameDescriptorSetLayout() 
+{
+  return _frameDescirptorSetLayout;
+}
+
+vk::DescriptorSetLayout Pipeline::GetMaterialDescritporSetLayout()
+{
+  return _materialDescriptorSetLayout;
+}
+
+vk::DescriptorSetLayout Pipeline::GetMaterialImageDescriptorSetLayout() 
+{
+  return _materialImageDescriptorSetLayout;
+}
+
 void Pipleline::InitModel()
 {
   // set shader state
@@ -195,7 +210,7 @@ void Pipleline::InitModel()
 
   // descriptor set layout
   {
-    std::vector<vk::DescriptorSetLayout> descriptorSetLayout;
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
     // camera uniform buffer
     vk::DescriptorSetLayoutBinding cameraBinding({0,
                                                   vk::DescriptorType::eUniformBuffer,
@@ -203,7 +218,7 @@ void Pipleline::InitModel()
                                                   vk::ShaderStageFlagBits::eVertex,
                                                   {}});
 
-    descriptorSetLayout.push_back(_createDescriptorSetLayout({cameraBinding}));
+    descriptorSetLayouts.push_back(_createDescriptorSetLayout({cameraBinding}));
 
     {
       if (_id.model.materialPart.info.bits.baseColorInfo)
@@ -213,7 +228,7 @@ void Pipleline::InitModel()
                                                                1,
                                                                vk::ShaderStageFlagBits::eFragment,
                                                                {}});
-        descriptorSetLayout.push_back(_createDescriptorSetLayout({materialUniformBinding}));
+        descriptorSetLayouts.push_back(_createDescriptorSetLayout({materialUniformBinding}));
       }
 
       if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
@@ -229,12 +244,14 @@ void Pipleline::InitModel()
       {
       }
     }
+    _frameDescriptorSetLayout = descriptorSetLayouts[0];
+    _materialDescriptorSetLayout = descriptorSetLayouts[1];
   }
 
   // pipeline layout
   vk::PipelineLayoutCreateInfo pipelineLayoutInfo({{},
-                                                   descriptorSetLayout.size(),
-                                                   descriptorSetLayout.data(),
+                                                   descriptorSetLayouts.size(),
+                                                   descriptorSetLayouts.data(),
                                                    0,
                                                    {}});
   _pipelineLayout = _device.createPipelineLayout(pipelineInfo);
@@ -258,10 +275,6 @@ void Pipleline::InitModel()
                                              vk::AttachmentStoreOp::eStore,
                                              vk::ImageLayout::eUndefined,
                                              vk::ImageLayout::eDepthStencilAttachmentOptimal});
-  RenderPass renderPass;
-  renderPass.AddAttachment(colorAttachment);
-  renderPass.AddAttachment(depthAttachment);
-  _renderPass = renderPass.Get();
 
   vk::GraphicsPipelineCreateInfo pipelineInfo({{},
                                                shaderStages.size(),
@@ -276,7 +289,7 @@ void Pipleline::InitModel()
                                                colorBlending,
                                                {},
                                                _pipelineLayout,
-                                               _renderPass,
+                                               _renderer->GetRenderPass(),
                                                uint32_t subpass_ = {},
                                                {},
                                                {}});

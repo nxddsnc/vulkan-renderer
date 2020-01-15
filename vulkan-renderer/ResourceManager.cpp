@@ -28,6 +28,10 @@ void ResourceManager::createNodeResource(std::shared_ptr<Drawable> node)
     _nodes.push_back(node);
 }
 
+void ResourceManager::createDescriptorSet() 
+{
+    
+}
 
 vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()
 {

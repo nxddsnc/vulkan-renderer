@@ -7,6 +7,7 @@
 #include "Renderer.h"
 #include "PipelineManager.h"
 #include "Pipeline.h"
+#include "DecriptorSet.h"
 class Window;
 class Camera;
 struct Drawable;
@@ -26,9 +27,9 @@ struct FrameData
 {
     vk::Semaphore                   renderFinishedSemaphore{};
     std::vector<vk::Semaphore>      imageReadySemaphores{};
-	std::vector<vk::DescriptorSet>  descriptorSets;
     std::vector<vk::CommandBuffer>  cmdBuffers;
-	std::unordered_map<PipelineId, vk::Framebuffer> framebuffers;
+	vk::Framebuffer					framebuffer;
+	std::vector<DescriptorSet>      descriptorSets;
 };
 
 class VulkanRenderer : public Renderer
@@ -56,6 +57,7 @@ public:
 	uint32_t GetSwapchainImageCount();
 	vk::SurfaceFormatKHR GetSurfaceFormat();
 	vk::Format GetDepthFormat();
+	vk::RenderPass GetRenderPass();
 
   void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> nodes);
 private:
@@ -64,7 +66,7 @@ private:
 	void _endRender(std::vector<VkSemaphore> waitSemaphores);
 	void _updateUniformBuffer();
 
-  void _cleanupSwapchain();
+  	void _cleanupSwapchain();
 
 	void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
 	
@@ -98,65 +100,66 @@ private:
 	void _initSynchronizations();
 	void _deInitSynchronizations();
 
-  void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
+  	void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
 
-	VulkanContext				            	*   _context;
+	VulkanContext				        *   _context;
 
-	UniformBufferObject										_ubo = {};
-	float																	_time = 0.0;
+	UniformBufferObject						_ubo = {};
+	float									_time = 0.0;
 
-	vk::Instance													_instance;
-	vk::PhysicalDevice										_gpu;
-	vk::Device										  			_device;
-	vk::Queue										    			_queue;
-  vk::CommandPool								  			_commandPool;
-  vk::PhysicalDeviceProperties					_gpuProperties;
+	vk::Instance							_instance;
+	vk::PhysicalDevice						_gpu;
+	vk::Device								_device;
+	vk::Queue								_queue;
+  	vk::CommandPool							_commandPool;
+  	vk::PhysicalDeviceProperties			_gpuProperties;
 	vk::PhysicalDeviceMemoryProperties		_gpuMemoryProperties;
-	uint32_t															_graphicsQueueFamilyIndex = 0;
+	uint32_t								_graphicsQueueFamilyIndex = 0;
 
-  VmaAllocator                        	_memoryAllocator;
+  	VmaAllocator                        	_memoryAllocator;
 
-	ResourceManager                 *   	_resourceManager;
+	ResourceManager                 	*   _resourceManager;
 
-	PipelineManager 										*	_pipelineManager;
+	PipelineManager 					*	_pipelineManager;
 
-	vk::SurfaceKHR					    					_surface;
-	std::vector<vk::Image>								_swapchainImages;
-	std::vector<vk::ImageView>						_swapchainImageViews;
-  std::vector<FrameData>              	_framesData;
-	std::vector<VkFramebuffer>						_framebuffers;
-	std::vector<VkDescriptorSet>					_descriptorSets;
-	vk::DescriptorPool										_descriptorPool;
-	std::vector<VkCommandBuffer>					_commandBuffers;
+	vk::SurfaceKHR					  		_surface;
+	std::vector<vk::Image>					_swapchainImages;
+	std::vector<vk::ImageView>				_swapchainImageViews;
+  	std::vector<FrameData>              	_framesData;
+	std::vector<VkFramebuffer>				_framebuffers;
+	std::vector<VkDescriptorSet>			_descriptorSets;
+    vk::DescriptorSetLayout 				_frameDescriptorSetLayout;
+	vk::DescriptorPool						_descriptorPool;
+	std::vector<VkCommandBuffer>			_commandBuffers;
 
 	std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>> _drawableMap;
 
-	std::vector<VkBuffer>									_uniformBuffers;
-	std::vector<VmaAllocation>						_uniformBuffersMemory;
+	std::vector<VkBuffer>					_uniformBuffers;
+	std::vector<VmaAllocation>				_uniformBuffersMemory;
 
-	std::vector<vk::Semaphore>		    		_imageAvailableSemaphores;
+	std::vector<vk::Semaphore>		    	_imageAvailableSemaphores;
 
-	size_t																_currentFrame = 0;
+	size_t									_currentFrame = 0;
 
-	vk::Extent2D													_swapchainExtent;
+	vk::Extent2D							_swapchainExtent;
 
-	VkImage																_depthStencilImage = VK_NULL_HANDLE;
-  VmaAllocation													_depthStencilImageMemory = VK_NULL_HANDLE;
-	VkImageView														_depthStencilImageView = VK_NULL_HANDLE;
-	vk::Format														_depthStencilFormat;
-	boolean																_stencilAvailable = false;
+	VkImage									_depthStencilImage = VK_NULL_HANDLE;
+  	VmaAllocation							_depthStencilImageMemory = VK_NULL_HANDLE;
+	VkImageView								_depthStencilImageView = VK_NULL_HANDLE;
+	vk::Format								_depthStencilFormat;
+	boolean									_stencilAvailable = false;
 
-	VkRenderPass													_renderPass = VK_NULL_HANDLE;
+	VkRenderPass							_renderPass = VK_NULL_HANDLE;
 
-	vk::SurfaceFormatKHR									_surfaceFormat;
-	VkSwapchainKHR												_swapchain = VK_NULL_HANDLE;
-	uint32_t															_swapchainImageCount;
-	uint32_t															_activeSwapchainImageId = UINT32_MAX;
+	vk::SurfaceFormatKHR					_surfaceFormat;
+	VkSwapchainKHR							_swapchain = VK_NULL_HANDLE;
+	uint32_t								_swapchainImageCount;
+	uint32_t								_activeSwapchainImageId = UINT32_MAX;
 
-	VkFence																_swapchainImageAvailable;
+	VkFence									_swapchainImageAvailable;
 
 	Window                            * 	_window = nullptr;
 
-  Camera                            * 	_camera;
+ 	Camera                            * 	_camera;
 };
 

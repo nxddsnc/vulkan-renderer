@@ -8,6 +8,7 @@
 /************************************************************************/
 /* Minimum renderable node.*/
 /************************************************************************/
+class Pipeline;
 struct Drawable
 {
     glm::mat4                     matrix;
@@ -17,5 +18,8 @@ struct Drawable
     VmaAllocation                 vertexBufferMemory;
     vk::Buffer                    indexBuffer;
     VmaAllocation                 indexBufferMemory;
+    std::shared_ptr<Pipeline>     pipeline;
+    vk::DescriptorSet             materialDescriptorSet;
+    vk::DescriptorSet             materialImageDescriptorSet;
 };
 
