@@ -4,9 +4,9 @@
 #include <chrono>
 #include <iostream>
 #include <GLFW\glfw3.h>
-#include "Context.h"
 #include "MyScene.h"
 #include "ModelLoader.h"
+#include "camera.hpp"
 
 VulkanRenderer *renderer;
 Window *window;
@@ -62,7 +62,7 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
     mouseX = xpos;
     mouseY = ypos;
     
-    Camera *camera = renderer->GetCamera();
+    VulkanCamera *camera = renderer->GetCamera();
     if (camera->keys.left) {
         camera->rotate(glm::vec3(dy * camera->rotationSpeed, -dx * camera->rotationSpeed, 0.0f));
     }

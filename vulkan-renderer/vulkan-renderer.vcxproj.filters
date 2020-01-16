@@ -72,6 +72,15 @@
     <ClCompile Include="Vulkan\RenderPass.cpp">
       <Filter>源文件\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="Vulkan\PipelineManager.cpp">
+      <Filter>源文件\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\Pipeline.cpp">
+      <Filter>源文件\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\ShaderModule.cpp">
+      <Filter>源文件\Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -126,6 +135,15 @@
       <Filter>头文件\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Vulkan\RenderPass.h">
+      <Filter>头文件\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\PipelineManager.h">
+      <Filter>头文件\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\Pipeline.h">
+      <Filter>头文件\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\ShaderModule.h">
       <Filter>头文件\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>

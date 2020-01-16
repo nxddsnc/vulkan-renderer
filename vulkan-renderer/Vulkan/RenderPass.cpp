@@ -38,9 +38,9 @@ vk::RenderPass RenderPass::Get()
 
 	vk::RenderPassCreateInfo createInfo({
 		{},
-		_attachments.size(),
+		static_cast<uint32_t>(_attachments.size()),
 		_attachments.data(),
-		_subpasses.size(),
+        static_cast<uint32_t>(_subpasses.size()),
 		_subpasses.data(),
 		1,
 		&dependency

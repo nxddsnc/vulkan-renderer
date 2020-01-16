@@ -1,12 +1,13 @@
-#inlcude "ShaderModule.h"
-#include <ifstream>
+#include "ShaderModule.h"
+#include <fstream>
 
-ShaderModule(PipelineId id) 
+ShaderModule::ShaderModule(vk::Device* device, PipelineId id)
 {
-
+    _id = id;
+    _device = device;
 }
 
-~ShaderModule() 
+ShaderModule::~ShaderModule()
 {
 
 }
@@ -28,11 +29,10 @@ void ShaderModule::LoadFromFile(const std::string& filename)
   file.close();
 }
 
-bool ShaderModule::build(API::ShaderModule& shaderModule, VkResult* returnResult) {
+void ShaderModule::Build() 
+{
   vk::ShaderModuleCreateInfo createInfo = {};
 	createInfo.codeSize = _data.size();
-	createInfo.pCode = _data.data();
-	VkShaderModule shaderModule;
-	vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule);
-	return shaderModule;
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(_data.data());
+    _shaderModule = _device->createShaderModule(&createInfo, nullptr);
 }

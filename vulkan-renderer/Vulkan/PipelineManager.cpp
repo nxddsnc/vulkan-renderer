@@ -1,23 +1,23 @@
-#include "PiplelineManager.h"
+#include "PipelineManager.h"
 
-PiplelineManager::PiplelineManager(VulkanRenderer *vulkanRenderer)
+PipelineManager::PipelineManager(VulkanRenderer *vulkanRenderer)
 {
   _renderer =  vulkanRenderer;
 }
 
-PiplelineManager::~PiplelineManager()
+PipelineManager::~PipelineManager()
 {
   
 }
 
-std::shared_ptr<Pipeline> PiplelineManager::_createPipeline(PipelineId id)
+std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id)
 {
-  std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>(id);
+  std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>(_renderer, id);
 
   switch(id.type)
   {
     case MODEL:
-      pipeline.InitModel();
+      pipeline->InitModel();
       break;
   }
 
@@ -26,7 +26,7 @@ std::shared_ptr<Pipeline> PiplelineManager::_createPipeline(PipelineId id)
   return pipeline;
 }
 
-std::shared_ptr<Pipeline> PiplelineManager::GetPipeline(PipelineId id)
+std::shared_ptr<Pipeline> PipelineManager::GetPipeline(PipelineId id)
 {
   if (_pipelines.count(id) > 0) 
   {

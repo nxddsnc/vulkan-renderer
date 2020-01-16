@@ -4,13 +4,13 @@
 
 struct VertexBits
 {
-    VertexBits()  : hasNormal(true), hasTangent(false), hasTexCoord1(false),  hasTexCoord2(false), hasColr(false) {}
+    VertexBits()  : hasNormal(true), hasTangent(false), hasTexCoord1(false),  hasTexCoord2(false), hasColor(false) {}
     bool hasNormal    : 1;
     bool hasTangent   : 1;
     bool hasTexCoord1 : 1;
     bool hasTexCoord2 : 1;
     bool hasColor     : 1;
-}
+};
 
 enum class Mode : uint8_t {
     Points = 0,        ///< Each vertex defines a separate point

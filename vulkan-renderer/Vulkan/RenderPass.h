@@ -6,8 +6,9 @@ public:
     RenderPass();
     ~RenderPass();
 
-    vk::RenderPass Build();
+    vk::RenderPass Get();
     void AddAttachment(vk::AttachmentDescription attachmentDescription);
+    void AddSubPass(vk::SubpassDescription subpass);
 private:
     std::vector<vk::AttachmentDescription> _attachments;
     std::vector<vk::SubpassDescription> _subpasses;

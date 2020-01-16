@@ -1,12 +1,12 @@
 #include "Pipeline.h"
 #include "ShaderModule.h"
-#include "Renderer.h"
 #include "VulkanRenderer.h"
 #include "RenderPass.h"
-Pipeline::Pipeline(Renderer *renderer, PipelineId id)
+
+Pipeline::Pipeline(VulkanRenderer *renderer, PipelineId id)
 {
-  this._id = id;
-  this._renderer = renderer;
+  _id = id;
+  _renderer = renderer;
 }
 
 Pipeline::~Pipeline()
@@ -21,10 +21,11 @@ void Pipeline::_addInputBinding(uint32_t stride, vk::VertexInputRate inputRate)
   _inputBindings.push_back(std::move(inputBinding));
 }
 
-void Pipeline::_addAttributes(uint32_t location, vk::Format format, uint32_t offset)
+void Pipeline::_addAttributes(uint32_t location, uint32_t binding, vk::Format format, uint32_t offset)
 {
   const vk::VertexInputAttributeDescription inputAttribute({
       location,
+      binding,
       format,
       offset,
   });
@@ -36,39 +37,25 @@ vk::DescriptorSetLayout Pipeline::_createDescriptorSetLayout(std::vector<vk::Des
   vk::DescriptorSetLayoutCreateInfo layoutInfo({{},
                                                 static_cast<uint32_t>(bindings.size()),
                                                 bindings.data()});
-  return _device.createDescriptorSetLayout(layoutinfo);
+  return _renderer->GetVulkanDevice().createDescriptorSetLayout(layoutInfo);
 }
 
-vk::DescriptorSetLayout Pipeline::GetFrameDescriptorSetLayout() 
-{
-  return _frameDescirptorSetLayout;
-}
-
-vk::DescriptorSetLayout Pipeline::GetMaterialDescritporSetLayout()
-{
-  return _materialDescriptorSetLayout;
-}
-
-vk::DescriptorSetLayout Pipeline::GetMaterialImageDescriptorSetLayout() 
-{
-  return _materialImageDescriptorSetLayout;
-}
-
-void Pipleline::InitModel()
+void Pipeline::InitModel()
 {
   // set shader state
   {
-    ShaderModule vertexShader;
+    vk::Device device = _renderer->GetVulkanDevice();
+    ShaderModule vertexShader(&device, _id);
     vertexShader.LoadFromFile("Shaders/basic_vert.spv");
-    vertexShader.build();
+    vertexShader.Build();
 
-    ShaderModule fragmentShader;
+    ShaderModule fragmentShader(&device, _id);
     fragmentShader.LoadFromFile("Sahders/basic_frag.spv");
-    fragmentShader.build();
+    fragmentShader.Build();
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-    shaderStages.push_back(vertexShader.GetShaderStage());
-    shaderStages.push_back(fragmentShader.GetShaderStage());
+    shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
+    shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
   }
 
   // set vertex input state
@@ -78,7 +65,7 @@ void Pipleline::InitModel()
 
     // We always have normal
     _addInputBinding(sizeof(Math::Vec3f), vk::VertexInputRate::eVertex);
-    addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+    _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
 
     // Set vertex data attributes for dynamic attributes
     if (_id.model.primitivePart.info.bits.tangentVertexData)
@@ -220,33 +207,33 @@ void Pipleline::InitModel()
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({cameraBinding}));
 
-    {
-      if (_id.model.materialPart.info.bits.baseColorInfo)
-      {
-        vk::DescriptorSetLayoutBinding materialUniformBinding({0,
-                                                               vk::DescriptorType::eUniformBuffer,
-                                                               1,
-                                                               vk::ShaderStageFlagBits::eFragment,
-                                                               {}});
-        descriptorSetLayouts.push_back(_createDescriptorSetLayout({materialUniformBinding}));
-      }
+  //   {
+  //     if (_id.model.materialPart.info.bits.baseColorInfo)
+  //     {
+  //       vk::DescriptorSetLayoutBinding materialUniformBinding({0,
+  //                                                              vk::DescriptorType::eUniformBuffer,
+  //                                                              1,
+  //                                                              vk::ShaderStageFlagBits::eFragment,
+  //                                                              {}});
+  //       descriptorSetLayouts.push_back(_createDescriptorSetLayout({materialUniformBinding}));
+  //     }
 
-      if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
-      {
-      }
-      if (_id.model.materialPart.info.bits.normalInfo)
-      {
-      }
-      if (_id.model.materialPart.info.bits.occlusionInfo)
-      {
-      }
-      if (_id.model.materialPart.info.bits.emissiveInfo)
-      {
-      }
-    }
-    _frameDescriptorSetLayout = descriptorSetLayouts[0];
-    _materialDescriptorSetLayout = descriptorSetLayouts[1];
-  }
+  //     if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
+  //     {
+  //     }
+  //     if (_id.model.materialPart.info.bits.normalInfo)
+  //     {
+  //     }
+  //     if (_id.model.materialPart.info.bits.occlusionInfo)
+  //     {
+  //     }
+  //     if (_id.model.materialPart.info.bits.emissiveInfo)
+  //     {
+  //     }
+  //   }
+  //   _frameDescriptorSetLayout = descriptorSetLayouts[0];
+  //   _materialDescriptorSetLayout = descriptorSetLayouts[1];
+   }
 
   // pipeline layout
   vk::PipelineLayoutCreateInfo pipelineLayoutInfo({{},
@@ -256,25 +243,6 @@ void Pipleline::InitModel()
                                                    {}});
   _pipelineLayout = _device.createPipelineLayout(pipelineInfo);
 
-  vk::AttachmentDescription colorAttachment({{},
-                                             _context.GetSurfaceFormat().format,
-                                             vk::SampleCountFlagBits::e1,
-                                             vk::AttachmentLoadOp::eClear,
-                                             vk::AttachmentStoreOp::eStore,
-                                             vk::AttachmentLoadOp::eDontCare,
-                                             vk::AttachmentStoreOp::eDontCare,
-                                             vk::ImageLayout::eUndefined,
-                                             vk::ImageLayout::ePresentSrcKHR});
-
-  vk::AttachmentDescription depthAttachment({{},
-                                             _renderer.GetDepthFormat(),
-                                             vk::SampleCountFlagBits::e1,
-                                             vk::AttachmentLoadOp::eClear,
-                                             vk::AttachmentStoreOp::eDontCare,
-                                             vk::AttachmentLoadOp::eDontCare,
-                                             vk::AttachmentStoreOp::eStore,
-                                             vk::ImageLayout::eUndefined,
-                                             vk::ImageLayout::eDepthStencilAttachmentOptimal});
 
   vk::GraphicsPipelineCreateInfo pipelineInfo({{},
                                                shaderStages.size(),
@@ -305,6 +273,7 @@ vk::Pipeline Pipeline::GetPipeline()
 {
   return _graphicsPipeline;
 }
+
 vk::PipelineLayout Pipeline::GetPipelineLayout()
 {
   return _pipelineLayout;

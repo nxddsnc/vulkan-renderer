@@ -1,3 +1,5 @@
+#include "Platform.h"
+#pragma once
 enum PipelineType
 {
   MODEL
@@ -39,32 +41,54 @@ struct PipelineId
       } info;
     } materialPart;
   } model;
+
+  bool operator==(PipelineId const & rhs) const VULKAN_HPP_NOEXCEPT
+  {
+      return model.materialPart.info.value == rhs.model.materialPart.info.value &&
+          model.primitivePart.info.value == rhs.model.primitivePart.info.value;
+  }
+
+  bool operator!=(PipelineId const & rhs) const VULKAN_HPP_NOEXCEPT
+  {
+      return model.materialPart.info.value != rhs.model.materialPart.info.value ||
+          model.primitivePart.info.value != rhs.model.primitivePart.info.value;
+  }
 };
 
-class Renderer;
+template<> struct std::hash<PipelineId> {
+    size_t operator()(const PipelineId& id) const {
+        // TODO: use more appropriate hash value
+        return std::hash<uint32_t>()(id.model.primitivePart.info.value * 31 + id.model.materialPart.info.value);
+    }
+};
+
+class VulkanRenderer;
+class VulkanCamera;
 class Pipeline
 {
 public:
-    Pipeline(Renderer *renderer, PipelineId id);
+    Pipeline(VulkanRenderer *renderer, PipelineId id);
     ~Pipeline();
 
     vk::RenderPass GetRenderPass();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
-    vk::DescriptorSetLayout GetFrameDescriptorSetLayout();
-    vk::DescriptorSetLayout GetMaterialDescritporSetLayout();
-    vk::DescriptorSetLayout GetMaterialImageDescriptorSetLayout();
-    _addAttributes(uint32_t location, vk::Format format, uint32_t offset);
+    void InitModel();
 private:
     PipelineId _id;
-    VulkanRenderer    * renderer;
+    VulkanRenderer    * _renderer;
     vk::RenderPass      _renderPass;
     vk::Pipeline        _graphicsPipeline;
     vk::PipelineLayout  _pipelineLayout;
     vk::DescriptorSetLayout _materialDescriptorSetLayout;
     vk::DescriptorSetLayout _materialImageDescriptorSetLayout;
+    vk::DescriptorSet       _cameraDescriptorSet;
 
     // Vertex input state
     std::vector<vk::VertexInputBindingDescription> _inputBindings;
     std::vector<vk::VertexInputAttributeDescription> _inputAttributes;
+private:
+    void _addAttributes(uint32_t location, uint32_t binding, vk::Format format, uint32_t offset);
+    vk::DescriptorSetLayout _createDescriptorSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings);
+    void _addInputBinding(uint32_t stride, vk::VertexInputRate inputRate);
 };

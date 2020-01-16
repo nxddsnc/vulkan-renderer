@@ -1,5 +1,4 @@
 #include "Window.h"
-#include "Renderer.h"
 #include "Shared.h"
 #include <array>
 Window::Window(uint32_t sizeX, uint32_t sizeY, std::string name)

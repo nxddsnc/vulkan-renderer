@@ -1,11 +1,12 @@
 #include "Platform.h"
+#pragma once 
 
-class Camera
+class VulkanCamera
 {
 private:
 	float fov;
 	float znear, zfar;
-
+    VmaAllocator *_memoryAllocator;
 	void updateViewMatrix()
 	{
 		glm::mat4 rotM = glm::mat4(1.0f);
@@ -29,6 +30,26 @@ private:
 		updated = true;
 	};
 public:
+	VulkanCamera(VmaAllocator *memoryAllocator) 
+	{
+        _memoryAllocator = memoryAllocator;
+
+		vk::BufferCreateInfo createInfo({{},
+                                         vk::DeviceSize(sizeof(matrices)),
+                                         vk::BufferUsageFlagBits::eUniformBuffer,
+                                         {},
+                                         {},
+                                         {}});
+		VmaAllocationCreateInfo allocInfo = {};
+		allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		VkBuffer buffer(uniformBuffer);
+        VkBufferCreateInfo &vkCreateInfo = createInfo;
+		vmaCreateBuffer(*_memoryAllocator, &vkCreateInfo, &allocInfo, &buffer, &uniformBufferMemory, nullptr);
+	};
+	~VulkanCamera()
+	{
+		vmaDestroyBuffer(*_memoryAllocator, uniformBuffer, uniformBufferMemory);
+	};
 	enum CameraType { lookat, firstperson };
 	CameraType type = CameraType::lookat;
 
@@ -45,6 +66,10 @@ public:
 		glm::mat4 perspective;
 		glm::mat4 view;
 	} matrices;
+
+	vk::Buffer					uniformBuffer;
+	VmaAllocation				uniformBufferMemory;
+    vk::DescriptorSet           descriptorSet;
 
 	struct
 	{
@@ -110,6 +135,56 @@ public:
 		updateViewMatrix();
 	}
 
+    void createDescriptorSet(vk::Device &device, vk::DescriptorPool &descriptorPool)
+    {
+        vk::DescriptorSetLayout descriptorSetLayout;
+        // camera uniform buffer
+        vk::DescriptorSetLayoutBinding cameraBinding({ 0,
+            vk::DescriptorType::eUniformBuffer,
+            1,
+            vk::ShaderStageFlagBits::eVertex,
+            {} });
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo({ {},
+            1,
+            &cameraBinding });
+        descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+
+        vk::DescriptorSetAllocateInfo allocInfo({
+            descriptorPool,
+            1,
+            &descriptorSetLayout
+        });
+        device.allocateDescriptorSets(&allocInfo, &descriptorSet);
+
+        vk::DescriptorBufferInfo bufferInfo({
+            uniformBuffer,
+            0,
+            sizeof(matrices)
+        });
+
+        vk::WriteDescriptorSet descriptorWrite({
+            descriptorSet,
+            0,
+            0,
+            1,
+            vk::DescriptorType::eUniformBuffer,
+            {},
+            &bufferInfo,
+            {}
+        });
+        device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    }
+
+	void UpdateUniformBuffer() 
+	{
+    	matrices.perspective[1][1] *= -1;;
+		void* data;
+		vmaMapMemory(*_memoryAllocator, uniformBufferMemory, &data);
+		memcpy(data, &matrices, sizeof(matrices));
+    	vmaUnmapMemory(*_memoryAllocator, uniformBufferMemory);
+	}
+	
 	void update(float deltaTime)
 	{
 		updated = false;

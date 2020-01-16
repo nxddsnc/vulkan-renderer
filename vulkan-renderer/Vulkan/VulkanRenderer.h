@@ -1,15 +1,10 @@
-
-#include "Platform.h"
 #include <vector>
-#include "Context.h"
-#include "Camera.hpp"
 #include <memory.h>
-#include "Renderer.h"
-#include "PipelineManager.h"
+#include <unordered_map>
 #include "Pipeline.h"
-#include "DecriptorSet.h"
+#include "Platform.h"
 class Window;
-class Camera;
+class VulkanCamera;
 struct Drawable;
 struct Vertex;
 #pragma once
@@ -29,28 +24,31 @@ struct FrameData
     std::vector<vk::Semaphore>      imageReadySemaphores{};
     std::vector<vk::CommandBuffer>  cmdBuffers;
 	vk::Framebuffer					framebuffer;
-	std::vector<DescriptorSet>      descriptorSets;
+	//std::vector<DescriptorSet>      descriptorSets;
 };
 
-class VulkanRenderer : public Renderer
+class PipelineManager;
+class VulkanContext;
+class VulkanCamera;
+class VulkanRenderer
 {
 public:
 	VulkanRenderer(Window *window);
 	~VulkanRenderer();
 
-  bool Run();
-  void DrawFrame();
-  void Resize(int width, int height);
-  Camera * GetCamera();
-  void OnSceneChanged();
+	bool Run();
+	void DrawFrame();
+	void Resize(int width, int height);
+	VulkanCamera *GetCamera();
+	void OnSceneChanged();
 	void GetExtendSize(uint32_t &width, uint32_t &height);
 
-	VkInstance GetVulkanInstance();
-	VkPhysicalDevice GetPhysicalDevice();
-	VkDevice GetVulkanDevice();
-	VkQueue GetVulkanDeviceQueue();
-	VkPhysicalDeviceProperties GetPhycicalDeviceProperties();
-	VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties();
+	vk::Instance GetVulkanInstance();
+	vk::PhysicalDevice GetPhysicalDevice();
+	vk::Device GetVulkanDevice();
+	vk::Queue GetVulkanDeviceQueue();
+	vk::PhysicalDeviceProperties GetPhycicalDeviceProperties();
+	vk::PhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties();
 	uint32_t GetGraphicFamilyIndex();
 	VkRenderPass GetVulkanRenderPass();
 	VkFramebuffer GetActiveFramebuffer();
@@ -85,12 +83,6 @@ private:
 	void _initFramebuffers();
 	void _deInitFramebuffers();
 
-	void _initUniformBuffers();
-	void _deInitUniformBuffers();
-
-	void _initDescriptorSetLayout();
-	void _deInitDescriptorSetLayout();
-
 	void _initDescriptorPool();
 	void _deInitDescriptorPool();
 
@@ -100,8 +92,8 @@ private:
 	void _initSynchronizations();
 	void _deInitSynchronizations();
 
-  	void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
-
+  	//void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
+    void _createCommandBuffers();
 	VulkanContext				        *   _context;
 
 	UniformBufferObject						_ubo = {};
@@ -126,16 +118,13 @@ private:
 	std::vector<vk::Image>					_swapchainImages;
 	std::vector<vk::ImageView>				_swapchainImageViews;
   	std::vector<FrameData>              	_framesData;
-	std::vector<VkFramebuffer>				_framebuffers;
+    vk::RenderPass                          _renderPass;
 	std::vector<VkDescriptorSet>			_descriptorSets;
     vk::DescriptorSetLayout 				_frameDescriptorSetLayout;
 	vk::DescriptorPool						_descriptorPool;
 	std::vector<VkCommandBuffer>			_commandBuffers;
 
-	std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>> _drawableMap;
-
-	std::vector<VkBuffer>					_uniformBuffers;
-	std::vector<VmaAllocation>				_uniformBuffersMemory;
+	std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>>> _drawableMap;
 
 	std::vector<vk::Semaphore>		    	_imageAvailableSemaphores;
 
@@ -149,8 +138,6 @@ private:
 	vk::Format								_depthStencilFormat;
 	boolean									_stencilAvailable = false;
 
-	VkRenderPass							_renderPass = VK_NULL_HANDLE;
-
 	vk::SurfaceFormatKHR					_surfaceFormat;
 	VkSwapchainKHR							_swapchain = VK_NULL_HANDLE;
 	uint32_t								_swapchainImageCount;
@@ -160,6 +147,6 @@ private:
 
 	Window                            * 	_window = nullptr;
 
- 	Camera                            * 	_camera;
+ 	VulkanCamera                            * 	_camera;
 };
 
