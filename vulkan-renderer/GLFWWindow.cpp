@@ -10,7 +10,7 @@
 void Window::_initOSWindow()
 {
     glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);		// This tells GLFW to not create an OpenGL context with the window
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);        // This tells GLFW to not create an OpenGL context with the window
     _window = glfwCreateWindow(_width, _height, _windowName.c_str(), nullptr, nullptr);
     
     // make sure we indeed get the surface size we want.

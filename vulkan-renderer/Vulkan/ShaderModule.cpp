@@ -9,7 +9,7 @@ ShaderModule::ShaderModule(vk::Device* device, PipelineId id)
 
 ShaderModule::~ShaderModule()
 {
-
+    _device->destroyShaderModule(_shaderModule);
 }
 
 void ShaderModule::LoadFromFile(const std::string& filename)

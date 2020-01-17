@@ -14,12 +14,12 @@ double mouseX, mouseY;
 
 void ResizeCallback(GLFWwindow* window, int width, int height)
 {
-	renderer->Resize(width, height);
+    renderer->Resize(width, height);
 }
 
 void CloseCallback(GLFWwindow* _window)
 {
-	window->Close();
+    window->Close();
 }
 
 void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
@@ -70,11 +70,11 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
 
 int main()
 {
-	window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
-	renderer = new VulkanRenderer(window);
+    window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
+    renderer = new VulkanRenderer(window);
     GLFWwindow *_window = window->GetGLFWWindow();
-	glfwSetWindowSizeCallback(_window, ResizeCallback);
-	glfwSetWindowCloseCallback(_window, CloseCallback);
+    glfwSetWindowSizeCallback(_window, ResizeCallback);
+    glfwSetWindowCloseCallback(_window, CloseCallback);
     glfwSetMouseButtonCallback(_window, MouseButtonCallback);
     glfwSetScrollCallback(_window, MouseScrollCallback);
     glfwSetCursorPosCallback(_window, MouseMoveCallback);
@@ -95,8 +95,8 @@ int main()
         renderer->AddRenderNodes(myScene.GetDrawables());
     }
 
-	while (renderer->Run())
-	{
+    while (renderer->Run())
+    {
         ++frame_counter;
         if (last_time + std::chrono::seconds(1) < timer.now()) {
             last_time = timer.now();
@@ -104,10 +104,10 @@ int main()
             frame_counter = 0;
             std::cout << "FPS: " << fps << std::endl;
         }
-		renderer->DrawFrame();
+        renderer->DrawFrame();
 
         glfwPollEvents();
-	}
-	delete renderer;
-	return 0;
+    }
+    delete renderer;
+    return 0;
 }

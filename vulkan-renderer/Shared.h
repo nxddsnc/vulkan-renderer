@@ -23,13 +23,13 @@ void ErrorCheck(vk::Result result);
 std::vector<char> readFile(const std::string& filename);
 
 uint32_t FindMemoryTypeIndex(VkPhysicalDeviceMemoryProperties *gpuMemoryProperties, 
-	const VkMemoryRequirements *momoryRequiremenets, const VkMemoryPropertyFlags memoryProperties);
+    const VkMemoryRequirements *momoryRequiremenets, const VkMemoryPropertyFlags memoryProperties);
 
 /************************************************************************/
 /*                                                                      */
 /************************************************************************/
 
 void createImage(vk::Device &device, vk::PhysicalDeviceMemoryProperties * gpuMemoryProperties,
-	uint32_t width, uint32_t height, VkFormat format,
-	vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
-	vk::Image& image, vk::DeviceMemory& imageMemory);
+    uint32_t width, uint32_t height, VkFormat format,
+    vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+    vk::Image& image, vk::DeviceMemory& imageMemory);

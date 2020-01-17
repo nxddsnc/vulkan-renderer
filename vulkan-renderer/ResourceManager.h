@@ -10,8 +10,8 @@ struct Drawable;
 class ResourceManager
 {
 public:
-	ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue, uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator);
-	~ResourceManager();
+    ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue, uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator);
+    ~ResourceManager();
 
     void createNodeResource(std::shared_ptr<Drawable> node);
 private:
@@ -23,11 +23,11 @@ private:
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
     void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 private:
-	vk::Device					                    _device;
-	vk::Queue					                    _graphicsQueue;
-	vk::CommandPool				                    _commandPool;
-    uint32_t                                        _graphicsQueueFamilyIndex;
-    VmaAllocator                                    _memoryAllocator;
+    vk::Device                                    _device;
+    vk::Queue                                     _graphicsQueue;
+    vk::CommandPool                               _commandPool;
+    uint32_t                                      _graphicsQueueFamilyIndex;
+    VmaAllocator                                  _memoryAllocator;
     std::vector<std::shared_ptr<Drawable>>        _nodes;
 };
 
