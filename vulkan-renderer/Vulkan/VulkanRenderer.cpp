@@ -56,7 +56,6 @@ VulkanRenderer::VulkanRenderer(Window *window)
 	_initSwapchainImages();
 	_initDepthStencilImage();
 	_initFramebuffers();
-	// _initUniformBuffers();
 	_initDescriptorPool();
 	_initDescriptorSet();
 	_initSynchronizations();
@@ -70,7 +69,6 @@ VulkanRenderer::~VulkanRenderer()
 	_deInitSynchronizations();
 	_deInitDescriptorSet();
 	_deInitDescriptorPool();
-	// _deInitUniformBuffers();
 	_deInitFramebuffers();
 	_deInitDepthStencilImage();
 	_deInitSwapchainImages();
@@ -449,7 +447,7 @@ void VulkanRenderer::_deInitDepthStencilImage()
 
 void VulkanRenderer::_initFramebuffers() 
 {
-	RenderPass renderPass;
+	RenderPass renderPass(&_device);
     vk::AttachmentDescription colorAttachment({
         {},
         _surfaceFormat.format,
@@ -473,8 +471,9 @@ void VulkanRenderer::_initFramebuffers()
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthStencilAttachmentOptimal
     });
-    //renderPass.AddAttachment(colorAttachment);
+    renderPass.AddAttachment(colorAttachment);
 	renderPass.AddAttachment(depthAttachment);
+
 	_renderPass = renderPass.Get();
     
     for (int i = 0; i < _swapchainImageCount; ++i)
@@ -505,15 +504,20 @@ void VulkanRenderer::_deInitFramebuffers()
 
 void VulkanRenderer::_initDescriptorPool()
 {
-	std::array<vk::DescriptorPoolSize, 2> poolSizes = {};
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(_swapchainImages.size());
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(_swapchainImages.size());
+    // TODO: Assign descriptor and max set according to pipeline information.
+	std::array<vk::DescriptorPoolSize, 1> poolSizes = {};
+	poolSizes[0].descriptorCount = 10;
+    poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
 
 	vk::DescriptorPoolCreateInfo poolInfo({{},
-										   static_cast<uint32_t>(_swapchainImages.size()),
+										   static_cast<uint32_t>(20),
 										   static_cast<uint32_t>(poolSizes.size()),
 										   poolSizes.data()});
 	_descriptorPool = _device.createDescriptorPool(poolInfo);
+
+    // Init camera uniform buffer descriptor
+    // TODO: put the code below to some more appropriate place.
+    _camera->createDescriptorSet(_device, _descriptorPool);
 }
 
 void VulkanRenderer::_deInitDescriptorPool()
@@ -651,7 +655,7 @@ void VulkanRenderer::_createCommandBuffers()
 		   
                 for (auto drawable : it.second)
                 {
-                    commandBuffer.bindVertexBuffers(0, 1, &drawable->vertexBuffer, vk::DeviceSize(0));
+                    commandBuffer.bindVertexBuffers(0, drawable->vertexBuffers.size(), drawable->vertexBuffers.data(), drawable->vertexBufferOffsets.data());
 
                     switch (drawable->mesh->m_indexType)
                     {
@@ -697,7 +701,7 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
 		id.model.primitivePart.info.bits.countTexCoord = 0;
 		id.model.primitivePart.info.bits.countColor = drawable->mesh->m_vertexBits.hasColor;
 		id.model.materialPart.info.bits.baseColorInfo = 1;
-
+        id.type = MODEL;
 		if (_drawableMap.count(id) == 0) 
 		{
 			std::vector<std::shared_ptr<Drawable>> drawables_;

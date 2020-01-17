@@ -42,9 +42,8 @@ public:
                                          {}});
 		VmaAllocationCreateInfo allocInfo = {};
 		allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		VkBuffer buffer(uniformBuffer);
         VkBufferCreateInfo &vkCreateInfo = createInfo;
-		vmaCreateBuffer(*_memoryAllocator, &vkCreateInfo, &allocInfo, &buffer, &uniformBufferMemory, nullptr);
+		vmaCreateBuffer(*_memoryAllocator, &vkCreateInfo, &allocInfo, reinterpret_cast<VkBuffer*>(&uniformBuffer), &uniformBufferMemory, nullptr);
 	};
 	~VulkanCamera()
 	{

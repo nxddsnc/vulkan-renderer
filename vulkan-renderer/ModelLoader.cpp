@@ -95,13 +95,13 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
     else
     {
         aiMesh *_mesh = _scene->mMeshes[idx];
-        std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(_mesh->mNumVertices, _mesh->mNumFaces * 3);
 
         VertexBits vertexBits;
         vertexBits.hasNormal    = _mesh->HasNormals();
         // vertexBits.hasTangent   = _mesh->HasTangents();
         // vertexBits.hasTexCoord1 = _mesh->HasTextureCoords(0);
-       
+        std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(vertexBits, _mesh->mNumVertices, _mesh->mNumFaces * 3);
+
         for (size_t i = 0; i < _mesh->mNumVertices; ++i)
         {
             aiVector3D vertex = _mesh->mVertices[i];

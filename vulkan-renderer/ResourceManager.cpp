@@ -14,23 +14,18 @@ ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPoo
 
 ResourceManager::~ResourceManager()
 {
-   /* for (auto node : _nodes)
+   /* for (auto drawable : _nodes)
     {
-        vmaDestroyBuffer(_memoryAllocator, node->vertexBuffer, node->vertexBufferMemory);
-        vmaDestroyBuffer(_memoryAllocator, node->indexBuffer, node->indexBufferMemory);
+        vmaDestroyBuffer(_memoryAllocator, drawable->vertexBuffer, drawable->vertexBufferMemory);
+        vmaDestroyBuffer(_memoryAllocator, drawable->indexBuffer, drawable->indexBufferMemory);
     }*/
 }
 
-void ResourceManager::createNodeResource(std::shared_ptr<Drawable> node)
+void ResourceManager::createNodeResource(std::shared_ptr<Drawable> drawable)
 {
-    _createVertexBuffer(node);
-    _createIndexBuffer(node);
-    _nodes.push_back(node);
-}
-
-void ResourceManager::createDescriptorSet() 
-{
-    
+    _createVertexBuffers(drawable);
+    _createIndexBuffer(drawable);
+    _nodes.push_back(drawable);
 }
 
 vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()
@@ -108,11 +103,10 @@ void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
     _endSingleTimeCommand(commandBuffer);
 }
 
-
-void ResourceManager::_createVertexBuffer(std::shared_ptr<Drawable> node)
+void ResourceManager::_createVertexBuffer(std::shared_ptr<Drawable> drawable, vk::DeviceSize size, void *data_)
 {
-    vk::DeviceSize size = sizeof(node->mesh->m_vertices[0]) * node->mesh->m_vertices.size();
-
+    vk::Buffer buffer;
+    VmaAllocation bufferMemory;
     vk::BufferCreateInfo bufferInfo({
         {},
         size,
@@ -121,11 +115,10 @@ void ResourceManager::_createVertexBuffer(std::shared_ptr<Drawable> node)
         1,
         &_graphicsQueueFamilyIndex
     });
-    
 
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    //vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&node->vertexBuffer), &node->vertexBufferMemory, nullptr);
+    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&buffer), &bufferMemory, nullptr);
 
     vk::Buffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
@@ -144,17 +137,30 @@ void ResourceManager::_createVertexBuffer(std::shared_ptr<Drawable> node)
 
     void* data;
     vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, node->mesh->m_vertices.data(), (size_t)size);
+    memcpy(data, data_, (size_t)size);
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-    //_copyBuffer(stagingBuffer, node->vertexBuffer, size);
+    _copyBuffer(stagingBuffer, buffer, size);
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+
+    drawable->vertexBuffers.push_back(std::move(buffer));
+    drawable->vertexBufferMemorys.push_back(std::move(bufferMemory));
+    drawable->vertexBufferOffsets.push_back(vk::DeviceSize(0));
 }
 
-void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> node)
+void ResourceManager::_createVertexBuffers(std::shared_ptr<Drawable> drawable)
 {
-    VkDeviceSize size = node->mesh->m_indexNum * node->mesh->getIndexSize();
+    vk::DeviceSize size = sizeof(drawable->mesh->m_positions[0]) * drawable->mesh->m_positions.size();
+    _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_positions.data()));
+
+    size = sizeof(drawable->mesh->m_normals[0]) * drawable->mesh->m_normals.size();
+    _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_normals.data()));
+}
+
+void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)
+{
+    VkDeviceSize size = drawable->mesh->m_indexNum * drawable->mesh->getIndexSize();
 
     vk::BufferCreateInfo bufferInfo({
         {},
@@ -166,7 +172,7 @@ void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> node)
     });
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    //vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&node->indexBuffer), &node->indexBufferMemory, nullptr);
+    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&drawable->indexBuffer), &drawable->indexBufferMemory, nullptr);
 
     vk::Buffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
@@ -185,10 +191,10 @@ void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> node)
 
     void* data;
     vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, node->mesh->m_indices, (size_t)size);
+    memcpy(data, drawable->mesh->m_indices, (size_t)size);
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-    //_copyBuffer(stagingBuffer, node->indexBuffer, size);
+    _copyBuffer(stagingBuffer, drawable->indexBuffer, size);
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }

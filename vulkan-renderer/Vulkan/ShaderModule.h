@@ -13,7 +13,7 @@ public:
   vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() { return _stageCreateInfo; }
 
   void LoadFromFile(const std::string& filename);
-  void Build();
+  void Build(vk::ShaderStageFlagBits stage, const char *entry);
 private:
     PipelineId                              _id;
     vk::ShaderModule                        _shaderModule;

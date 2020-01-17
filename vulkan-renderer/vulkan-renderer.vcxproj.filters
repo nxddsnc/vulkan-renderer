@@ -54,9 +54,6 @@
     <ClCompile Include="MyTexture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="MyScene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -64,9 +61,6 @@
       <Filter>源文件\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Vulkan\VulkanRenderer.cpp">
-      <Filter>源文件\Vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="Vulkan\GraphicsPipeline.cpp">
       <Filter>源文件\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Vulkan\RenderPass.cpp">
@@ -114,9 +108,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MyTexture.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Drawable.h">

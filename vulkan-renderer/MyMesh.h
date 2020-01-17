@@ -24,7 +24,7 @@ enum class Mode : uint8_t {
 class MyMesh
 {
 public:
-    MyMesh(uint32_t vertexSize, uint32_t indexSize);
+    MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize);
     ~MyMesh();
 
     int getIndexSize();

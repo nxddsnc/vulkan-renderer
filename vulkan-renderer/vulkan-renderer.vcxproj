@@ -165,12 +165,10 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClCompile Include="MyMaterial.cpp" />
     <ClCompile Include="MyMesh.cpp" />
     <ClCompile Include="ModelLoader.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="MyTexture.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
-    <ClCompile Include="Vulkan\GraphicsPipeline.cpp" />
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />
     <ClCompile Include="Vulkan\RenderPass.cpp" />
@@ -187,7 +185,6 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />
     <ClInclude Include="ModelLoader.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Drawable.h" />
     <ClInclude Include="MyTexture.h" />
     <ClInclude Include="Platform.h" />

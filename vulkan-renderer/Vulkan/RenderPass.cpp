@@ -1,8 +1,9 @@
 #include "RenderPass.h"
 
-RenderPass::RenderPass()
+RenderPass::RenderPass(vk::Device *device)
 {
   _renderPass = nullptr;
+  _device = device; 
 }
 
 RenderPass::~RenderPass()
@@ -12,11 +13,6 @@ RenderPass::~RenderPass()
 void RenderPass::AddAttachment(vk::AttachmentDescription attachmentDescription)
 {
   _attachments.push_back(attachmentDescription);
-}
-
-void RenderPass::AddSubPass(vk::SubpassDescription subpass) 
-{
-  _subpasses.push_back(subpass);
 }
 
 vk::RenderPass RenderPass::Get() 
@@ -36,16 +32,38 @@ vk::RenderPass RenderPass::Get()
 	    {}
 	});
 
+    vk::AttachmentReference subpassColorAttachment({
+        0,
+        vk::ImageLayout::eColorAttachmentOptimal
+    });
+    vk::AttachmentReference subpassDepthStencilAttachment({
+        1,
+        vk::ImageLayout::eDepthStencilAttachmentOptimal
+    });
+
+    vk::SubpassDescription subpass({
+        {},
+        vk::PipelineBindPoint::eGraphics,
+        0,
+        {},
+        1,
+        &subpassColorAttachment,
+        {},
+        &subpassDepthStencilAttachment,
+        0,
+        {}
+    });
+
 	vk::RenderPassCreateInfo createInfo({
 		{},
 		static_cast<uint32_t>(_attachments.size()),
 		_attachments.data(),
-        static_cast<uint32_t>(_subpasses.size()),
-		_subpasses.data(),
+        1,
+		&subpass,
 		1,
 		&dependency
 	});
 
-	_renderPass = _device.createRenderPass(createInfo);
+	_renderPass = _device->createRenderPass(createInfo);
 	return _renderPass;
 }

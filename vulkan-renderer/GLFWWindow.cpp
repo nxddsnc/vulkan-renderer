@@ -2,7 +2,7 @@
 #include "Platform.h"
 #include "Window.h"
 #include <assert.h>
-#include "Renderer.h"
+#include "VulkanRenderer.h"
 #include "Shared.h"
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR

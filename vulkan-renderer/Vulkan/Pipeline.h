@@ -5,6 +5,15 @@ enum PipelineType
   MODEL
 };
 
+enum class PrimitiveMode : uint8_t {
+    Points = 0,         ///< Each vertex defines a separate point
+    Lines = 1,          ///< The first two vertices define the first segment, with subsequent pairs of vertices each defining one more segment
+    LineStrip = 3,      ///< The first vertex specifies the first segment¡¯s start point while the second vertex specifies the first segment¡¯s endpoint and the second segment¡¯s start point
+    Triangles = 4,      ///<
+    TriangleStrip = 5,  ///<
+    TriangleFan = 6     ///<
+};
+
 struct PipelineId
 {
   PipelineType type;
@@ -15,12 +24,12 @@ struct PipelineId
       union {
         struct
         {
-          unsigned int positionVertexData : 1;
-          unsigned int normalVertexData : 1;
-          unsigned int tangentVertexData : 1;
-          unsigned int countTexCoord : 2;
-          unsigned int countColor : 2;
-          unsigned int primitiveMode : 3;
+          uint8_t positionVertexData : 1;
+          uint8_t normalVertexData : 1;
+          uint8_t tangentVertexData : 1;
+          uint8_t countTexCoord : 2;
+          uint8_t countColor : 2;
+          PrimitiveMode primitiveMode : 3;
         } bits;
         uint32_t value;
       } info;
@@ -70,7 +79,6 @@ public:
     Pipeline(VulkanRenderer *renderer, PipelineId id);
     ~Pipeline();
 
-    vk::RenderPass GetRenderPass();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
     void InitModel();

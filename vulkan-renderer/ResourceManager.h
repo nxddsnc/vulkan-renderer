@@ -15,7 +15,8 @@ public:
 
     void createNodeResource(std::shared_ptr<Drawable> node);
 private:
-    void _createVertexBuffer(std::shared_ptr<Drawable> node);
+    void _createVertexBuffer(std::shared_ptr<Drawable> drawable, vk::DeviceSize size, void *data_);
+    void _createVertexBuffers(std::shared_ptr<Drawable> node);
     void _createIndexBuffer(std::shared_ptr<Drawable> node);
     vk::CommandBuffer _beginSingleTimeCommand();
     void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);

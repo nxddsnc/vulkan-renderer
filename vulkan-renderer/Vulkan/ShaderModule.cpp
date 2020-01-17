@@ -29,10 +29,14 @@ void ShaderModule::LoadFromFile(const std::string& filename)
   file.close();
 }
 
-void ShaderModule::Build() 
+void ShaderModule::Build(vk::ShaderStageFlagBits stage, const char *entry)
 {
-  vk::ShaderModuleCreateInfo createInfo = {};
-	createInfo.codeSize = _data.size();
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(_data.data());
-    _shaderModule = _device->createShaderModule(&createInfo, nullptr);
+    vk::ShaderModuleCreateInfo createInfo = {};
+    createInfo.codeSize = _data.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(_data.data());
+    _shaderModule = _device->createShaderModule(createInfo);
+
+    _stageCreateInfo.stage = stage;
+    _stageCreateInfo.module = _shaderModule;
+    _stageCreateInfo.pName = entry;
 }

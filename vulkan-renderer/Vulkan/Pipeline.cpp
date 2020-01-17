@@ -15,7 +15,7 @@ Pipeline::~Pipeline()
 
 void Pipeline::_addInputBinding(uint32_t stride, vk::VertexInputRate inputRate)
 {
-  const vk::VertexInputBindingDescription inputBinding({_inputBindings.size(),
+  const vk::VertexInputBindingDescription inputBinding({static_cast<uint32_t>(_inputBindings.size()),
                                                         stride,
                                                         inputRate});
   _inputBindings.push_back(std::move(inputBinding));
@@ -42,93 +42,91 @@ vk::DescriptorSetLayout Pipeline::_createDescriptorSetLayout(std::vector<vk::Des
 
 void Pipeline::InitModel()
 {
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
   // set shader state
   {
     vk::Device device = _renderer->GetVulkanDevice();
     ShaderModule vertexShader(&device, _id);
     vertexShader.LoadFromFile("Shaders/basic_vert.spv");
-    vertexShader.Build();
+    vertexShader.Build(vk::ShaderStageFlagBits::eVertex, "main");
 
     ShaderModule fragmentShader(&device, _id);
-    fragmentShader.LoadFromFile("Sahders/basic_frag.spv");
-    fragmentShader.Build();
+    fragmentShader.LoadFromFile("Shaders/basic_frag.spv");
+    fragmentShader.Build(vk::ShaderStageFlagBits::eFragment, "main");
 
-    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
     shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
   }
 
   // set vertex input state
+  _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+  _addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
+
+  // We always have normal
+  _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+  _addAttributes(1, 1, vk::Format::eR32G32B32Sfloat, 0);
+
+  // Set vertex data attributes for dynamic attributes
+  if (_id.model.primitivePart.info.bits.tangentVertexData)
   {
-    _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-    _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-
-    // We always have normal
-    _addInputBinding(sizeof(Math::Vec3f), vk::VertexInputRate::eVertex);
-    _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-
-    // Set vertex data attributes for dynamic attributes
-    if (_id.model.primitivePart.info.bits.tangentVertexData)
-    {
-      _addInputBinding(sizeof(Math::Vec3f), vk::VertexInputRate::eVertex);
-      _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-    }
-
-    for (uint8_t i = 0; i < primitivePart.countTexCoord; ++i)
-    {
-      _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
-      // _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-    }
-
-    for (uint8_t i = 0; i < primitivePart.countColor; ++i)
-    {
       _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-      _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-    }
-
-    vk::PipelineVertexInputStateCreateInfo vertexInputInfo({{},
-                                                            _inputBindings.size(),
-                                                            _inputBindings.data(),
-                                                            _inputAttributes.size(),
-                                                            _inputAttributes.data()});
+      _addAttributes(2, 2, vk::Format::eR32G32B32Sfloat, 0);
   }
+
+  //for (uint8_t i = 0; i < primitivePart.countTexCoord; ++i)
+  //{
+  //  _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
+  //  // _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+  //}
+
+  //for (uint8_t i = 0; i < primitivePart.countColor; ++i)
+  //{
+  //  _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+  //  _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
+  //}
+
+  vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
+                                                          static_cast<uint32_t>(_inputBindings.size()),
+                                                          _inputBindings.data(),
+                                                          static_cast<uint32_t>(_inputAttributes.size()),
+                                                          _inputAttributes.data() });
 
   // Set input assembly state
   vk::PipelineInputAssemblyStateCreateInfo assemblyInfo;
   vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
   switch (_id.model.primitivePart.info.bits.primitiveMode)
   {
-  case Render::Mesh::PrimitiveSet::Mode::Points:
-    assemblyInfo = vk::PrimitiveTopology::ePointList;
+  case PrimitiveMode::Points:
+    assemblyInfo.topology = vk::PrimitiveTopology::ePointList;
     polygonMode = vk::PolygonMode::ePoint;
     break;
-  case Render::Mesh::PrimitiveSet::Mode::Lines:
-    assemblyInfo = vk::PrimitiveTopology::eLineList;
+  case PrimitiveMode::Lines:
+    assemblyInfo.topology = vk::PrimitiveTopology::eLineList;
     polygonMode = vk::PolygonMode::eLine;
     break;
-  case Render::Mesh::PrimitiveSet::Mode::LineStrip:
-    assemblyInfo = vk::PrimitiveTopology::eLineStrip;
+  case PrimitiveMode::LineStrip:
+    assemblyInfo.topology = vk::PrimitiveTopology::eLineStrip;
     polygonMode = vk::PolygonMode::eLine;
     break;
-  case Render::Mesh::PrimitiveSet::Mode::Triangles:
-    assemblyInfo = vk::PrimitiveTopology::eTriangleList;
+  case PrimitiveMode::Triangles:
+    assemblyInfo.topology = vk::PrimitiveTopology::eTriangleList;
     break;
-  case Render::Mesh::PrimitiveSet::Mode::TriangleStrip:
-    assemblyInfo = vk::PrimitiveTopology::eTriangleStip;
+  case PrimitiveMode::TriangleStrip:
+    assemblyInfo.topology = vk::PrimitiveTopology::eTriangleStrip;
     break;
-  case Render::Mesh::PrimitiveSet::Mode::TriangleFan:
-    assemblyInfo = vk::PrimitiveTopology::eTriangleFan;
+  case PrimitiveMode::TriangleFan:
+    assemblyInfo.topology = vk::PrimitiveTopology::eTriangleFan;
     break;
   }
 
   uint32_t width, height;
-  _renderer.GetExtendSize(width, height);
+  _renderer->GetExtendSize(width, height);
   // Set viewport state
   const vk::Viewport viewport{
       /* viewport.x */ 0.0f,
       /* viewport.y */ 0.0f,
-      /* viewport.width */ width,
-      /* viewport.height */ height,
+      /* viewport.width */  (float)width,
+      /* viewport.height */ (float)height,
       /* viewport.minDepth */ 0.0f,
       /* viewport.maxDepth */ 1.0f,
   };
@@ -141,16 +139,16 @@ void Pipeline::InitModel()
                                                      1,
                                                      &viewport,
                                                      1,
-                                                     &sissor});
+                                                     &scissor});
 
   // Rasterizer
   vk::PipelineRasterizationStateCreateInfo rasterizerState({{},
-                                                            std::static_cast<vk::Bool32>(false),
-                                                            std::static_cast<Bool32>(false),
+                                                            static_cast<vk::Bool32>(false),
+                                                            static_cast<vk::Bool32>(false),
                                                             polygonMode,
                                                             vk::CullModeFlagBits::eBack,
                                                             vk::FrontFace::eCounterClockwise,
-                                                            std::static_cast<Bool32>(false),
+                                                            static_cast<vk::Bool32>(false),
                                                             0.0f,
                                                             0.0f,
                                                             0.0f,
@@ -159,53 +157,52 @@ void Pipeline::InitModel()
   // Multisampling
   vk::PipelineMultisampleStateCreateInfo multisampling({{},
                                                         vk::SampleCountFlagBits::e1,
-                                                        std::static_cast<vk::Bool32>(false),
-                                                        float minSampleShading_ = {},
+                                                        static_cast<vk::Bool32>(false),
                                                         {},
-                                                        std::static_cast<vk::Bool32>(false),
-                                                        std::static_cast<vk::Bool32>(false)});
+                                                        {},
+                                                        static_cast<vk::Bool32>(false),
+                                                        static_cast<vk::Bool32>(false)});
 
   // Color blending
-  vk::PipelineColorBlendAttachmentState colorBlendAttachment({std::static_cast<vk::Bool32>(false),
+  vk::PipelineColorBlendAttachmentState colorBlendAttachment({static_cast<vk::Bool32>(false),
                                                               vk::BlendFactor::eOne,
                                                               vk::BlendFactor::eZero,
                                                               vk::BlendOp::eAdd,
                                                               vk::BlendFactor::eOne,
                                                               vk::BlendFactor::eZero,
                                                               vk::BlendOp::eAdd,
-                                                              vk::ColorComponentFlagBits::eR || vk::ColorComponentFlagBits::eG || vk::ColorComponentFlagBits::eB || vk::ColorComponentFlagBits::eA});
+                                                              vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA});
 
   std::array<float, 4> blendConsts = {0, 0, 0, 0};
   vk::PipelineColorBlendStateCreateInfo colorBlending({{},
-                                                       std::static_cast<vk::Bool32>(false),
+                                                       static_cast<vk::Bool32>(false),
                                                        vk::LogicOp::eCopy,
                                                        1,
                                                        &colorBlendAttachment,
                                                        blendConsts});
 
   // Depth and stencil testing
-  vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({vk::PipelineDepthStencilStateCreateFlags flags_ = {},
-                                                                       std::static_cast<vk::Bool32>(true),
-                                                                       std::static_cast<vk::Bool32>(true),
+  vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({{},
+                                                                       static_cast<vk::Bool32>(true),
+                                                                       static_cast<vk::Bool32>(true),
                                                                        vk::CompareOp::eLess,
-                                                                       std::static_cast<vk::Bool32>(false),
-                                                                       std::static_cast<vk::Bool32>(false),
+                                                                       static_cast<vk::Bool32>(false),
+                                                                       static_cast<vk::Bool32>(false),
                                                                        {},
                                                                        {},
                                                                        0.0f,
                                                                        1.0f});
 
   // descriptor set layout
-  {
-    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
-    // camera uniform buffer
-    vk::DescriptorSetLayoutBinding cameraBinding({0,
-                                                  vk::DescriptorType::eUniformBuffer,
-                                                  1,
-                                                  vk::ShaderStageFlagBits::eVertex,
-                                                  {}});
+  std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+  // camera uniform buffer
+  vk::DescriptorSetLayoutBinding cameraBinding({ 0,
+                                                vk::DescriptorType::eUniformBuffer,
+                                                1,
+                                                vk::ShaderStageFlagBits::eVertex,
+                                                {} });
 
-    descriptorSetLayouts.push_back(_createDescriptorSetLayout({cameraBinding}));
+  descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
   //   {
   //     if (_id.model.materialPart.info.bits.baseColorInfo)
@@ -233,42 +230,37 @@ void Pipeline::InitModel()
   //   }
   //   _frameDescriptorSetLayout = descriptorSetLayouts[0];
   //   _materialDescriptorSetLayout = descriptorSetLayouts[1];
-   }
+   //}
 
   // pipeline layout
-  vk::PipelineLayoutCreateInfo pipelineLayoutInfo({{},
-                                                   descriptorSetLayouts.size(),
+  vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
+                                                   static_cast<uint32_t>(descriptorSetLayouts.size()),
                                                    descriptorSetLayouts.data(),
                                                    0,
-                                                   {}});
-  _pipelineLayout = _device.createPipelineLayout(pipelineInfo);
+                                                   {} });
+  _pipelineLayout = _renderer->GetVulkanDevice().createPipelineLayout(pipelineLayoutInfo);
 
-
-  vk::GraphicsPipelineCreateInfo pipelineInfo({{},
-                                               shaderStages.size(),
+  vk::GraphicsPipelineCreateInfo pipelineInfo({ {},
+                                               static_cast<uint32_t>(shaderStages.size()),
                                                shaderStages.data(),
                                                &vertexInputInfo,
                                                &assemblyInfo,
                                                {},
                                                &viewportState,
                                                &rasterizerState,
-                                               &multiSampling,
+                                               &multisampling,
                                                &depthStencilStateCreateInfo,
-                                               colorBlending,
+                                               &colorBlending,
                                                {},
                                                _pipelineLayout,
                                                _renderer->GetRenderPass(),
-                                               uint32_t subpass_ = {},
                                                {},
-                                               {}});
+                                               {},
+                                               static_cast<int32_t>(-1)});
 
-  _graphicsPipeline = _device.createGraphicsPipeline(pipelineInfo);
+  _graphicsPipeline = _renderer->GetVulkanDevice().createGraphicsPipeline(nullptr, pipelineInfo);
 }
 
-vk::RenderPass Pipeline::GetRenderPass()
-{
-  return _renderPass;
-}
 vk::Pipeline Pipeline::GetPipeline()
 {
   return _graphicsPipeline;
