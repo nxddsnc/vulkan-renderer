@@ -179,11 +179,12 @@ public:
 
     void UpdateUniformBuffer() 
     {
-        matrices.perspective[1][1] *= -1;;
+        matrices.perspective[1][1] *= -1;
         void* data;
         vmaMapMemory(*_memoryAllocator, uniformBufferMemory, &data);
         memcpy(data, &matrices, sizeof(matrices));
         vmaUnmapMemory(*_memoryAllocator, uniformBufferMemory);
+        matrices.perspective[1][1] *= -1;
     }
     
     void update(float deltaTime)

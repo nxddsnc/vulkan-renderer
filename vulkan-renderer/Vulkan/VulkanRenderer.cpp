@@ -149,19 +149,19 @@ uint32_t VulkanRenderer::GetGraphicFamilyIndex()
     return _graphicsQueueFamilyIndex;
 }
 
-VkRenderPass VulkanRenderer::GetVulkanRenderPass()
+vk::RenderPass VulkanRenderer::GetVulkanRenderPass()
 {
     return _renderPass;
 }
 
-VkFramebuffer VulkanRenderer::GetActiveFramebuffer()
+vk::Framebuffer VulkanRenderer::GetActiveFramebuffer()
 {
     return _framesData[_activeSwapchainImageId].framebuffer;
 }
 
 uint32_t VulkanRenderer::GetSwapchainImageCount()
 {
-    return uint32_t();
+    return _swapchainImageCount;
 }
 
 vk::SurfaceFormatKHR VulkanRenderer::GetSurfaceFormat()

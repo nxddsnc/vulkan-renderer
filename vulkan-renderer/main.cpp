@@ -51,7 +51,7 @@ void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
     float wheelDelta = yoffset;
-    renderer->GetCamera()->translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f));
+    renderer->GetCamera()->translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * 20));
 }
 
 void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
@@ -64,7 +64,7 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
     
     VulkanCamera *camera = renderer->GetCamera();
     if (camera->keys.left) {
-        camera->rotate(glm::vec3(dy * camera->rotationSpeed, -dx * camera->rotationSpeed, 0.0f));
+        camera->rotate(glm::vec3(-dy * camera->rotationSpeed, 0.0f, -dx * camera->rotationSpeed));
     }
 }
 

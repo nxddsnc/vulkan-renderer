@@ -50,8 +50,8 @@ public:
     vk::PhysicalDeviceProperties GetPhycicalDeviceProperties();
     vk::PhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties();
     uint32_t GetGraphicFamilyIndex();
-    VkRenderPass GetVulkanRenderPass();
-    VkFramebuffer GetActiveFramebuffer();
+    vk::RenderPass GetVulkanRenderPass();
+    vk::Framebuffer GetActiveFramebuffer();
     uint32_t GetSwapchainImageCount();
     vk::SurfaceFormatKHR GetSurfaceFormat();
     vk::Format GetDepthFormat();
@@ -69,7 +69,7 @@ private:
     void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
     
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
-
+    
     void _initSwapchain();
     void _deInitSwapchain();
 
@@ -79,7 +79,6 @@ private:
     void _initDepthStencilImage();
     void _deInitDepthStencilImage();
 
-    vk::Framebuffer _createFramebuffer(vk::RenderPass renderPass); 
     void _initFramebuffers();
     void _deInitFramebuffers();
 
