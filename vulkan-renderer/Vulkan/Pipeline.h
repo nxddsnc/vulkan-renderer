@@ -79,6 +79,7 @@ public:
     Pipeline(VulkanRenderer *renderer, PipelineId id);
     ~Pipeline();
 
+    void Destroy();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
     void InitModel();

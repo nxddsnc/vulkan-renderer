@@ -7,8 +7,10 @@ PipelineManager::PipelineManager(VulkanRenderer *vulkanRenderer)
 
 PipelineManager::~PipelineManager()
 {
-    // Force pipeline  deconstruct.
-    _pipelines.clear();
+    for (auto it : _pipelines)
+    {
+        it.second->Destroy();
+    }
 }
 
 std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id)

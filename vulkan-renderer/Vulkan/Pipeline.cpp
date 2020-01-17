@@ -11,6 +11,11 @@ Pipeline::Pipeline(VulkanRenderer *renderer, PipelineId id)
 
 Pipeline::~Pipeline()
 {
+   
+}
+
+void Pipeline::Destroy()
+{
     _renderer->GetVulkanDevice().destroyPipeline(_graphicsPipeline);
     _renderer->GetVulkanDevice().destroyPipelineLayout(_pipelineLayout);
 }
@@ -259,6 +264,11 @@ void Pipeline::InitModel()
                                                  static_cast<int32_t>(-1) });
 
     _graphicsPipeline = _renderer->GetVulkanDevice().createGraphicsPipeline(nullptr, pipelineInfo);
+
+    for (auto descriptorSetLayout : descriptorSetLayouts)
+    {
+        _renderer->GetVulkanDevice().destroyDescriptorSetLayout(descriptorSetLayout);
+    }
 }
 
 vk::Pipeline Pipeline::GetPipeline()

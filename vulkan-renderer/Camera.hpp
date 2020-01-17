@@ -173,6 +173,8 @@ public:
             {}
         });
         device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+
+        device.destroyDescriptorSetLayout(descriptorSetLayout);
     }
 
     void UpdateUniformBuffer() 
