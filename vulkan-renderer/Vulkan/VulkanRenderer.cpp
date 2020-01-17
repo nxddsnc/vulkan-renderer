@@ -76,9 +76,10 @@ VulkanRenderer::~VulkanRenderer()
 
 	delete _resourceManager;
     delete _pipelineManager;
-	vmaDestroyAllocator(_memoryAllocator);
+    delete _camera;
 
-	delete _camera;
+    vmaDestroyAllocator(_memoryAllocator);
+
 	delete _context;
 }
 

@@ -14,11 +14,14 @@ ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPoo
 
 ResourceManager::~ResourceManager()
 {
-   /* for (auto drawable : _nodes)
+    for (auto drawable : _nodes)
     {
-        vmaDestroyBuffer(_memoryAllocator, drawable->vertexBuffer, drawable->vertexBufferMemory);
+        for (int i = 0; i < drawable->vertexBuffers.size(); ++i)
+        {
+            vmaDestroyBuffer(_memoryAllocator, drawable->vertexBuffers[i], drawable->vertexBufferMemorys[i]);
+        }
         vmaDestroyBuffer(_memoryAllocator, drawable->indexBuffer, drawable->indexBufferMemory);
-    }*/
+    }
 }
 
 void ResourceManager::createNodeResource(std::shared_ptr<Drawable> drawable)
