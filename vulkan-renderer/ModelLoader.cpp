@@ -12,7 +12,7 @@
 #include <memory>
 #include "MyImage.h"
 #include <stdio.h>
-
+#include "Utils.h"
 
 ModelLoader::ModelLoader(MyScene *scene)
 {
@@ -26,6 +26,7 @@ ModelLoader::~ModelLoader()
 
 bool ModelLoader::load(const char * filepath)
 {
+    m_baseDirectory = GetFileDirectory(filepath);
     // Create an instance of the Importer class
     Assimp::Importer importer;
     // And have it read the given file with some example postprocessing
@@ -64,10 +65,12 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
     {
         // extract mesh
         auto mesh = _extractMesh(node->mMeshes[i]);
-        std::shared_ptr<Drawable> myNode = std::make_shared<Drawable>();
-        myNode->mesh = mesh;
-        myNode->matrix = matrix;
-        m_pScene->AddDrawable(myNode);
+        auto material = _extractMaterial(m_pAiScene->mMeshes[node->mMeshes[i]]->mMaterialIndex);
+        std::shared_ptr<Drawable> drawable = std::make_shared<Drawable>();
+        drawable->mesh = mesh;
+        drawable->material = material;
+        drawable->matrix = matrix;
+        m_pScene->AddDrawable(drawable);
     }
 
     for (int i = 0; i < node->mNumChildren; ++i)
@@ -232,22 +235,22 @@ std::shared_ptr<MyTexture> ModelLoader::_extractTexture(char *texturePath, int t
         myTexture->m_pImage = _extractImage(texturePath);
 
         m_textureMap.insert(std::make_pair(textureKey, myTexture));
+       
+        return myTexture;
     }
 }
 
-std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filePath)
+std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filename)
 {
-    if (m_imageMap.count(filePath) > 0)
+    if (m_imageMap.count(filename) > 0)
     {
-        return m_imageMap.at(filePath);
+        return m_imageMap.at(filename);
     }
     else
     {
-        const aiTexture *texture = m_pAiScene->GetEmbeddedTexture(filePath);
-        std::shared_ptr<MyImage> image = std::make_shared<MyImage>(filePath);
+        const aiTexture *texture = m_pAiScene->GetEmbeddedTexture(filename);
+        std::shared_ptr<MyImage> image = std::make_shared<MyImage>(filename);
         int width, height, components;
-        char filename[512];
-        char filepath[512];
         unsigned char *imageData = nullptr;
         if (texture != NULL) {
             //returned pointer is not null, read texture from memory
@@ -264,14 +267,20 @@ std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filePath)
         }
         else
         {
-            FILE *file = std::fopen(filePath, "r");
+            char filePath[1024];
+            std::sprintf(filePath, "%s/%s", m_baseDirectory.c_str(), filename);
+            FILE *file = std::fopen(filePath, "rb");
+            if (file == nullptr)
+            {
+                return nullptr;
+            }
             image->m_data = stbi_load_from_file(file, &width, &height, &components, 0);
         }
         image->m_width = width;
         image->m_height = height;
         image->m_channels = components;
 
-        m_imageMap.insert(std::make_pair(filePath, image));
+        m_imageMap.insert(std::make_pair(filename, image));
 
         return image;
     }

@@ -61,6 +61,8 @@ private:
     const aiScene     *m_pAiScene;
     MyScene           *m_pScene;
 
+    std::string        m_baseDirectory;
+
     std::unordered_map<unsigned int, std::shared_ptr<MyMesh>>       m_meshMap;
     std::unordered_map<unsigned int, std::shared_ptr<MyMaterial>>   m_materialMap;
     std::unordered_map<TextureKey, std::shared_ptr<MyTexture>>     m_textureMap;

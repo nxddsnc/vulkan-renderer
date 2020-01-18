@@ -193,6 +193,7 @@ glslc Shaders/basic.frag -o Shaders/basic_frag.spv</Command>
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="Vulkan\GraphicsPipeline.h" />
     <ClInclude Include="Vulkan\Pipeline.h" />
     <ClInclude Include="Vulkan\PipelineManager.h" />
