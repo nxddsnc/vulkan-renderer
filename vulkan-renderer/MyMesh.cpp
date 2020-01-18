@@ -17,13 +17,13 @@ MyMesh::MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize)
     {
         m_tangents.resize(vertexSize);
     }
+    if (vertexBits.hasTexCoord0)
+    {
+        m_texCoords0.resize(vertexSize);
+    }
     if (vertexBits.hasTexCoord1)
     {
         m_texCoords1.resize(vertexSize);
-    }
-    if (vertexBits.hasTexCoord2)
-    {
-        m_texCoords2.resize(vertexSize);
     }
     if (vertexBits.hasColor)
     {

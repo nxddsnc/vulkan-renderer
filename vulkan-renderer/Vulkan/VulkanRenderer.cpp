@@ -701,9 +701,10 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
         id.model.primitivePart.info.bits.positionVertexData = 1;
         id.model.primitivePart.info.bits.normalVertexData = 1;
         id.model.primitivePart.info.bits.tangentVertexData = drawable->mesh->m_vertexBits.hasTangent;
-        id.model.primitivePart.info.bits.countTexCoord = 0;
+        id.model.primitivePart.info.bits.countTexCoord = drawable->mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
         id.model.primitivePart.info.bits.countColor = drawable->mesh->m_vertexBits.hasColor;
         id.model.materialPart.info.bits.baseColorInfo = 1;
+        id.model.materialPart.info.bits.hasColor
         id.type = MODEL;
         if (_drawableMap.count(id) == 0) 
         {
