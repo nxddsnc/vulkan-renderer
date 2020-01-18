@@ -75,6 +75,9 @@
     <ClCompile Include="Vulkan\ShaderModule.cpp">
       <Filter>源文件\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="MyImage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -136,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="Vulkan\ShaderModule.h">
       <Filter>头文件\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="MyImage.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

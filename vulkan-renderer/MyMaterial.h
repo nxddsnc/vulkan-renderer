@@ -1,17 +1,18 @@
 #include <glm/glm.hpp>
 #include <memory>
-
+#include <string>
 class MyTexture;
 #pragma once
 class MyMaterial
 {
 public:
-    MyMaterial();
+    MyMaterial(std::string name);
     ~MyMaterial();
-private:
-    glm::vec3                    _diffuse;
-    float                        _transparent;
-    std::shared_ptr<MyTexture*>  _diffuseMap;
-    std::shared_ptr<MyTexture*>  _normalMap;
+public:
+    std::string                  m_name;
+    glm::vec3                    m_diffuse;
+    float                        m_opacity;
+    std::shared_ptr<MyTexture>  m_pDiffuseMap;
+    std::shared_ptr<MyTexture>  m_pNormalMap;
 };
 

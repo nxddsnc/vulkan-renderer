@@ -8,7 +8,7 @@ enum PipelineType
 enum class PrimitiveMode : uint8_t {
     Points = 0,         ///< Each vertex defines a separate point
     Lines = 1,          ///< The first two vertices define the first segment, with subsequent pairs of vertices each defining one more segment
-    LineStrip = 3,      ///< The first vertex specifies the first segment¡¯s start point while the second vertex specifies the first segment¡¯s endpoint and the second segment¡¯s start point
+    LineStrip = 3,      ///< The first vertex specifies the first segmentï¿½ï¿½s start point while the second vertex specifies the first segmentï¿½ï¿½s endpoint and the second segmentï¿½ï¿½s start point
     Triangles = 4,      ///<
     TriangleStrip = 5,  ///<
     TriangleFan = 6     ///<
@@ -51,13 +51,13 @@ struct PipelineId
     } materialPart;
   } model;
 
-  bool operator==(PipelineId const & rhs) const VULKAN_HPP_NOEXCEPT
+  bool operator==(PipelineId const & rhs) const
   {
       return model.materialPart.info.value == rhs.model.materialPart.info.value &&
           model.primitivePart.info.value == rhs.model.primitivePart.info.value;
   }
 
-  bool operator!=(PipelineId const & rhs) const VULKAN_HPP_NOEXCEPT
+  bool operator!=(PipelineId const & rhs) const
   {
       return model.materialPart.info.value != rhs.model.materialPart.info.value ||
           model.primitivePart.info.value != rhs.model.primitivePart.info.value;

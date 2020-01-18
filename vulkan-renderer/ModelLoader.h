@@ -11,6 +11,36 @@ struct aiMaterial;
 class MyMesh;
 class MyMaterial;
 class MyTexture;
+class MyImage;
+
+struct TextureKey
+{
+    int  wrapMode[3];
+    char fileName[1024];
+
+    bool operator==(TextureKey const &textureKey) const 
+    {
+        return std::strcmp(fileName, textureKey.fileName) == 0 &&
+                        wrapMode[0] == textureKey.wrapMode[0] &&
+                        wrapMode[1] == textureKey.wrapMode[1] && 
+                        wrapMode[2] == textureKey.wrapMode[2];
+    }
+
+    bool operator!=(TextureKey const &textureKey) const 
+    {
+        return std::strcmp(fileName, textureKey.fileName) != 0 ||
+                        wrapMode[0] != textureKey.wrapMode[0] ||
+                        wrapMode[1] != textureKey.wrapMode[1] ||
+                        wrapMode[2] != textureKey.wrapMode[2];
+    }
+};
+template<> struct std::hash<TextureKey> {
+    size_t operator()(const TextureKey& textureKey) const {
+        // TODO: use more appropriate hash value
+        return std::hash<uint32_t>()(std::strlen(textureKey.fileName) + 
+                                    (textureKey.wrapMode[0] + textureKey.wrapMode[1] << 2 + textureKey.wrapMode[2] << 4) << 10);
+    }
+};
 
 class ModelLoader
 {
@@ -25,12 +55,15 @@ private:
     void _extractTransform(glm::mat4 &transform, void *aiMatrix);
     std::shared_ptr<MyMesh> _extractMesh(unsigned int idx);
     std::shared_ptr<MyMaterial> _extractMaterial(unsigned int idx);
+    std::shared_ptr<MyTexture> _extractTexture(char *texturePath, int textureWrapMode[3]);
+    std::shared_ptr<MyImage> _extractImage(char *filePath);
 private:
-    const aiScene     *_scene;
-    MyScene           *m_scene;
+    const aiScene     *m_pAiScene;
+    MyScene           *m_pScene;
 
-    std::unordered_map<unsigned int, std::shared_ptr<MyMesh>> _meshMap;
-    std::unordered_map<unsigned int, std::shared_ptr<MyMaterial>> _materialMap;
-    std::unordered_map<unsigned int, std::shared_ptr<MyTexture>> _textureMap;
+    std::unordered_map<unsigned int, std::shared_ptr<MyMesh>>       m_meshMap;
+    std::unordered_map<unsigned int, std::shared_ptr<MyMaterial>>   m_materialMap;
+    std::unordered_map<TextureKey, std::shared_ptr<MyTexture>>     m_textureMap;
+    std::unordered_map<std::string, std::shared_ptr<MyImage>>       m_imageMap;
 };
 

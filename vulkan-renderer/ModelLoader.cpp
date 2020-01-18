@@ -8,10 +8,15 @@
 #include "MyMaterial.h"
 #include "MyTexture.h"
 #include "Drawable.h"
+#include "stb_image.h"
+#include <memory>
+#include "MyImage.h"
+#include <stdio.h>
+
 
 ModelLoader::ModelLoader(MyScene *scene)
 {
-    m_scene = scene;
+    m_pScene = scene;
 }
 
 
@@ -26,19 +31,19 @@ bool ModelLoader::load(const char * filepath)
     // And have it read the given file with some example postprocessing
     // Usually - if speed is not the most important aspect for you - you'll
     // probably to request more postprocessing than we do in this example.
-    _scene = importer.ReadFile(filepath,
+    m_pAiScene = importer.ReadFile(filepath,
         aiProcess_GenNormals |
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_SortByPType |
         aiProcess_RemoveRedundantMaterials);
     // If the import failed, report it
-    if (!_scene)
+    if (!m_pAiScene)
     {
         return false;
     }
 
-    _parseScene(_scene);
+    _parseScene(m_pAiScene);
     return true;
 }
 
@@ -62,7 +67,7 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
         std::shared_ptr<Drawable> myNode = std::make_shared<Drawable>();
         myNode->mesh = mesh;
         myNode->matrix = matrix;
-        m_scene->AddDrawable(myNode);
+        m_pScene->AddDrawable(myNode);
     }
 
     for (int i = 0; i < node->mNumChildren; ++i)
@@ -88,13 +93,13 @@ void ModelLoader::_extractTransform(glm::mat4 & transform, void * aiMatrix)
 
 std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
 {
-    if (_meshMap.count(idx) > 0)
+    if (m_meshMap.count(idx) > 0)
     {
-        return _meshMap.at(idx);
+        return m_meshMap.at(idx);
     }
     else
     {
-        aiMesh *_mesh = _scene->mMeshes[idx];
+        aiMesh *_mesh = m_pAiScene->mMeshes[idx];
 
         VertexBits vertexBits;
         vertexBits.hasNormal    = _mesh->HasNormals();
@@ -160,39 +165,116 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
             }
         }
 
-        _meshMap.insert(std::make_pair(idx, mesh));
+        m_meshMap.insert(std::make_pair(idx, mesh));
         return mesh;
     }
 }
 
 std::shared_ptr<MyMaterial> ModelLoader::_extractMaterial(unsigned int idx)
 {
-    if (_materialMap.count(idx) > 0)
+    if (m_materialMap.count(idx) > 0)
     {
-        return _materialMap.at(idx);
+        return m_materialMap.at(idx);
     }
     else
     {
-        std::shared_ptr<MyMaterial> material = std::make_shared<MyMaterial>();
-
-        /*aiMaterial *material = _scene->mMaterials[mesh->mMaterialIndex];
+        aiMaterial *material = m_pAiScene->mMaterials[idx];
         aiString materialName;
         material->Get(AI_MATKEY_NAME, materialName);
-        sprintf_s(myMaterial->name, "%s_%d", materialName.data, m_materialMap.size());
+        std::shared_ptr<MyMaterial> myMaterial = std::make_shared<MyMaterial>(materialName.data);
 
-        printf("%s\n", myMaterial->name);
         aiColor3D diffuse;
         material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
-        material->Get(AI_MATKEY_OPACITY, myMaterial->tr);
-        myMaterial->kd[0] = diffuse.r;
-        myMaterial->kd[1] = diffuse.g;
-        myMaterial->kd[2] = diffuse.b;
-*/
-        _materialMap.insert(std::make_pair(idx, material));
+        material->Get(AI_MATKEY_OPACITY, myMaterial->m_opacity);
+        myMaterial->m_diffuse[0] = diffuse.r;
+        myMaterial->m_diffuse[1] = diffuse.g;
+        myMaterial->m_diffuse[2] = diffuse.b;
 
-        return material;
+        if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+        {
+            aiString texturePath;
+            int textureMapMode[3] = { aiTextureMapMode_Wrap };
+            aiReturn res = material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath, NULL, NULL, NULL, NULL,
+                reinterpret_cast<aiTextureMapMode*>(textureMapMode));
+            myMaterial->m_pDiffuseMap = _extractTexture(texturePath.data, textureMapMode);
+        }
+        if (material->GetTextureCount(aiTextureType_NORMALS) > 0)
+        {
+            aiString texturePath;
+            int textureMapMode[3];
+            aiReturn res = material->GetTexture(aiTextureType_NORMALS, 0, &texturePath, NULL, NULL, NULL, NULL,
+                reinterpret_cast<aiTextureMapMode*>(textureMapMode));
+            myMaterial->m_pNormalMap = _extractTexture(texturePath.data, textureMapMode);
+        }
+        //TODO: load other types of texture later.
+
+        m_materialMap.insert(std::make_pair(idx, myMaterial));
+
+        return myMaterial;
     }
+}
 
+std::shared_ptr<MyTexture> ModelLoader::_extractTexture(char *texturePath, int textureWrapMode[3])
+{
+    TextureKey textureKey;
+    std::strcpy(textureKey.fileName, texturePath);
+    if (m_textureMap.count(textureKey) > 0)
+    {
+        return m_textureMap.at(textureKey);
+    }
+    else
+    {
+        std::shared_ptr<MyTexture> myTexture = std::make_shared<MyTexture>();
+        myTexture->m_wrapMode[0] = static_cast<WrapMode>(textureWrapMode[0]);
+        myTexture->m_wrapMode[1] = static_cast<WrapMode>(textureWrapMode[1]);
+        myTexture->m_wrapMode[2] = static_cast<WrapMode>(textureWrapMode[2]);
+
+        myTexture->m_pImage = _extractImage(texturePath);
+
+        m_textureMap.insert(std::make_pair(textureKey, myTexture));
+    }
+}
+
+std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filePath)
+{
+    if (m_imageMap.count(filePath) > 0)
+    {
+        return m_imageMap.at(filePath);
+    }
+    else
+    {
+        const aiTexture *texture = m_pAiScene->GetEmbeddedTexture(filePath);
+        std::shared_ptr<MyImage> image = std::make_shared<MyImage>(filePath);
+        int width, height, components;
+        char filename[512];
+        char filepath[512];
+        unsigned char *imageData = nullptr;
+        if (texture != NULL) {
+            //returned pointer is not null, read texture from memory
+            if (texture->mHeight == 0)
+            {
+                image->m_data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth,
+                    &width, &height, &components, 0);
+            }
+            else
+            {
+                image->m_data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth * texture->mHeight,
+                    &width, &height, &components, 0);
+            }
+        }
+        else
+        {
+            FILE *file = std::fopen(filePath, "r");
+            image->m_data = stbi_load_from_file(file, &width, &height, &components, 0);
+        }
+        image->m_width = width;
+        image->m_height = height;
+        image->m_channels = components;
+
+        m_imageMap.insert(std::make_pair(filePath, image));
+
+        return image;
+    }
 }
 
 
