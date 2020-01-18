@@ -4,11 +4,11 @@
 
 struct VertexBits
 {
-    VertexBits()  : hasNormal(true), hasTangent(false), hasTexCoord1(false),  hasTexCoord2(false), hasColor(false) {}
+    VertexBits()  : hasNormal(true), hasTangent(false), hasTexCoord0(false),  hasTexCoord1(false), hasColor(false) {}
     bool hasNormal    : 1;
     bool hasTangent   : 1;
+    bool hasTexCoord0 : 1;
     bool hasTexCoord1 : 1;
-    bool hasTexCoord2 : 1;
     bool hasColor     : 1;
 };
 
@@ -33,8 +33,8 @@ public:
     std::vector<glm::vec3>  m_positions;
     std::vector<glm::vec3>  m_normals;
     std::vector<glm::vec3>  m_tangents;
+    std::vector<glm::vec2>  m_texCoords0;
     std::vector<glm::vec2>  m_texCoords1;
-    std::vector<glm::vec2>  m_texCoords2;
     std::vector<glm::vec3>  m_colors;
     void                  * m_indices;
     uint32_t                m_vertexNum;

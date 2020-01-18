@@ -105,9 +105,9 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
         aiMesh *_mesh = m_pAiScene->mMeshes[idx];
 
         VertexBits vertexBits;
-        vertexBits.hasNormal    = _mesh->HasNormals();
-        // vertexBits.hasTangent   = _mesh->HasTangents();
-        // vertexBits.hasTexCoord1 = _mesh->HasTextureCoords(0);
+        vertexBits.hasNormal         = _mesh->HasNormals();
+        vertexBits.hasTangent        = _mesh->HasTangentsAndBitangents();
+        vertexBits.hasTexCoord0      = _mesh->HasTextureCoords(0);
         std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(vertexBits, _mesh->mNumVertices, _mesh->mNumFaces * 3);
 
         for (size_t i = 0; i < _mesh->mNumVertices; ++i)
@@ -127,12 +127,24 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
                 mesh->m_normals[i].z = normal.z;
             }
         }
-        // if (vertexBits.hasTexCoord1)
-        // {
-        //     aiVector3D uv = _mesh->mTextureCoords[0][i];
-        //     mesh->m_vertices[i].texCoord.x = uv.x;
-        //     mesh->m_vertices[i].texCoord.y = uv.y;
-        // }
+         if (vertexBits.hasTexCoord1)
+         {
+             for (size_t i = 0; i < _mesh->mNumVertices; ++i)
+             {
+                 aiVector3D uv = _mesh->mTextureCoords[0][i];
+                 mesh->m_texCoords0[i].x = uv.x;
+                 mesh->m_texCoords0[i].y = uv.y;
+             }
+         }
+         if (vertexBits.hasTangent)
+         {
+             for (size_t i = 0; i < _mesh->mNumVertices; ++i)
+             {
+                 aiVector3D tangent = _mesh->mTangents[i];
+                 mesh->m_tangents[i].x = tangent.x;
+                 mesh->m_tangents[i].y = tangent.y;
+             }
+         }
         if(mesh->m_indexType == 1)
         {
             uint8_t *indexPtr = reinterpret_cast<uint8_t*>(mesh->m_indices);
