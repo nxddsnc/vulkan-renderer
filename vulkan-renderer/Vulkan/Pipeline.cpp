@@ -70,16 +70,16 @@ void Pipeline::InitModel()
     _addAttributes(1, 1, vk::Format::eR32G32B32Sfloat, 0);
 
     // Set vertex data attributes for dynamic attributes
-    if (_id.model.primitivePart.info.bits.tangentVertexData)
-    {
-        _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-        _addAttributes(2, 2, vk::Format::eR32G32B32Sfloat, 0);
-    }
-
     if (_id.model.primitivePart.info.bits.countTexCoord > 0)
     {
         _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
-        _addAttributes(3, 3, vk::Format::eR32G32Sfloat, 0);
+        _addAttributes(2, 2, vk::Format::eR32G32Sfloat, 0);
+    }
+
+    if (_id.model.primitivePart.info.bits.tangentVertexData)
+    {
+        _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+        _addAttributes(3, 3, vk::Format::eR32G32B32Sfloat, 0);
     }
 
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},

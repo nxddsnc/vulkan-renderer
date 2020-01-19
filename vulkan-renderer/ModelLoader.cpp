@@ -127,7 +127,7 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
                 mesh->m_normals[i].z = normal.z;
             }
         }
-         if (vertexBits.hasTexCoord1)
+         if (vertexBits.hasTexCoord0)
          {
              for (size_t i = 0; i < _mesh->mNumVertices; ++i)
              {

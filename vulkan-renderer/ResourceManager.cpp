@@ -159,6 +159,17 @@ void ResourceManager::_createVertexBuffers(std::shared_ptr<Drawable> drawable)
 
     size = sizeof(drawable->mesh->m_normals[0]) * drawable->mesh->m_normals.size();
     _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_normals.data()));
+
+    if (drawable->mesh->m_texCoords0.size() > 0)
+    {
+        size = sizeof(drawable->mesh->m_texCoords0[0]) * drawable->mesh->m_texCoords0.size();
+        _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_texCoords0.data()));
+    }
+    if (drawable->mesh->m_tangents.size() > 0)
+    {
+        size = sizeof(drawable->mesh->m_tangents[0]) * drawable->mesh->m_tangents.size();
+        _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_tangents.data()));
+    }
 }
 
 void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)

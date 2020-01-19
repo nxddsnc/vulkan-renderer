@@ -10,16 +10,24 @@ enum ShaderStage
     TESSLATION,
     FRAGMENT,
 };
+
+namespace shaderc
+{
+    struct CompileOptions;
+}
 class ShaderModule
 {
 public:
-  ShaderModule(vk::Device *device, PipelineId id);
-  ~ShaderModule();
+    ShaderModule(vk::Device *device, PipelineId id);
+    ~ShaderModule();
 
-  vk::ShaderModule GetShaderModule() { return _shaderModule; };
-  vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() { return _stageCreateInfo; }
+    vk::ShaderModule GetShaderModule() { return _shaderModule; };
+    vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() { return _stageCreateInfo; }
 
-  void BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry);
+    void BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry);
+
+private:
+    void addShaderOptions(ShaderStage stage, shaderc::CompileOptions *option);
 private:
     PipelineId                              _id;
     vk::ShaderModule                        _shaderModule;
