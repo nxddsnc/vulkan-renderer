@@ -17,14 +17,15 @@ layout(location = IN_UV0_LOCATION) in vec2 inUv;
 layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 
-layout(location = 0) out vec3 fragColor;
+
+// varyings
+#if IN_UV0
+layout(location = IN_UV0_LOCATION) out vec2 outUv;
+#endif
 
 void main() {
     gl_Position = ubo.proj * ubo.view * vec4(inPosition, 1.0);
-    // fragColor = inNormal;
 #if IN_UV0
-    fragColor = vec3(inUv, 0.0);
-#else 
-    fragColor = vec3(1.0, 0.0, 0.0);
+    outUv = inUv;
 #endif
 }

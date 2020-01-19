@@ -9,11 +9,22 @@
 /* Minimum renderable node.*/
 /************************************************************************/
 class Pipeline;
+
+struct VulkanTexture
+{
+    vk::Image							image;
+    VmaAllocation						imageMemory;
+    vk::ImageView                       imageView;
+    vk::Sampler                         imageSampler;
+};
+
 struct Drawable
 {
     glm::mat4                     matrix;
     std::shared_ptr<MyMesh>       mesh;
     std::shared_ptr<MyMaterial>   material;
+
+    // buffers
     std::vector<vk::Buffer>       vertexBuffers;
     std::vector<vk::DeviceSize>   vertexBufferOffsets;
     std::vector<VmaAllocation>    vertexBufferMemorys;
@@ -22,5 +33,11 @@ struct Drawable
     std::shared_ptr<Pipeline>     pipeline;
     vk::DescriptorSet             materialDescriptorSet;
     vk::DescriptorSet             materialImageDescriptorSet;
+
+    // uniforms
+
+    // texture samplers
+    std::shared_ptr<VulkanTexture> baseColorTexture;
+    vk::DescriptorSet              textureDescriptorSet;
 };
 

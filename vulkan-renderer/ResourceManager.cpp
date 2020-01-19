@@ -2,8 +2,11 @@
 #include "Drawable.h"
 #include "MyMesh.h"
 #include "MyMaterial.h"
+#include "MyTexture.h"
+#include "MyImage.h"
 
-ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue, uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator)
+ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue,
+    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool)
 {
     _device         = device;
     _commandPool    = commandPool;
@@ -28,6 +31,7 @@ void ResourceManager::createNodeResource(std::shared_ptr<Drawable> drawable)
 {
     _createVertexBuffers(drawable);
     _createIndexBuffer(drawable);
+    _createTextures(drawable);
     _nodes.push_back(drawable);
 }
 
@@ -65,7 +69,6 @@ void ResourceManager::_endSingleTimeCommand(vk::CommandBuffer &commandBuffer)
     _graphicsQueue.waitIdle();
     _device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
 }
-
 
 void ResourceManager::_copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height)
 {
@@ -211,4 +214,201 @@ void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)
     _copyBuffer(stagingBuffer, drawable->indexBuffer, size);
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+}
+
+void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+{
+    vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
+
+    vk::ImageMemoryBarrier barrier({
+        {},
+        {},
+        oldLayout,
+        newLayout,
+        {},
+        {},
+        image,
+        vk::ImageSubresourceRange({
+        vk::ImageAspectFlagBits::eColor,
+        (uint32_t)0,
+        (uint32_t)1,
+        (uint32_t)0,
+        (uint32_t)1,
+    })
+    });
+
+    std::array<vk::ImageMemoryBarrier, 1> barriers = { barrier };
+
+
+    vk::PipelineStageFlagBits sourceStage;
+    vk::PipelineStageFlagBits destinationStage;
+
+    if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+        destinationStage = vk::PipelineStageFlagBits::eTransfer;
+    }
+    else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTransfer;
+        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
+    else {
+        throw std::invalid_argument("unsupported layout transition!");
+    }
+
+    commandBuffer.pipelineBarrier(sourceStage, destinationStage,
+        vk::DependencyFlagBits::eByRegion, nullptr, nullptr, barriers);
+
+    _endSingleTimeCommand(commandBuffer);
+}
+
+std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shared_ptr<MyTexture> texture)
+{
+    std::shared_ptr<MyImage> myImage = texture->m_pImage;
+    std::shared_ptr<VulkanTexture> vulkanTexture = std::make_shared<VulkanTexture>();
+
+    vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+    if (texture->m_pImage->m_channels == 3)
+    {
+        imageFormat = vk::Format::eR8G8B8Unorm;
+    }
+    // create image
+    vk::ImageCreateInfo imageCreateInfo( {},
+                                          vk::ImageType::e2D,
+                                          imageFormat,
+                                          vk::Extent3D({
+                                              static_cast<uint32_t>(myImage->m_width),
+                                              static_cast<uint32_t>(myImage->m_height),
+                                              1
+                                          }),
+                                          1,
+                                          1,
+                                          vk::SampleCountFlagBits::e1,
+                                          vk::ImageTiling::eOptimal,
+                                          vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+                                          vk::SharingMode::eExclusive,
+                                          1,
+                                          &_graphicsQueueFamilyIndex,
+                                          vk::ImageLayout::eUndefined);
+    VmaAllocationCreateInfo allocationCreateInfo = {};
+
+    allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    vmaCreateImage(_memoryAllocator, reinterpret_cast<VkImageCreateInfo*>(&imageCreateInfo), &allocationCreateInfo,
+        reinterpret_cast<VkImage*>(&(vulkanTexture->image)), &(vulkanTexture->imageMemory), nullptr);
+
+    // create image view
+    vk::ImageViewCreateInfo imageViewCreateInfo({
+        {},
+        vulkanTexture->image,
+        vk::ImageViewType::e2D,
+        imageFormat,
+        vk::ComponentMapping({
+            vk::ComponentSwizzle::eR,
+            vk::ComponentSwizzle::eG,
+            vk::ComponentSwizzle::eB,
+            {}
+        }),
+        vk::ImageSubresourceRange({
+            vk::ImageAspectFlagBits::eColor,
+            0,
+            1,
+            0,
+            1
+        })
+    });
+    vulkanTexture->imageView = _device.createImageView(imageViewCreateInfo);
+
+    // create image sampler
+    vk::SamplerCreateInfo createInfo({
+        {},
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        0.0,
+        vk::Bool32(true),
+        16.0,
+        vk::Bool32(false),
+        vk::CompareOp::eAlways,
+        0.0,
+        0.0,
+        vk::BorderColor::eFloatOpaqueWhite,
+        vk::Bool32(false)
+    });
+
+    vulkanTexture->imageSampler = _device.createSampler(createInfo);
+
+    // transfer data from RAM to GPU memory
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingBufferMemory;
+
+    VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    stagingBufferInfo.size = texture->m_pImage->m_width * texture->m_pImage->m_height * texture->m_pImage->m_channels;
+    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VmaAllocationCreateInfo stagingBufferAllocInfo = {};
+    stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
+
+    _transitionImageLayout(vulkanTexture->image, imageFormat,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    _copyBufferToImage(stagingBuffer, vulkanTexture->image,
+        static_cast<uint32_t>(texture->m_pImage->m_width), static_cast<uint32_t>(texture->m_pImage->m_height));
+    _transitionImageLayout(vulkanTexture->image, imageFormat,
+        vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+
+    return vulkanTexture;
+}
+
+void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
+{
+    if (drawable->material->m_pDiffuseMap)
+    {
+        drawable->baseColorTexture = _createCombinedTexture(drawable->material->m_pDiffuseMap);
+    }
+
+    vk::DescriptorSetLayout descriptorSetLayout;
+    vk::DescriptorSetLayoutBinding textureBinding({ 0,
+                                                   vk::DescriptorType::eCombinedImageSampler,
+                                                   1,
+                                                   vk::ShaderStageFlagBits::eFragment,
+                                                   {} });
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({ {},
+        1,
+        &textureBinding });
+    descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
+
+    vk::DescriptorSetAllocateInfo allocInfo({
+        _descriptorPool,
+        1,
+        &descriptorSetLayout
+    });
+    
+    _device.allocateDescriptorSets(&allocInfo, &drawable->textureDescriptorSet);
+
+
+    vk::DescriptorImageInfo imageInfo({ drawable->baseColorTexture->imageSampler,
+                                        drawable->baseColorTexture->imageView,
+                                        vk::ImageLayout::eShaderReadOnlyOptimal});
+
+
+    vk::WriteDescriptorSet descriptorWrite( drawable->textureDescriptorSet,
+                                            uint32_t(0),
+                                            uint32_t(0),
+                                            uint32_t(1),
+                                            vk::DescriptorType::eCombinedImageSampler,
+                                            &imageInfo,
+                                            {},
+                                            {} );
+    _device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+
+    _device.destroyDescriptorSetLayout(descriptorSetLayout);
 }

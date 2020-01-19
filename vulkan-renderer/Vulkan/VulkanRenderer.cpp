@@ -50,8 +50,6 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _camera->setRotation(glm::vec3(-45, 0, 45));
     _camera->setPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 10.0f);
 
-    _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator);
-
     _initSwapchain();
     _initSwapchainImages();
     _initDepthStencilImage();
@@ -59,6 +57,8 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _initDescriptorPool();
     _initDescriptorSet();
     _initSynchronizations();
+
+    _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool);
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -675,6 +675,7 @@ void VulkanRenderer::_createCommandBuffers()
 
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
+                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &drawable->textureDescriptorSet, 0, nullptr);
 
                     commandBuffer.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
                 }

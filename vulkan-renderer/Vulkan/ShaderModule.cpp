@@ -78,19 +78,16 @@ void ShaderModule::BuildFromFile(const std::string& filename, ShaderStage stage,
 
 void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions * options)
 {
-    if (stage == ShaderStage::VERTEX)
+    uint8_t bindings = 2;
+    if (_id.model.primitivePart.info.bits.countTexCoord)
     {
-        uint8_t bindings = 2;
-        if (_id.model.primitivePart.info.bits.countTexCoord)
-        {
-            options->AddMacroDefinition("IN_UV0", "1");
-            options->AddMacroDefinition("IN_UV0_LOCATION", std::to_string(bindings++));
-        }
-        if (_id.model.primitivePart.info.bits.tangentVertexData)
-        {
-            options->AddMacroDefinition("IN_TANGENT", "TRUE");
-            options->AddMacroDefinition("IN_TANGENT_LOCATION", std::to_string(bindings++));
-        }
+        options->AddMacroDefinition("IN_UV0", "1");
+        options->AddMacroDefinition("IN_UV0_LOCATION", std::to_string(bindings++));
+    }
+    if (_id.model.primitivePart.info.bits.tangentVertexData)
+    {
+        options->AddMacroDefinition("IN_TANGENT", "1");
+        options->AddMacroDefinition("IN_TANGENT_LOCATION", std::to_string(bindings++));
     }
 }
 

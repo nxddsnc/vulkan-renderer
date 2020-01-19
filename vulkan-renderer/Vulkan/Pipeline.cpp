@@ -190,6 +190,7 @@ void Pipeline::InitModel()
                                                                          0.0f,
                                                                          1.0f });
 
+    // TODO: Extract the descriptorSetlayout part as a single class.
     // descriptor set layout
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
     // camera uniform buffer
@@ -201,33 +202,16 @@ void Pipeline::InitModel()
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
-    //   {
-    //     if (_id.model.materialPart.info.bits.baseColorInfo)
-    //     {
-    //       vk::DescriptorSetLayoutBinding materialUniformBinding({0,
-    //                                                              vk::DescriptorType::eUniformBuffer,
-    //                                                              1,
-    //                                                              vk::ShaderStageFlagBits::eFragment,
-    //                                                              {}});
-    //       descriptorSetLayouts.push_back(_createDescriptorSetLayout({materialUniformBinding}));
-    //     }
-
-    //     if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
-    //     {
-    //     }
-    //     if (_id.model.materialPart.info.bits.normalInfo)
-    //     {
-    //     }
-    //     if (_id.model.materialPart.info.bits.occlusionInfo)
-    //     {
-    //     }
-    //     if (_id.model.materialPart.info.bits.emissiveInfo)
-    //     {
-    //     }
-    //   }
-    //   _frameDescriptorSetLayout = descriptorSetLayouts[0];
-    //   _materialDescriptorSetLayout = descriptorSetLayouts[1];
-     //}
+    vk::DescriptorSetLayoutBinding materialSamplerBinding({ 0,
+                                                            vk::DescriptorType::eCombinedImageSampler,
+                                                            1,
+                                                            vk::ShaderStageFlagBits::eFragment,
+                                                            {}
+    });
+    if (_id.model.materialPart.info.bits.baseColorMap)
+    {
+        descriptorSetLayouts.push_back(_createDescriptorSetLayout({ materialSamplerBinding }));
+    }
 
     // pipeline layout
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
