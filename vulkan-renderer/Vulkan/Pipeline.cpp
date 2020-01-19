@@ -53,12 +53,10 @@ void Pipeline::InitModel()
     // set shader state
     vk::Device device = _renderer->GetVulkanDevice();
     ShaderModule vertexShader(&device, _id);
-    vertexShader.LoadFromFile("Shaders/basic_vert.spv");
-    vertexShader.Build(vk::ShaderStageFlagBits::eVertex, "main");
+    vertexShader.BuildFromFile("Shaders/basic.vert", ShaderStage::VERTEX, "main");
 
     ShaderModule fragmentShader(&device, _id);
-    fragmentShader.LoadFromFile("Shaders/basic_frag.spv");
-    fragmentShader.Build(vk::ShaderStageFlagBits::eFragment, "main");
+    fragmentShader.BuildFromFile("Shaders/basic.frag", ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
     shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
@@ -78,17 +76,11 @@ void Pipeline::InitModel()
         _addAttributes(2, 2, vk::Format::eR32G32B32Sfloat, 0);
     }
 
-    //for (uint8_t i = 0; i < primitivePart.countTexCoord; ++i)
-    //{
-    //  _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
-    //  // _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-    //}
-
-    //for (uint8_t i = 0; i < primitivePart.countColor; ++i)
-    //{
-    //  _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-    //  _addAttributes(vk::Format::eR32G32B32Sfloat, 0);
-    //}
+    if (_id.model.primitivePart.info.bits.countTexCoord > 0)
+    {
+        _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
+        _addAttributes(3, 3, vk::Format::eR32G32Sfloat, 0);
+    }
 
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
                                                             static_cast<uint32_t>(_inputBindings.size()),
