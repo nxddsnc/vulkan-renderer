@@ -37,7 +37,8 @@ bool ModelLoader::load(const char * filepath)
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_SortByPType |
-        aiProcess_RemoveRedundantMaterials);
+        aiProcess_RemoveRedundantMaterials |
+        aiProcess_GenUVCoords);
     // If the import failed, report it
     if (!m_pAiScene)
     {
@@ -264,17 +265,19 @@ std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filename)
         std::shared_ptr<MyImage> image = std::make_shared<MyImage>(filename);
         int width, height, components;
         unsigned char *imageData = nullptr;
+        // FIXME: currently, we always load texture with 4 channels.
+        int requstedComponents = 4;
         if (texture != NULL) {
-            //returned pointer is not null, read texture from memory
+            // returned pointer is not null, read texture from memory
             if (texture->mHeight == 0)
             {
                 image->m_data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth,
-                    &width, &height, &components, 0);
+                    &width, &height, &components, requstedComponents);
             }
             else
             {
                 image->m_data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth * texture->mHeight,
-                    &width, &height, &components, 0);
+                    &width, &height, &components, requstedComponents);
             }
         }
         else
@@ -286,11 +289,11 @@ std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filename)
             {
                 return nullptr;
             }
-            image->m_data = stbi_load_from_file(file, &width, &height, &components, 0);
+            image->m_data = stbi_load_from_file(file, &width, &height, &components, requstedComponents);
         }
         image->m_width = width;
         image->m_height = height;
-        image->m_channels = components;
+        image->m_channels = requstedComponents;
 
         m_imageMap.insert(std::make_pair(filename, image));
 

@@ -58,7 +58,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _initDescriptorSet();
     _initSynchronizations();
 
-    _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool);
+    _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -66,6 +66,8 @@ VulkanRenderer::~VulkanRenderer()
     vkDeviceWaitIdle(_device);
     vkQueueWaitIdle(_queue);
     delete _window;
+    delete _resourceManager;
+
     _deInitSynchronizations();
     _deInitDescriptorSet();
     _deInitDescriptorPool();
@@ -74,7 +76,6 @@ VulkanRenderer::~VulkanRenderer()
     _deInitSwapchainImages();
     _deInitSwapchain();
 
-    delete _resourceManager;
     delete _pipelineManager;
     delete _camera;
 
@@ -508,9 +509,11 @@ void VulkanRenderer::_deInitFramebuffers()
 void VulkanRenderer::_initDescriptorPool()
 {
     // TODO: Assign descriptor and max set according to pipeline information.
-    std::array<vk::DescriptorPoolSize, 1> poolSizes = {};
+    std::array<vk::DescriptorPoolSize, 2> poolSizes = {};
     poolSizes[0].descriptorCount = 10;
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
+    poolSizes[1].descriptorCount = 10;
+    poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
 
     vk::DescriptorPoolCreateInfo poolInfo({{},
                                            static_cast<uint32_t>(20),

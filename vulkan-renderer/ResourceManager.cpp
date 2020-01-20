@@ -6,13 +6,15 @@
 #include "MyImage.h"
 
 ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue,
-    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool)
+    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool, vk::PhysicalDevice &gpu)
 {
     _device         = device;
     _commandPool    = commandPool;
     _graphicsQueue = graphicsQueue;
     _graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
     _memoryAllocator = memoryAllocator;
+    _descriptorPool = descriptorPool;
+    _gpu = gpu;
 }
 
 ResourceManager::~ResourceManager()
@@ -24,6 +26,12 @@ ResourceManager::~ResourceManager()
             vmaDestroyBuffer(_memoryAllocator, drawable->vertexBuffers[i], drawable->vertexBufferMemorys[i]);
         }
         vmaDestroyBuffer(_memoryAllocator, drawable->indexBuffer, drawable->indexBufferMemory);
+        if (drawable->baseColorTexture)
+        {
+            vmaDestroyImage(_memoryAllocator, drawable->baseColorTexture->image, drawable->baseColorTexture->imageMemory);
+            _device.destroyImageView(drawable->baseColorTexture->imageView);
+            _device.destroySampler(drawable->baseColorTexture->imageSampler);
+        }
     }
 }
 
@@ -273,10 +281,12 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
     std::shared_ptr<VulkanTexture> vulkanTexture = std::make_shared<VulkanTexture>();
 
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
-    if (texture->m_pImage->m_channels == 3)
-    {
-        imageFormat = vk::Format::eR8G8B8Unorm;
-    }
+    //if (texture->m_pImage->m_channels == 3)
+    //{
+    //    imageFormat = vk::Format::eR8G8B8Unorm;
+    //}
+
+    auto properties = _gpu.getFormatProperties(imageFormat);
     // create image
     vk::ImageCreateInfo imageCreateInfo( {},
                                           vk::ImageType::e2D,
@@ -324,7 +334,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
     vulkanTexture->imageView = _device.createImageView(imageViewCreateInfo);
 
     // create image sampler
-    vk::SamplerCreateInfo createInfo({
+    vk::SamplerCreateInfo createInfo(
         {},
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -341,7 +351,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
         0.0,
         vk::BorderColor::eFloatOpaqueWhite,
         vk::Bool32(false)
-    });
+    );
 
     vulkanTexture->imageSampler = _device.createSampler(createInfo);
 
@@ -355,6 +365,11 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
     vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
+
+    void* data;
+    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
+    memcpy(data, texture->m_pImage->m_data, static_cast<size_t>(stagingBufferInfo.size));
+    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
     _transitionImageLayout(vulkanTexture->image, imageFormat,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);

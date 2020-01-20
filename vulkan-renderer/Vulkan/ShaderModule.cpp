@@ -89,5 +89,15 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
         options->AddMacroDefinition("IN_TANGENT", "1");
         options->AddMacroDefinition("IN_TANGENT_LOCATION", std::to_string(bindings++));
     }
+    
+    bindings = 0;
+    if (stage == ShaderStage::FRAGMENT)
+    {
+        if (_id.model.materialPart.info.bits.baseColorMap)
+        {
+            options->AddMacroDefinition("TEXTURE_BASE_COLOR", "1");
+            options->AddMacroDefinition("TEXUTRE_BASE_COLOR_LOCATION", std::to_string(bindings++));
+        }
+    }
 }
 

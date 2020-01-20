@@ -173,8 +173,8 @@ void VulkanContext::_initInstance()
         "Vulkan Renderer",
         1,
         "Vulkan",
-        VK_API_VERSION_1_0,
-        VK_API_VERSION_1_0
+        VK_API_VERSION_1_1,
+        VK_API_VERSION_1_1
     });
 
     vk::InstanceCreateInfo instanceCreateInfo({
