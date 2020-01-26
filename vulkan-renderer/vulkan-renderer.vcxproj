@@ -170,6 +170,7 @@
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
+    <ClCompile Include="SHLight.cpp" />
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />
     <ClCompile Include="Vulkan\RenderPass.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />
+    <ClInclude Include="SHLight.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vulkan\GraphicsPipeline.h" />
     <ClInclude Include="Vulkan\Pipeline.h" />

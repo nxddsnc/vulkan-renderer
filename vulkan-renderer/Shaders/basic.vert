@@ -19,12 +19,15 @@ layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 
 
 // varyings
+layout(location = 0) out vec3 outNormal;
+
 #if IN_UV0
 layout(location = IN_UV0_LOCATION) out vec2 outUv;
 #endif
 
 void main() {
     gl_Position = ubo.proj * ubo.view * vec4(inPosition, 1.0);
+    outNormal = inNormal;
 #if IN_UV0
     outUv = inUv;
 #endif

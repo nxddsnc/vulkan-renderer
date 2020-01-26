@@ -7,6 +7,7 @@ class Window;
 class VulkanCamera;
 struct Drawable;
 struct Vertex;
+class SHLight;
 #pragma once
 
 struct UniformBufferObject {
@@ -132,7 +133,7 @@ private:
     vk::Extent2D                            _swapchainExtent;
 
     VkImage                                 _depthStencilImage = VK_NULL_HANDLE;
-      VmaAllocation                         _depthStencilImageMemory = VK_NULL_HANDLE;
+    VmaAllocation                           _depthStencilImageMemory = VK_NULL_HANDLE;
     VkImageView                             _depthStencilImageView = VK_NULL_HANDLE;
     vk::Format                              _depthStencilFormat;
     boolean                                 _stencilAvailable = false;
@@ -146,6 +147,7 @@ private:
 
     Window                            *     _window = nullptr;
 
-     VulkanCamera                     *     _camera;
+    VulkanCamera                      *     _camera;
+    SHLight                           *     _light;
 };
 

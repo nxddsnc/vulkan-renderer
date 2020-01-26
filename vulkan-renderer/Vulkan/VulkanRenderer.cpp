@@ -19,6 +19,7 @@
 #include "Drawable.h"
 #include "Context.h"
 #include "Camera.hpp"
+#include "SHLight.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -50,6 +51,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _camera->setRotation(glm::vec3(-45, 0, 45));
     _camera->setPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 10.0f);
 
+    _light = new SHLight(&_memoryAllocator);
     _initSwapchain();
     _initSwapchainImages();
     _initDepthStencilImage();
@@ -77,6 +79,7 @@ VulkanRenderer::~VulkanRenderer()
     _deInitSwapchain();
 
     delete _pipelineManager;
+    delete _light;
     delete _camera;
 
     vmaDestroyAllocator(_memoryAllocator);
@@ -253,6 +256,7 @@ void VulkanRenderer::_updateUniformBuffer()
     //ubo.proj[1][1] *= -1;
 
     _camera->UpdateUniformBuffer();
+    _light->UpdateUniformBuffer();
 }
 
 void VulkanRenderer::_cleanupSwapchain()
@@ -524,6 +528,7 @@ void VulkanRenderer::_initDescriptorPool()
     // Init camera uniform buffer descriptor
     // TODO: put the code below to some more appropriate place.
     _camera->createDescriptorSet(_device, _descriptorPool);
+    _light->CreateDescriptorSet(_device, _descriptorPool);
 }
 
 void VulkanRenderer::_deInitDescriptorPool()
@@ -678,7 +683,8 @@ void VulkanRenderer::_createCommandBuffers()
 
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
-                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &drawable->textureDescriptorSet, 0, nullptr);
+                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
+                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
 
                     commandBuffer.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
                 }

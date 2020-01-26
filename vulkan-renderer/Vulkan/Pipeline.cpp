@@ -202,6 +202,13 @@ void Pipeline::InitModel()
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
+    vk::DescriptorSetLayoutBinding lightBidning({ 0,
+                                                  vk::DescriptorType::eUniformBuffer,
+                                                  1,
+                                                  vk::ShaderStageFlagBits::eFragment,
+                                                  {} });
+    descriptorSetLayouts.push_back(_createDescriptorSetLayout({ lightBidning }));
+
     vk::DescriptorSetLayoutBinding materialSamplerBinding({ 0,
                                                             vk::DescriptorType::eCombinedImageSampler,
                                                             1,
