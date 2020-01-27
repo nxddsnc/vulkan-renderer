@@ -384,6 +384,10 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
 
 void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
 {
+    if (drawable->material->m_pDiffuseMap == nullptr)
+    {
+        return;
+    }
     if (drawable->material->m_pDiffuseMap)
     {
         drawable->baseColorTexture = _createCombinedTexture(drawable->material->m_pDiffuseMap);

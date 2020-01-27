@@ -77,11 +77,7 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
     for (int i = 0; i < node->mNumChildren; ++i)
     {
         aiNode *child = node->mChildren[i];
-
-        for (int j = 0; j < child->mNumChildren; ++j)
-        {
-            _extractNode(child->mChildren[i], matrix);
-        }
+        _extractNode(child, matrix);
     }
 }
 

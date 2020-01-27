@@ -670,9 +670,9 @@ void VulkanRenderer::_createCommandBuffers()
 
                     switch (drawable->mesh->m_indexType)
                     {
-                    case 1:
-                        commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, vk::IndexType::eUint8EXT);
-                        break;
+                    //case 1:
+                    //    commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, vk::IndexType::eUint8EXT);
+                    //    break;
                     case 2:
                         commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, vk::IndexType::eUint16);
                         break;
@@ -684,7 +684,10 @@ void VulkanRenderer::_createCommandBuffers()
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
-                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
+                    if (drawable->baseColorTexture)
+                    {
+                        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
+                    }
 
                     commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, 0, sizeof(drawable->matrix), reinterpret_cast<void*>(&drawable->matrix));
 
