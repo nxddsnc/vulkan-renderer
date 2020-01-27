@@ -6,6 +6,11 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 view;
 } ubo;
 
+layout(push_constant) uniform UniformPerDrawable
+{
+    mat4 modelMatrix;
+} uniformPerDrawable;
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 
@@ -26,7 +31,7 @@ layout(location = IN_UV0_LOCATION) out vec2 outUv;
 #endif
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0);
     outNormal = inNormal;
 #if IN_UV0
     outUv = inUv;

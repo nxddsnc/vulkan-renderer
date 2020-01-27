@@ -686,6 +686,8 @@ void VulkanRenderer::_createCommandBuffers()
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
 
+                    commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, 0, sizeof(drawable->matrix), reinterpret_cast<void*>(&drawable->matrix));
+
                     commandBuffer.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
                 }
 

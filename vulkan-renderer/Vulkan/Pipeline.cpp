@@ -202,6 +202,7 @@ void Pipeline::InitModel()
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
+    // light uniform buffer.
     vk::DescriptorSetLayoutBinding lightBidning({ 0,
                                                   vk::DescriptorType::eUniformBuffer,
                                                   1,
@@ -209,23 +210,31 @@ void Pipeline::InitModel()
                                                   {} });
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ lightBidning }));
 
-    vk::DescriptorSetLayoutBinding materialSamplerBinding({ 0,
-                                                            vk::DescriptorType::eCombinedImageSampler,
-                                                            1,
-                                                            vk::ShaderStageFlagBits::eFragment,
-                                                            {}
-    });
+    // per drawable
+    std::vector<vk::DescriptorSetLayoutBinding> perDrawableBindings;
+    
+    vk::PushConstantRange pushConstantRange({ vk::ShaderStageFlagBits::eVertex,
+                                              0,
+                                              sizeof(glm::mat4) });
+     
     if (_id.model.materialPart.info.bits.baseColorMap)
     {
-        descriptorSetLayouts.push_back(_createDescriptorSetLayout({ materialSamplerBinding }));
+        vk::DescriptorSetLayoutBinding materialSamplerBinding({ 0,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {}
+        });
+        perDrawableBindings.push_back(materialSamplerBinding);
     }
+    descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
 
     // pipeline layout
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
                                                      static_cast<uint32_t>(descriptorSetLayouts.size()),
                                                      descriptorSetLayouts.data(),
-                                                     0,
-                                                     {} });
+                                                     1,
+                                                     &pushConstantRange });
     _pipelineLayout = _renderer->GetVulkanDevice().createPipelineLayout(pipelineLayoutInfo);
 
     vk::GraphicsPipelineCreateInfo pipelineInfo({ {},
