@@ -9,6 +9,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 layout(push_constant) uniform UniformPerDrawable
 {
     mat4 modelMatrix;
+    mat4 normalMatrix;
 } uniformPerDrawable;
 
 layout(location = 0) in vec3 inPosition;
@@ -22,18 +23,26 @@ layout(location = IN_UV0_LOCATION) in vec2 inUv;
 layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 
-
 // varyings
-layout(location = 0) out vec3 outNormal;
+layout(location = 0) out mat3 outTBN;
+layout(location = 3) out vec3 outPosition;
+layout(location = 4) out vec3 outNormal;
 
 #if IN_UV0
-layout(location = IN_UV0_LOCATION) out vec2 outUv;
+layout(location = IN_UV0_LOCATION + 3) out vec2 outUv;
 #endif
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0);
-    outNormal = inNormal;
+    outPosition = (uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0)).xyz;
+    gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
+    outNormal = (uniformPerDrawable.normalMatrix * vec4(inNormal, 1.0)).xyz;
 #if IN_UV0
     outUv = inUv;
+#endif
+
+#if IN_TANGENT
+    vec3 tangent = (uniformPerDrawable.modelMatrix * vec4(inTangent, 0.0)).xyz;
+    vec3 biTangent = normalize(cross(inNormal, tangent));
+    outTBN = mat3(normalize(tangent), biTangent, inNormal);
 #endif
 }

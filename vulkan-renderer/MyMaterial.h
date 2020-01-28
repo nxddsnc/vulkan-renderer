@@ -10,9 +10,8 @@ public:
     ~MyMaterial();
 public:
     std::string                  m_name;
-    glm::vec3                    m_diffuse;
-    float                        m_opacity;
-    std::shared_ptr<MyTexture>  m_pDiffuseMap;
-    std::shared_ptr<MyTexture>  m_pNormalMap;
+    glm::vec4                    m_baseColor;
+    std::shared_ptr<MyTexture>   m_pDiffuseMap;
+    std::shared_ptr<MyTexture>   m_pNormalMap;
 };
 

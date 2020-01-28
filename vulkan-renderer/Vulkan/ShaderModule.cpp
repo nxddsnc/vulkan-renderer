@@ -93,10 +93,19 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
     bindings = 0;
     if (stage == ShaderStage::FRAGMENT)
     {
+        if (_id.model.materialPart.info.bits.baseColorInfo)
+        {
+            options->AddMacroDefinition("BASE_COLOR", "1");
+        }
         if (_id.model.materialPart.info.bits.baseColorMap)
         {
             options->AddMacroDefinition("TEXTURE_BASE_COLOR", "1");
             options->AddMacroDefinition("TEXUTRE_BASE_COLOR_LOCATION", std::to_string(bindings++));
+        }
+        if (_id.model.materialPart.info.bits.normalMap)
+        {
+            options->AddMacroDefinition("TEXTURE_NORMAL", "1");
+            options->AddMacroDefinition("TEXTURE_NORMAL_LOCATION", std::to_string(bindings++));
         }
     }
 }

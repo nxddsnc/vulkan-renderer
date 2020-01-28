@@ -71,6 +71,7 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
         drawable->mesh = mesh;
         drawable->material = material;
         drawable->matrix = matrix;
+        drawable->normalMatrix = glm::inverse(matrix);
         m_pScene->AddDrawable(drawable);
     }
 
@@ -197,10 +198,10 @@ std::shared_ptr<MyMaterial> ModelLoader::_extractMaterial(unsigned int idx)
 
         aiColor3D diffuse;
         material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
-        material->Get(AI_MATKEY_OPACITY, myMaterial->m_opacity);
-        myMaterial->m_diffuse[0] = diffuse.r;
-        myMaterial->m_diffuse[1] = diffuse.g;
-        myMaterial->m_diffuse[2] = diffuse.b;
+        material->Get(AI_MATKEY_OPACITY, myMaterial->m_baseColor.a);
+        myMaterial->m_baseColor.r = diffuse.r;
+        myMaterial->m_baseColor.g = diffuse.g;
+        myMaterial->m_baseColor.b = diffuse.b;
 
         if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
         {

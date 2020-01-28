@@ -213,13 +213,34 @@ void Pipeline::InitModel()
     // per drawable
     std::vector<vk::DescriptorSetLayoutBinding> perDrawableBindings;
     
-    vk::PushConstantRange pushConstantRange({ vk::ShaderStageFlagBits::eVertex,
-                                              0,
-                                              sizeof(glm::mat4) });
-     
+    std::vector<vk::PushConstantRange> pushConstantRanges;
+
+    uint32_t offset = 0;
+    pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4) * 2));
+    offset += sizeof(glm::mat4) * 2;
+    //pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4)));
+    //offset += sizeof(glm::mat4);
+
+    if (_id.model.materialPart.info.bits.baseColorInfo)
+    {
+        pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec4)));
+        offset += sizeof(glm::vec4);
+    }
+
+    uint32_t bindings = 0;
     if (_id.model.materialPart.info.bits.baseColorMap)
     {
-        vk::DescriptorSetLayoutBinding materialSamplerBinding({ 0,
+        vk::DescriptorSetLayoutBinding materialSamplerBinding({ bindings++,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {}
+        });
+        perDrawableBindings.push_back(materialSamplerBinding);
+    }
+    if (_id.model.materialPart.info.bits.normalMap)
+    {
+        vk::DescriptorSetLayoutBinding materialSamplerBinding({ bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,
             vk::ShaderStageFlagBits::eFragment,
@@ -233,8 +254,8 @@ void Pipeline::InitModel()
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
                                                      static_cast<uint32_t>(descriptorSetLayouts.size()),
                                                      descriptorSetLayouts.data(),
-                                                     1,
-                                                     &pushConstantRange });
+                                                     static_cast<uint32_t>(pushConstantRanges.size()),
+                                                     pushConstantRanges.data() });
     _pipelineLayout = _renderer->GetVulkanDevice().createPipelineLayout(pipelineLayoutInfo);
 
     vk::GraphicsPipelineCreateInfo pipelineInfo({ {},

@@ -28,9 +28,18 @@ ResourceManager::~ResourceManager()
         vmaDestroyBuffer(_memoryAllocator, drawable->indexBuffer, drawable->indexBufferMemory);
         if (drawable->baseColorTexture)
         {
-            vmaDestroyImage(_memoryAllocator, drawable->baseColorTexture->image, drawable->baseColorTexture->imageMemory);
-            _device.destroyImageView(drawable->baseColorTexture->imageView);
-            _device.destroySampler(drawable->baseColorTexture->imageSampler);
+            if (drawable->baseColorTexture)
+            {
+                vmaDestroyImage(_memoryAllocator, drawable->baseColorTexture->image, drawable->baseColorTexture->imageMemory);
+                _device.destroyImageView(drawable->baseColorTexture->imageView);
+                _device.destroySampler(drawable->baseColorTexture->imageSampler);
+            }
+            if (drawable->normalTexture)
+            {
+                vmaDestroyImage(_memoryAllocator, drawable->normalTexture->image, drawable->normalTexture->imageMemory);
+                _device.destroyImageView(drawable->normalTexture->imageView);
+                _device.destroySampler(drawable->normalTexture->imageSampler);
+            }
         }
     }
 }
@@ -384,47 +393,59 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
 
 void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
 {
-    if (drawable->material->m_pDiffuseMap == nullptr)
+    if (drawable->material->m_pDiffuseMap == nullptr && drawable->material->m_pNormalMap == nullptr)
     {
         return;
     }
+    
+    uint32_t bindings = 0;
+    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+    std::vector<vk::DescriptorImageInfo> imageInfos;
     if (drawable->material->m_pDiffuseMap)
     {
         drawable->baseColorTexture = _createCombinedTexture(drawable->material->m_pDiffuseMap);
+        vk::DescriptorSetLayoutBinding textureBinding(bindings++,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {});
+        textureBindings.push_back(textureBinding);
+
+        vk::DescriptorImageInfo imageInfo(drawable->baseColorTexture->imageSampler, 
+            drawable->baseColorTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfos.push_back(imageInfo);
+    }
+    if (drawable->material->m_pNormalMap)
+    {
+        drawable->normalTexture = _createCombinedTexture(drawable->material->m_pNormalMap);
+        vk::DescriptorSetLayoutBinding textureBinding(bindings++,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {});
+        textureBindings.push_back(textureBinding);
+
+        vk::DescriptorImageInfo imageInfo(drawable->normalTexture->imageSampler,
+            drawable->normalTexture->imageView,
+            vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfos.push_back(imageInfo);
     }
 
     vk::DescriptorSetLayout descriptorSetLayout;
-    vk::DescriptorSetLayoutBinding textureBinding({ 0,
-                                                   vk::DescriptorType::eCombinedImageSampler,
-                                                   1,
-                                                   vk::ShaderStageFlagBits::eFragment,
-                                                   {} });
 
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({ {},
-        1,
-        &textureBinding });
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
     descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
 
-    vk::DescriptorSetAllocateInfo allocInfo({
-        _descriptorPool,
-        1,
-        &descriptorSetLayout
-    });
+    vk::DescriptorSetAllocateInfo allocInfo(_descriptorPool, 1, &descriptorSetLayout);
     
     _device.allocateDescriptorSets(&allocInfo, &drawable->textureDescriptorSet);
-
-
-    vk::DescriptorImageInfo imageInfo({ drawable->baseColorTexture->imageSampler,
-                                        drawable->baseColorTexture->imageView,
-                                        vk::ImageLayout::eShaderReadOnlyOptimal});
-
 
     vk::WriteDescriptorSet descriptorWrite( drawable->textureDescriptorSet,
                                             uint32_t(0),
                                             uint32_t(0),
-                                            uint32_t(1),
+                                            static_cast<uint32_t>(imageInfos.size()),
                                             vk::DescriptorType::eCombinedImageSampler,
-                                            &imageInfo,
+                                            imageInfos.data(),
                                             {},
                                             {} );
     _device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);

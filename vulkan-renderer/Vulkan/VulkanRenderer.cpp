@@ -684,12 +684,21 @@ void VulkanRenderer::_createCommandBuffers()
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
-                    if (drawable->baseColorTexture)
+                    if (drawable->baseColorTexture || drawable->normalTexture)
                     {
                         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
                     }
 
-                    commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, 0, sizeof(drawable->matrix), reinterpret_cast<void*>(&drawable->matrix));
+                    uint32_t offset = 0;
+                    commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->matrix));
+                    offset += sizeof(glm::mat4);
+                    commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->normalMatrix));
+                    offset += sizeof(glm::mat4);
+
+                    if (pipelineId.model.materialPart.info.bits.baseColorInfo)
+                    {
+                        commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec4), reinterpret_cast<void*>(&drawable->material->m_baseColor));
+                    }
 
                     commandBuffer.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
                 }

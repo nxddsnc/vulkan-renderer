@@ -21,6 +21,7 @@ struct VulkanTexture
 struct Drawable
 {
     glm::mat4                     matrix;
+    glm::mat4                     normalMatrix;
     std::shared_ptr<MyMesh>       mesh;
     std::shared_ptr<MyMaterial>   material;
 
@@ -38,6 +39,10 @@ struct Drawable
 
     // texture samplers
     std::shared_ptr<VulkanTexture> baseColorTexture;
+    std::shared_ptr<VulkanTexture> normalTexture;
+
     vk::DescriptorSet              textureDescriptorSet;
+
+    //vk::DescriptorSet              textureDescriptorSet;
 };
 
