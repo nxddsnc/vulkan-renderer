@@ -284,6 +284,168 @@ void Pipeline::InitModel()
     }
 }
 
+void Pipeline::InitSkybox()
+{
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+    // set shader state
+    vk::Device device = _renderer->GetVulkanDevice();
+    ShaderModule vertexShader(&device, _id);
+    vertexShader.BuildFromFile("Shaders/skybox.vert", ShaderStage::VERTEX, "main");
+
+    ShaderModule fragmentShader(&device, _id);
+    fragmentShader.BuildFromFile("Shaders/skybox.frag", ShaderStage::FRAGMENT, "main");
+
+    shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
+    shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
+
+    // set vertex input state
+    // vertex
+    _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+    _addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
+
+    // uv coord
+    _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
+    _addAttributes(2, 2, vk::Format::eR32G32Sfloat, 0);
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
+        static_cast<uint32_t>(_inputBindings.size()),
+        _inputBindings.data(),
+        static_cast<uint32_t>(_inputAttributes.size()),
+        _inputAttributes.data() });
+
+    // Set input assembly state
+    vk::PipelineInputAssemblyStateCreateInfo assemblyInfo;
+    vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
+
+    uint32_t width, height;
+    _renderer->GetExtendSize(width, height);
+    // Set viewport state
+    const vk::Viewport viewport{
+        /* viewport.x */ 0.0f,
+        /* viewport.y */ 0.0f,
+        /* viewport.width */  (float)width,
+        /* viewport.height */ (float)height,
+        /* viewport.minDepth */ 0.0f,
+        /* viewport.maxDepth */ 1.0f,
+    };
+
+    const vk::Rect2D scissor{
+        /* scissor.offset */{ 0, 0 },
+        /* scissor.extent */{ width, height } };
+
+    vk::PipelineViewportStateCreateInfo viewportState({ {},
+        1,
+        &viewport,
+        1,
+        &scissor });
+
+    // Rasterizer
+    vk::PipelineRasterizationStateCreateInfo rasterizerState({ {},
+        static_cast<vk::Bool32>(false),
+        static_cast<vk::Bool32>(false),
+        polygonMode,
+        vk::CullModeFlagBits::eBack,
+        vk::FrontFace::eCounterClockwise,
+        static_cast<vk::Bool32>(false),
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f });
+
+    // Multisampling
+    vk::PipelineMultisampleStateCreateInfo multisampling({ {},
+        vk::SampleCountFlagBits::e1,
+        static_cast<vk::Bool32>(false),
+        {},
+        {},
+        static_cast<vk::Bool32>(false),
+        static_cast<vk::Bool32>(false) });
+
+    // Color blending
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment({ static_cast<vk::Bool32>(false),
+        vk::BlendFactor::eOne,
+        vk::BlendFactor::eZero,
+        vk::BlendOp::eAdd,
+        vk::BlendFactor::eOne,
+        vk::BlendFactor::eZero,
+        vk::BlendOp::eAdd,
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA });
+
+    std::array<float, 4> blendConsts = { 0, 0, 0, 0 };
+    vk::PipelineColorBlendStateCreateInfo colorBlending({ {},
+        static_cast<vk::Bool32>(false),
+        vk::LogicOp::eCopy,
+        1,
+        &colorBlendAttachment,
+        blendConsts });
+
+    // Depth and stencil testing
+    vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({ {},
+        static_cast<vk::Bool32>(true),
+        static_cast<vk::Bool32>(true),
+        vk::CompareOp::eLess,
+        static_cast<vk::Bool32>(false),
+        static_cast<vk::Bool32>(false),
+        {},
+        {},
+        0.0f,
+        1.0f });
+
+    // TODO: Extract the descriptorSetlayout part as a single class.
+    // descriptor set layout
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+    // camera uniform buffer
+    vk::DescriptorSetLayoutBinding cameraBinding({ 0,
+        vk::DescriptorType::eUniformBuffer,
+        1,
+        vk::ShaderStageFlagBits::eVertex,
+        {} });
+
+    descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
+
+    vk::DescriptorSetLayoutBinding skyboxSamplerBinding({ 1,
+        vk::DescriptorType::eCombinedImageSampler,
+        1,
+        vk::ShaderStageFlagBits::eFragment,
+        {}
+    });
+
+    descriptorSetLayouts.push_back(_createDescriptorSetLayout({ skyboxSamplerBinding }));
+     
+    // pipeline layout
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo({},
+        static_cast<uint32_t>(descriptorSetLayouts.size()),
+        descriptorSetLayouts.data(),
+        0,
+        {});
+    _pipelineLayout = _renderer->GetVulkanDevice().createPipelineLayout(pipelineLayoutInfo);
+
+    vk::GraphicsPipelineCreateInfo pipelineInfo({ {},
+        static_cast<uint32_t>(shaderStages.size()),
+        shaderStages.data(),
+        &vertexInputInfo,
+        &assemblyInfo,
+        {},
+        &viewportState,
+        &rasterizerState,
+        &multisampling,
+        &depthStencilStateCreateInfo,
+        &colorBlending,
+        {},
+        _pipelineLayout,
+        _renderer->GetRenderPass(),
+        {},
+        {},
+        static_cast<int32_t>(-1) });
+
+    _graphicsPipeline = _renderer->GetVulkanDevice().createGraphicsPipeline(nullptr, pipelineInfo);
+
+    for (auto descriptorSetLayout : descriptorSetLayouts)
+    {
+        _renderer->GetVulkanDevice().destroyDescriptorSetLayout(descriptorSetLayout);
+    }
+}
+
 vk::Pipeline Pipeline::GetPipeline()
 {
     return _graphicsPipeline;

@@ -2,6 +2,7 @@
 #include "MyMesh.h"
 #include <vector>
 #include <memory.h>
+#include "MyImage.h"
 #pragma once
 /************************************************************************/
 /* Meant to Control the gpu resource allocation.*/
@@ -17,16 +18,17 @@ public:
     ~ResourceManager();
 
     void createNodeResource(std::shared_ptr<Drawable> node);
+
+    std::shared_ptr<VulkanTexture> CreateCombinedTexture(std::shared_ptr<MyTexture> texture);
 private:
     void _createVertexBuffer(std::shared_ptr<Drawable> drawable, vk::DeviceSize size, void *data_);
     void _createVertexBuffers(std::shared_ptr<Drawable> drawable);
     void _createIndexBuffer(std::shared_ptr<Drawable> drawable);
     void _createTextures(std::shared_ptr<Drawable> drawable);
-    void _transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
-    std::shared_ptr<VulkanTexture> _createCombinedTexture(std::shared_ptr<MyTexture> texture);
+    void _transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     vk::CommandBuffer _beginSingleTimeCommand();
     void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);
-    void _copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+    void _copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage);
     void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 private:
     vk::PhysicalDevice                            _gpu;

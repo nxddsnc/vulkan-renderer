@@ -4,6 +4,7 @@
 #include "MyMaterial.h"
 #include "MyTexture.h"
 #include "MyImage.h"
+#include <algorithm>
 
 ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue,
     uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool, vk::PhysicalDevice &gpu)
@@ -87,26 +88,43 @@ void ResourceManager::_endSingleTimeCommand(vk::CommandBuffer &commandBuffer)
     _device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
 }
 
-void ResourceManager::_copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height)
+void ResourceManager::_copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage)
 {
     vk::CommandBuffer cmdBuffer = _beginSingleTimeCommand();
 
+    vk::DeviceSize offset = 0;
+    std::vector<vk::BufferImageCopy> regions;
+    for (int layer = 0; layer < myImage->m_layerCount; ++layer)
+    {
+        for (int level = 0; level < myImage->m_mipmapCount; ++level)
+        {
+            vk::BufferImageCopy region(
+                offset,
+                0,
+                0,
+                vk::ImageSubresourceLayers(
+                    vk::ImageAspectFlagBits::eColor,
+                    (uint32_t)level,
+                    (uint32_t)layer,
+                    (uint32_t)1
+                ),
+                vk::Offset3D(0, 0, 0),
+                vk::Extent3D(std::max(1, int(myImage->m_width / pow(2, level))), std::max(1, int(myImage->m_height / pow(2, level))), 1)
+            );
+            regions.push_back(region);
 
-    vk::BufferImageCopy region({
-        0,
-        0,
-        0,
-        vk::ImageSubresourceLayers({
-        vk::ImageAspectFlagBits::eColor,
-        (uint32_t)0,
-        (uint32_t)0,
-        (uint32_t)1
-    }),
-        vk::Offset3D({ 0, 0, 0 }),
-        vk::Extent3D({ width, height, 1 })
-    });
+            if (myImage->m_bCompressed)
+            {
+                offset += std::max(1, int((myImage->m_width + 3) / 4 * (myImage->m_height + 3) / 4 *
+                    myImage->m_channels * myImage->m_blockSize / pow(4, level)));
+            }
+            else
+            {
+                offset += std::max(1, int(myImage->m_width * myImage->m_height * myImage->m_channels * myImage->m_blockSize / pow(4, level)));
+            }
+        }
+    }
 
-    std::array<vk::BufferImageCopy, 1> regions = { region };
     cmdBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, regions);
 
     _endSingleTimeCommand(cmdBuffer);
@@ -233,7 +251,7 @@ void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
 
-void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
 {
     vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
 
@@ -245,13 +263,7 @@ void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format
         {},
         {},
         image,
-        vk::ImageSubresourceRange({
-        vk::ImageAspectFlagBits::eColor,
-        (uint32_t)0,
-        (uint32_t)1,
-        (uint32_t)0,
-        (uint32_t)1,
-    })
+        subResourceRange
     });
 
     std::array<vk::ImageMemoryBarrier, 1> barriers = { barrier };
@@ -284,16 +296,21 @@ void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format
     _endSingleTimeCommand(commandBuffer);
 }
 
-std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shared_ptr<MyTexture> texture)
+std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
 {
     std::shared_ptr<MyImage> myImage = texture->m_pImage;
     std::shared_ptr<VulkanTexture> vulkanTexture = std::make_shared<VulkanTexture>();
 
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
-    //if (texture->m_pImage->m_channels == 3)
-    //{
-    //    imageFormat = vk::Format::eR8G8B8Unorm;
-    //}
+    switch (myImage->m_format)
+    {
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
+        imageFormat = vk::Format::eR8G8B8A8Unorm;
+        break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
+        imageFormat = vk::Format::eR16G16B16A16Sfloat;
+        break;
+    }
 
     auto properties = _gpu.getFormatProperties(imageFormat);
     // create image
@@ -305,8 +322,8 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
                                               static_cast<uint32_t>(myImage->m_height),
                                               1
                                           }),
-                                          1,
-                                          1,
+                                          myImage->m_mipmapCount,
+                                          myImage->m_layerCount,
                                           vk::SampleCountFlagBits::e1,
                                           vk::ImageTiling::eOptimal,
                                           vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
@@ -320,6 +337,13 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
     vmaCreateImage(_memoryAllocator, reinterpret_cast<VkImageCreateInfo*>(&imageCreateInfo), &allocationCreateInfo,
         reinterpret_cast<VkImage*>(&(vulkanTexture->image)), &(vulkanTexture->imageMemory), nullptr);
 
+    vk::ImageSubresourceRange subResourceRange(
+        vk::ImageAspectFlagBits::eColor,
+        0,
+        myImage->m_mipmapCount,
+        0,
+        myImage->m_layerCount
+    );
     // create image view
     vk::ImageViewCreateInfo imageViewCreateInfo({
         {},
@@ -330,15 +354,9 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
             vk::ComponentSwizzle::eR,
             vk::ComponentSwizzle::eG,
             vk::ComponentSwizzle::eB,
-            {}
+            vk::ComponentSwizzle::eA
         }),
-        vk::ImageSubresourceRange({
-            vk::ImageAspectFlagBits::eColor,
-            0,
-            1,
-            0,
-            1
-        })
+        subResourceRange
     });
     vulkanTexture->imageView = _device.createImageView(imageViewCreateInfo);
 
@@ -369,7 +387,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
     VmaAllocation stagingBufferMemory;
 
     VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    stagingBufferInfo.size = texture->m_pImage->m_width * texture->m_pImage->m_height * texture->m_pImage->m_channels;
+    stagingBufferInfo.size = texture->m_pImage->m_bufferSize;
     stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
@@ -380,11 +398,10 @@ std::shared_ptr<VulkanTexture> ResourceManager::_createCombinedTexture(std::shar
     memcpy(data, texture->m_pImage->m_data, static_cast<size_t>(stagingBufferInfo.size));
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-    _transitionImageLayout(vulkanTexture->image, imageFormat,
+    _transitionImageLayout(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-    _copyBufferToImage(stagingBuffer, vulkanTexture->image,
-        static_cast<uint32_t>(texture->m_pImage->m_width), static_cast<uint32_t>(texture->m_pImage->m_height));
-    _transitionImageLayout(vulkanTexture->image, imageFormat,
+    _copyBufferToImage(stagingBuffer, vulkanTexture->image, myImage);
+    _transitionImageLayout(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 
@@ -403,7 +420,7 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
     std::vector<vk::DescriptorImageInfo> imageInfos;
     if (drawable->material->m_pDiffuseMap)
     {
-        drawable->baseColorTexture = _createCombinedTexture(drawable->material->m_pDiffuseMap);
+        drawable->baseColorTexture = CreateCombinedTexture(drawable->material->m_pDiffuseMap);
         vk::DescriptorSetLayoutBinding textureBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,
@@ -417,7 +434,7 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
     }
     if (drawable->material->m_pNormalMap)
     {
-        drawable->normalTexture = _createCombinedTexture(drawable->material->m_pNormalMap);
+        drawable->normalTexture = CreateCombinedTexture(drawable->material->m_pNormalMap);
         vk::DescriptorSetLayoutBinding textureBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,

@@ -19,12 +19,13 @@ std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id)
 
   switch(id.type)
   {
-    case MODEL:
+  case MODEL:
       pipeline->InitModel();
       break;
+  case SKYBOX:
+      pipeline->InitSkybox();
+      break;
   }
-
-
   
   return pipeline;
 }

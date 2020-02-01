@@ -108,7 +108,7 @@
       <PreprocessorDefinitions>_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);NOMINMAX </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/assimp;Vulkan;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/includes/assimp;Vulkan;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,6 +171,7 @@
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="SHLight.cpp" />
+    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />
     <ClCompile Include="Vulkan\RenderPass.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />
     <ClInclude Include="SHLight.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vulkan\GraphicsPipeline.h" />
     <ClInclude Include="Vulkan\Pipeline.h" />

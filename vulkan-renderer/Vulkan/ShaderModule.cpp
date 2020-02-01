@@ -16,97 +16,109 @@ ShaderModule::~ShaderModule()
 
 void ShaderModule::BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry)
 {
-  std::ifstream file(filename);
+    std::ifstream file(filename);
 
-  if (!file.good())
-  {
-    throw std::runtime_error("failed to open file!");
-  }
-  std::string content = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    if (!file.good())
+    {
+        throw std::runtime_error("failed to open file!");
+    }
+    std::string content = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
-  file.close();
+    file.close();
 
-  shaderc::Compiler compiler;
-  shaderc::CompileOptions options;
-  addShaderOptions(stage, &options);
+    shaderc::Compiler compiler;
+    shaderc::CompileOptions options;
+    addShaderOptions(stage, &options);
 
-  shaderc_shader_kind kind;
-  vk::ShaderStageFlagBits shaderStage;
-  switch (stage)
-  {
-  case VERTEX:
-      kind = shaderc_glsl_vertex_shader;
-      shaderStage = vk::ShaderStageFlagBits::eVertex;
+    shaderc_shader_kind kind;
+    vk::ShaderStageFlagBits shaderStage;
+    switch (stage)
+    {
+    case VERTEX:
+        kind = shaderc_glsl_vertex_shader;
+        shaderStage = vk::ShaderStageFlagBits::eVertex;
 
-      break;
-  case GEOMETRY:
-      kind = shaderc_glsl_geometry_shader;
-      shaderStage = vk::ShaderStageFlagBits::eGeometry;
-      break;
-  case TESSLATION:
-      kind = shaderc_glsl_tess_control_shader;
-      shaderStage = vk::ShaderStageFlagBits::eTessellationControl;
-      break;
-  case FRAGMENT:
-      kind = shaderc_glsl_fragment_shader;
-      shaderStage = vk::ShaderStageFlagBits::eFragment;
-      break;
-  default:
-      break;
-  }
+        break;
+    case GEOMETRY:
+        kind = shaderc_glsl_geometry_shader;
+        shaderStage = vk::ShaderStageFlagBits::eGeometry;
+        break;
+    case TESSLATION:
+        kind = shaderc_glsl_tess_control_shader;
+        shaderStage = vk::ShaderStageFlagBits::eTessellationControl;
+        break;
+    case FRAGMENT:
+        kind = shaderc_glsl_fragment_shader;
+        shaderStage = vk::ShaderStageFlagBits::eFragment;
+        break;
+    default:
+        break;
+    }
 
-  shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(content, kind, filename.c_str(), options);
-  
-  std::vector<uint32_t> data(module.cbegin(), module.cend());
+    shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(content, kind, filename.c_str(), options);
 
-  if (module.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success)
-  {
-      std::cout << "Error when compiling shader: " << filename << std::endl;
-      std::cout << module.GetErrorMessage() << std::endl;
-      return;
-  }
+    std::vector<uint32_t> data(module.cbegin(), module.cend());
 
-  vk::ShaderModuleCreateInfo createInfo = {};
-  createInfo.codeSize = data.size() * sizeof(uint32_t);
-  createInfo.pCode = data.data();
-  _shaderModule = _device->createShaderModule(createInfo);
+    if (module.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success)
+    {
+        std::cout << "Error when compiling shader: " << filename << std::endl;
+        std::cout << module.GetErrorMessage() << std::endl;
+        return;
+    }
 
-  _stageCreateInfo.stage = shaderStage;
-  _stageCreateInfo.module = _shaderModule;
-  _stageCreateInfo.pName = entry;
+    vk::ShaderModuleCreateInfo createInfo = {};
+    createInfo.codeSize = data.size() * sizeof(uint32_t);
+    createInfo.pCode = data.data();
+    _shaderModule = _device->createShaderModule(createInfo);
+
+    _stageCreateInfo.stage = shaderStage;
+    _stageCreateInfo.module = _shaderModule;
+    _stageCreateInfo.pName = entry;
 }
 
 void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions * options)
 {
-    uint8_t bindings = 2;
-    if (_id.model.primitivePart.info.bits.countTexCoord)
+    switch (_id.type)
     {
-        options->AddMacroDefinition("IN_UV0", "1");
-        options->AddMacroDefinition("IN_UV0_LOCATION", std::to_string(bindings++));
+    case PipelineType::MODEL:
+    {
+        uint8_t bindings = 2;
+        if (_id.model.primitivePart.info.bits.countTexCoord)
+        {
+            options->AddMacroDefinition("IN_UV0", "1");
+            options->AddMacroDefinition("IN_UV0_LOCATION", std::to_string(bindings++));
+        }
+        if (_id.model.primitivePart.info.bits.tangentVertexData)
+        {
+            options->AddMacroDefinition("IN_TANGENT", "1");
+            options->AddMacroDefinition("IN_TANGENT_LOCATION", std::to_string(bindings++));
+        }
+
+        bindings = 0;
+        if (stage == ShaderStage::FRAGMENT)
+        {
+            if (_id.model.materialPart.info.bits.baseColorInfo)
+            {
+                options->AddMacroDefinition("BASE_COLOR", "1");
+            }
+            if (_id.model.materialPart.info.bits.baseColorMap)
+            {
+                options->AddMacroDefinition("TEXTURE_BASE_COLOR", "1");
+                options->AddMacroDefinition("TEXUTRE_BASE_COLOR_LOCATION", std::to_string(bindings++));
+            }
+            if (_id.model.materialPart.info.bits.normalMap)
+            {
+                options->AddMacroDefinition("TEXTURE_NORMAL", "1");
+                options->AddMacroDefinition("TEXTURE_NORMAL_LOCATION", std::to_string(bindings++));
+            }
+        }
+        break;
     }
-    if (_id.model.primitivePart.info.bits.tangentVertexData)
+    case PipelineType::SKYBOX:
     {
-        options->AddMacroDefinition("IN_TANGENT", "1");
-        options->AddMacroDefinition("IN_TANGENT_LOCATION", std::to_string(bindings++));
+        break;
+
     }
-    
-    bindings = 0;
-    if (stage == ShaderStage::FRAGMENT)
-    {
-        if (_id.model.materialPart.info.bits.baseColorInfo)
-        {
-            options->AddMacroDefinition("BASE_COLOR", "1");
-        }
-        if (_id.model.materialPart.info.bits.baseColorMap)
-        {
-            options->AddMacroDefinition("TEXTURE_BASE_COLOR", "1");
-            options->AddMacroDefinition("TEXUTRE_BASE_COLOR_LOCATION", std::to_string(bindings++));
-        }
-        if (_id.model.materialPart.info.bits.normalMap)
-        {
-            options->AddMacroDefinition("TEXTURE_NORMAL", "1");
-            options->AddMacroDefinition("TEXTURE_NORMAL_LOCATION", std::to_string(bindings++));
-        }
     }
 }
 

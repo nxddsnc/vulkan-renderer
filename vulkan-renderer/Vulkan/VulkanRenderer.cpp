@@ -20,6 +20,7 @@
 #include "Context.h"
 #include "Camera.hpp"
 #include "SHLight.h"
+#include "Skybox.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -61,6 +62,8 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _initSynchronizations();
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
+    Skybox  skybox(_resourceManager);
+    skybox.LoadFromFile("./TestModel/Skybox/env.dds");
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -707,7 +710,6 @@ void VulkanRenderer::_createCommandBuffers()
                 commandBuffer.end();
 
                 _framesData[i].cmdBuffers.push_back(commandBuffer);
-
            }
        }
     }

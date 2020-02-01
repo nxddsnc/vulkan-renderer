@@ -2,7 +2,8 @@
 #pragma once
 enum PipelineType
 {
-  MODEL
+  MODEL,
+  SKYBOX
 };
 
 enum class PrimitiveMode : uint8_t {
@@ -85,6 +86,7 @@ public:
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
     void InitModel();
+    void InitSkybox();
 private:
     PipelineId _id;
     VulkanRenderer    * _renderer;

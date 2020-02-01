@@ -291,6 +291,7 @@ std::shared_ptr<MyImage> ModelLoader::_extractImage(char * filename)
         image->m_width = width;
         image->m_height = height;
         image->m_channels = requstedComponents;
+        image->m_bufferSize = image->m_width * image->m_height * 4;
 
         m_imageMap.insert(std::make_pair(filename, image));
 
