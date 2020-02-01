@@ -2,11 +2,38 @@
 #include "MyImage.h"
 #include "MyTexture.h"
 #include "ResourceManager.h"
+#include "MyMesh.h"
+#include "Drawable.h"
 #include <iostream>
 
 Skybox::Skybox(ResourceManager *resourceManager)
 {
     m_pResourceManager = resourceManager;
+    
+    std::shared_ptr<MyMesh> mesh;
+    mesh->CreateCube();
+    vk::DeviceSize size = mesh->m_vertexNum * sizeof(mesh->m_positions[0]);
+
+    vk::Buffer positionBuffer;
+    VmaAllocation positionBufferMemory;
+    vk::DeviceSize positionBufferOffset;
+    resourceManager->CreateVertexBuffer(size, reinterpret_cast<void*>(mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
+    m_vertexBuffers.push_back(positionBuffer);
+    m_vertexBufferMemorys.push_back(positionBufferMemory);
+    m_vertexBufferOffsets.push_back(positionBufferOffset);
+
+    size = mesh->m_vertexNum * sizeof(mesh->m_texCoords0[0]);
+    vk::Buffer uvBuffer;
+    VmaAllocation uvBufferMemory;
+    vk::DeviceSize uvBufferOffset;
+    resourceManager->CreateVertexBuffer(size, reinterpret_cast<void*>(mesh->m_texCoords0.data()), uvBuffer, uvBufferMemory, uvBufferOffset);
+    m_vertexBuffers.push_back(uvBuffer);
+    m_vertexBufferMemorys.push_back(uvBufferMemory);
+    m_vertexBufferOffsets.push_back(uvBufferOffset);
+
+    resourceManager->CreateIndexBuffer(mesh, m_indexBuffer, m_indexBufferMemory);
+
+    
 }
 
 
@@ -142,3 +169,4 @@ bool Skybox::loadDDS(const char* path)
 
     fclose(f);
 }
+

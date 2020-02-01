@@ -18,29 +18,28 @@ struct VulkanTexture
     vk::Sampler                         imageSampler;
 };
 
-struct Drawable
+class Drawable
 {
-    glm::mat4                     matrix;
-    glm::mat4                     normalMatrix;
-    std::shared_ptr<MyMesh>       mesh;
-    std::shared_ptr<MyMaterial>   material;
+public:
+    glm::mat4                     m_matrix;
+    glm::mat4                     m_normalMatrix;
+    std::shared_ptr<MyMesh>       m_mesh;
+    std::shared_ptr<MyMaterial>   m_material;
 
     // buffers
-    std::vector<vk::Buffer>       vertexBuffers;
-    std::vector<vk::DeviceSize>   vertexBufferOffsets;
-    std::vector<VmaAllocation>    vertexBufferMemorys;
-    vk::Buffer                    indexBuffer;
-    VmaAllocation                 indexBufferMemory;
-    std::shared_ptr<Pipeline>     pipeline;
-    vk::DescriptorSet             materialDescriptorSet;
-    vk::DescriptorSet             materialImageDescriptorSet;
+    std::vector<vk::Buffer>       m_vertexBuffers;
+    std::vector<vk::DeviceSize>   m_vertexBufferOffsets;
+    std::vector<VmaAllocation>    m_vertexBufferMemorys;
+    vk::Buffer                    m_indexBuffer;
+    VmaAllocation                 m_indexBufferMemory;
+    std::shared_ptr<Pipeline>     m_pPipeline;
+    vk::DescriptorSet             m_materialDescriptorSet;
 
     // uniforms
 
     // texture samplers
     std::shared_ptr<VulkanTexture> baseColorTexture;
     std::shared_ptr<VulkanTexture> normalTexture;
-
     vk::DescriptorSet              textureDescriptorSet;
 
     //vk::DescriptorSet              textureDescriptorSet;

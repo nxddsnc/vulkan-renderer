@@ -62,14 +62,16 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _initSynchronizations();
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
-    Skybox  skybox(_resourceManager);
-    skybox.LoadFromFile("./TestModel/Skybox/env.dds");
+    _skybox = new Skybox(_resourceManager);
+    _skybox->LoadFromFile("./TestModel/Skybox/env.dds");
 }
 
 VulkanRenderer::~VulkanRenderer()
 {
     vkDeviceWaitIdle(_device);
     vkQueueWaitIdle(_queue);
+
+    delete _skybox;
     delete _window;
     delete _resourceManager;
 
@@ -621,97 +623,115 @@ void VulkanRenderer::_createCommandBuffers()
 {
     for (uint32_t i = 0; i < _swapchainImageCount; ++i)
     {
-       PipelineId lastPipelineId;
+        std::shared_ptr<Pipeline> pipelineModel = nullptr;
+        
+        // skybox
+        PipelineId skyBoxPipelineId;
+        skyBoxPipelineId.type = PipelineType::SKYBOX;
+        std::shared_ptr<Pipeline> pipelineSkybox = _pipelineManager->GetPipeline(skyBoxPipelineId);
+
+        
+       
+        PipelineId lastPipelineId;
        lastPipelineId.model.primitivePart.info.bits.positionVertexData = 0;
-       std::shared_ptr<Pipeline> pipeline = nullptr;
+
+       vk::CommandBufferAllocateInfo commandBufferAllocateInfo({
+           _commandPool,
+           vk::CommandBufferLevel::ePrimary,
+           static_cast<uint32_t>(1)
+       });
+       vk::CommandBuffer commandBuffer;
+       _device.allocateCommandBuffers(&commandBufferAllocateInfo, &commandBuffer);
+
+       vk::CommandBufferBeginInfo beginInfo({
+           vk::CommandBufferUsageFlagBits::eSimultaneousUse,
+           nullptr
+       });
+
+       commandBuffer.begin(beginInfo);
+
+       std::array<vk::ClearValue, 2> clearValues{};
+       clearValues[0].color.float32[0] = 0.0;
+       clearValues[0].color.float32[1] = 0.0;
+       clearValues[0].color.float32[2] = 0.0;
+       clearValues[0].color.float32[3] = 1.0f;
+
+       clearValues[1].depthStencil.depth = 1.0f;
+       clearValues[1].depthStencil.stencil = 0;
+
+       vk::RenderPassBeginInfo renderPassInfo({ _renderPass,
+           _framesData[i].framebuffer,
+           vk::Rect2D({ vk::Offset2D({ 0, 0 }),
+               _swapchainExtent }),
+               (uint32_t)clearValues.size(),
+           clearValues.data() });
+
+       commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
+
+       // skybox command buffer
+       commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
+       commandBuffer.bindVertexBuffers(0, _skybox->m_pDrawable->m_vertexBuffers.size(), _skybox->m_pDrawable->m_vertexBuffers.data(), _skybox->m_pDrawable->m_vertexBufferOffsets.data());
+       commandBuffer.bindIndexBuffer(_skybox->m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
+       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
+       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_pDrawable->textureDescriptorSet, 0, nullptr);
+       commandBuffer.drawIndexed(_skybox->m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+
+       // draw drawables
        for (auto it : _drawableMap)
        {
            PipelineId pipelineId = it.first;
            if (lastPipelineId != pipelineId)
            {
-               pipeline = _pipelineManager->GetPipeline(pipelineId);
+               pipelineModel = _pipelineManager->GetPipeline(pipelineId);
                lastPipelineId =  pipelineId;
 
-               vk::CommandBufferAllocateInfo commandBufferAllocateInfo({
-                   _commandPool,
-                   vk::CommandBufferLevel::ePrimary,
-                   static_cast<uint32_t>(1)
-               });
-               vk::CommandBuffer commandBuffer;
-               _device.allocateCommandBuffers(&commandBufferAllocateInfo, &commandBuffer);
-
-               vk::CommandBufferBeginInfo beginInfo({
-                vk::CommandBufferUsageFlagBits::eSimultaneousUse,
-                nullptr   
-               });
-
-               commandBuffer.begin(beginInfo);
-
-               std::array<vk::ClearValue, 2> clearValues{};
-               clearValues[0].color.float32[0] = 0.0;
-               clearValues[0].color.float32[1] = 0.0;
-               clearValues[0].color.float32[2] = 0.0;
-               clearValues[0].color.float32[3] = 1.0f;
-
-               clearValues[1].depthStencil.depth = 1.0f;
-               clearValues[1].depthStencil.stencil = 0;
-
-               vk::RenderPassBeginInfo renderPassInfo({ _renderPass,
-                                                       _framesData[i].framebuffer,
-                                                       vk::Rect2D({vk::Offset2D({0, 0}),
-                                                                   _swapchainExtent}),
-                                                       (uint32_t)clearValues.size(),
-                                                       clearValues.data() });
-                
-                commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
-
-                commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
+                commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipeline());
            
                 for (auto drawable : it.second)
                 {
-                    commandBuffer.bindVertexBuffers(0, drawable->vertexBuffers.size(), drawable->vertexBuffers.data(), drawable->vertexBufferOffsets.data());
+                    commandBuffer.bindVertexBuffers(0, drawable->m_vertexBuffers.size(), drawable->m_vertexBuffers.data(), drawable->m_vertexBufferOffsets.data());
 
-                    switch (drawable->mesh->m_indexType)
+                    switch (drawable->m_mesh->m_indexType)
                     {
                     //case 1:
                     //    commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, vk::IndexType::eUint8EXT);
                     //    break;
                     case 2:
-                        commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, vk::IndexType::eUint16);
+                        commandBuffer.bindIndexBuffer(drawable->m_indexBuffer, 0, vk::IndexType::eUint16);
                         break;
                     case 4:
-                        commandBuffer.bindIndexBuffer(drawable->indexBuffer, 0, vk::IndexType::eUint32);
+                        commandBuffer.bindIndexBuffer(drawable->m_indexBuffer, 0, vk::IndexType::eUint32);
                         break;
                     }
 
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
-                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
-                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
+                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
+                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
                     if (drawable->baseColorTexture || drawable->normalTexture)
                     {
-                        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
+                        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
                     }
 
                     uint32_t offset = 0;
-                    commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->matrix));
+                    commandBuffer.pushConstants(pipelineModel->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->m_matrix));
                     offset += sizeof(glm::mat4);
-                    commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->normalMatrix));
+                    commandBuffer.pushConstants(pipelineModel->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->m_normalMatrix));
                     offset += sizeof(glm::mat4);
 
                     if (pipelineId.model.materialPart.info.bits.baseColorInfo)
                     {
-                        commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec4), reinterpret_cast<void*>(&drawable->material->m_baseColor));
+                        commandBuffer.pushConstants(pipelineModel->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec4), reinterpret_cast<void*>(&drawable->m_material->m_baseColor));
                     }
 
-                    commandBuffer.drawIndexed(drawable->mesh->m_indexNum, 1, 0, 0, 0);
+                    commandBuffer.drawIndexed(drawable->m_mesh->m_indexNum, 1, 0, 0, 0);
                 }
-
-                commandBuffer.endRenderPass();
-                commandBuffer.end();
-
-                _framesData[i].cmdBuffers.push_back(commandBuffer);
            }
        }
+
+       commandBuffer.endRenderPass();
+       commandBuffer.end();
+
+       _framesData[i].cmdBuffers.push_back(commandBuffer);
     }
 }
 
@@ -726,12 +746,12 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
 
         id.model.primitivePart.info.bits.positionVertexData = 1;
         id.model.primitivePart.info.bits.normalVertexData = 1;
-        id.model.primitivePart.info.bits.tangentVertexData = drawable->mesh->m_vertexBits.hasTangent;
-        id.model.primitivePart.info.bits.countTexCoord = drawable->mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
-        id.model.primitivePart.info.bits.countColor = drawable->mesh->m_vertexBits.hasColor;
+        id.model.primitivePart.info.bits.tangentVertexData = drawable->m_mesh->m_vertexBits.hasTangent;
+        id.model.primitivePart.info.bits.countTexCoord = drawable->m_mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
+        id.model.primitivePart.info.bits.countColor = drawable->m_mesh->m_vertexBits.hasColor;
         id.model.materialPart.info.bits.baseColorInfo = 1;
-        id.model.materialPart.info.bits.baseColorMap = drawable->material->m_pDiffuseMap != nullptr;
-        id.model.materialPart.info.bits.normalMap = drawable->material->m_pNormalMap != nullptr;
+        id.model.materialPart.info.bits.baseColorMap = drawable->m_material->m_pDiffuseMap != nullptr;
+        id.model.materialPart.info.bits.normalMap = drawable->m_material->m_pNormalMap != nullptr;
         id.type = MODEL;
         if (_drawableMap.count(id) == 0) 
         {
@@ -739,11 +759,11 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
             drawables_.push_back(drawable);
             _drawableMap.insert(std::make_pair(id, drawables_));
             auto pipeline = _pipelineManager->GetPipeline(id);
-            drawable->pipeline = pipeline;
+            drawable->m_pPipeline = pipeline;
         }
         else 
         {
-            drawable->pipeline = _pipelineManager->GetPipeline(id);
+            drawable->m_pPipeline = _pipelineManager->GetPipeline(id);
             _drawableMap.at(id).push_back(drawable);
         }
     }

@@ -201,6 +201,7 @@ typedef struct {
 } DDS_HEADER_DXT10;
 
 class ResourceManager;
+class Drawable;
 #pragma once
 class Skybox
 {
@@ -209,10 +210,20 @@ public:
     ~Skybox();
 
     void LoadFromFile(std::string filename);
+
+public:
+    std::shared_ptr<Drawable>       m_pDrawable;
 private:
     bool loadDDS(const char* path);
 
     ResourceManager *m_pResourceManager;
+
+    std::vector<vk::Buffer>       m_vertexBuffers;
+    std::vector<vk::DeviceSize>   m_vertexBufferOffsets;
+    std::vector<VmaAllocation>    m_vertexBufferMemorys;
+    vk::Buffer                    m_indexBuffer;
+    VmaAllocation                 m_indexBufferMemory;
+
     std::shared_ptr<MyTexture>      m_pTexture;
 };
 

@@ -5,7 +5,7 @@
 #include "Platform.h"
 class Window;
 class VulkanCamera;
-struct Drawable;
+class Drawable;
 struct Vertex;
 class SHLight;
 #pragma once
@@ -31,6 +31,7 @@ struct FrameData
 class PipelineManager;
 class VulkanContext;
 class VulkanCamera;
+class Skybox;
 class VulkanRenderer
 {
 public:
@@ -66,10 +67,6 @@ private:
     void _updateUniformBuffer();
 
       void _cleanupSwapchain();
-
-    void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
-    
-    void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     
     void _initSwapchain();
     void _deInitSwapchain();
@@ -149,5 +146,7 @@ private:
 
     VulkanCamera                      *     _camera;
     SHLight                           *     _light;
+
+    Skybox                            *     _skybox;
 };
 

@@ -68,10 +68,10 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
         auto mesh = _extractMesh(node->mMeshes[i]);
         auto material = _extractMaterial(m_pAiScene->mMeshes[node->mMeshes[i]]->mMaterialIndex);
         std::shared_ptr<Drawable> drawable = std::make_shared<Drawable>();
-        drawable->mesh = mesh;
-        drawable->material = material;
-        drawable->matrix = matrix;
-        drawable->normalMatrix = glm::inverse(matrix);
+        drawable->m_mesh = mesh;
+        drawable->m_material = material;
+        drawable->m_matrix = matrix;
+        drawable->m_normalMatrix = glm::inverse(matrix);
         m_pScene->AddDrawable(drawable);
     }
 

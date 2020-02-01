@@ -22,11 +22,11 @@ ResourceManager::~ResourceManager()
 {
     for (auto drawable : _nodes)
     {
-        for (int i = 0; i < drawable->vertexBuffers.size(); ++i)
+        for (int i = 0; i < drawable->m_vertexBuffers.size(); ++i)
         {
-            vmaDestroyBuffer(_memoryAllocator, drawable->vertexBuffers[i], drawable->vertexBufferMemorys[i]);
+            vmaDestroyBuffer(_memoryAllocator, drawable->m_vertexBuffers[i], drawable->m_vertexBufferMemorys[i]);
         }
-        vmaDestroyBuffer(_memoryAllocator, drawable->indexBuffer, drawable->indexBufferMemory);
+        vmaDestroyBuffer(_memoryAllocator, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
         if (drawable->baseColorTexture)
         {
             if (drawable->baseColorTexture)
@@ -47,8 +47,8 @@ ResourceManager::~ResourceManager()
 
 void ResourceManager::createNodeResource(std::shared_ptr<Drawable> drawable)
 {
-    _createVertexBuffers(drawable);
-    _createIndexBuffer(drawable);
+    CreateVertexBuffers(drawable);
+    CreateIndexBuffer(drawable->m_mesh, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
     _createTextures(drawable);
     _nodes.push_back(drawable);
 }
@@ -144,10 +144,8 @@ void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
     _endSingleTimeCommand(commandBuffer);
 }
 
-void ResourceManager::_createVertexBuffer(std::shared_ptr<Drawable> drawable, vk::DeviceSize size, void *data_)
+void ResourceManager::CreateVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset)
 {
-    vk::Buffer buffer;
-    VmaAllocation bufferMemory;
     vk::BufferCreateInfo bufferInfo({
         {},
         size,
@@ -185,34 +183,56 @@ void ResourceManager::_createVertexBuffer(std::shared_ptr<Drawable> drawable, vk
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 
-    drawable->vertexBuffers.push_back(std::move(buffer));
-    drawable->vertexBufferMemorys.push_back(std::move(bufferMemory));
-    drawable->vertexBufferOffsets.push_back(vk::DeviceSize(0));
+    bufferOffset = 0;
 }
 
-void ResourceManager::_createVertexBuffers(std::shared_ptr<Drawable> drawable)
+void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
 {
-    vk::DeviceSize size = sizeof(drawable->mesh->m_positions[0]) * drawable->mesh->m_positions.size();
-    _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_positions.data()));
+    vk::DeviceSize size = sizeof(drawable->m_mesh->m_positions[0]) * drawable->m_mesh->m_positions.size();
+    vk::Buffer positionBuffer;
+    VmaAllocation positionBufferMemory;
+    vk::DeviceSize positionBufferOffset;
+    CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
+    drawable->m_vertexBuffers.push_back(std::move(positionBuffer));
+    drawable->m_vertexBufferMemorys.push_back(std::move(positionBufferMemory));
+    drawable->m_vertexBufferOffsets.push_back(std::move(positionBufferOffset));
 
-    size = sizeof(drawable->mesh->m_normals[0]) * drawable->mesh->m_normals.size();
-    _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_normals.data()));
+    vk::Buffer normalBuffer;
+    VmaAllocation normalBufferMemory;
+    vk::DeviceSize normalBufferOffset;
+    size = sizeof(drawable->m_mesh->m_normals[0]) * drawable->m_mesh->m_normals.size();
+    CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_normals.data()), normalBuffer, normalBufferMemory, normalBufferOffset);
+    drawable->m_vertexBuffers.push_back(std::move(normalBuffer));
+    drawable->m_vertexBufferMemorys.push_back(std::move(normalBufferMemory));
+    drawable->m_vertexBufferOffsets.push_back(std::move(normalBufferOffset));
 
-    if (drawable->mesh->m_texCoords0.size() > 0)
+    if (drawable->m_mesh->m_texCoords0.size() > 0)
     {
-        size = sizeof(drawable->mesh->m_texCoords0[0]) * drawable->mesh->m_texCoords0.size();
-        _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_texCoords0.data()));
+        vk::Buffer uvBuffer;
+        VmaAllocation uvBufferMemory;
+        vk::DeviceSize uvBufferOffset;
+        size = sizeof(drawable->m_mesh->m_texCoords0[0]) * drawable->m_mesh->m_texCoords0.size();
+        CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_texCoords0.data()), uvBuffer, uvBufferMemory, uvBufferOffset);
+        drawable->m_vertexBuffers.push_back(std::move(uvBuffer));
+        drawable->m_vertexBufferMemorys.push_back(std::move(uvBufferMemory));
+        drawable->m_vertexBufferOffsets.push_back(std::move(uvBufferOffset));
     }
-    if (drawable->mesh->m_tangents.size() > 0)
+    if (drawable->m_mesh->m_tangents.size() > 0)
     {
-        size = sizeof(drawable->mesh->m_tangents[0]) * drawable->mesh->m_tangents.size();
-        _createVertexBuffer(drawable, size, reinterpret_cast<void*>(drawable->mesh->m_tangents.data()));
+        vk::Buffer tangentBuffer;
+        VmaAllocation tangentBufferMemory;
+        vk::DeviceSize tangentBufferOffset;
+        size = sizeof(drawable->m_mesh->m_tangents[0]) * drawable->m_mesh->m_tangents.size();
+        CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_tangents.data()), tangentBuffer, tangentBufferMemory, tangentBufferOffset);
+        drawable->m_vertexBuffers.push_back(std::move(tangentBuffer));
+        drawable->m_vertexBufferMemorys.push_back(std::move(tangentBufferMemory));
+        drawable->m_vertexBufferOffsets.push_back(std::move(tangentBufferOffset));
     }
 }
 
-void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)
+void ResourceManager::CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory)
 {
-    VkDeviceSize size = drawable->mesh->m_indexNum * drawable->mesh->getIndexSize();
+    VkDeviceSize size = mesh->m_indexNum * mesh->getIndexSize();
 
     vk::BufferCreateInfo bufferInfo({
         {},
@@ -224,7 +244,7 @@ void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)
     });
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&drawable->indexBuffer), &drawable->indexBufferMemory, nullptr);
+    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&buffer), &bufferMemory, nullptr);
 
     vk::Buffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
@@ -243,10 +263,10 @@ void ResourceManager::_createIndexBuffer(std::shared_ptr<Drawable> drawable)
 
     void* data;
     vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-    memcpy(data, drawable->mesh->m_indices, (size_t)size);
+    memcpy(data, mesh->m_indices, (size_t)size);
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-    _copyBuffer(stagingBuffer, drawable->indexBuffer, size);
+    _copyBuffer(stagingBuffer, buffer, size);
 
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
@@ -410,7 +430,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
 
 void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
 {
-    if (drawable->material->m_pDiffuseMap == nullptr && drawable->material->m_pNormalMap == nullptr)
+    if (drawable->m_material->m_pDiffuseMap == nullptr && drawable->m_material->m_pNormalMap == nullptr)
     {
         return;
     }
@@ -418,9 +438,9 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
     uint32_t bindings = 0;
     std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
     std::vector<vk::DescriptorImageInfo> imageInfos;
-    if (drawable->material->m_pDiffuseMap)
+    if (drawable->m_material->m_pDiffuseMap)
     {
-        drawable->baseColorTexture = CreateCombinedTexture(drawable->material->m_pDiffuseMap);
+        drawable->baseColorTexture = CreateCombinedTexture(drawable->m_material->m_pDiffuseMap);
         vk::DescriptorSetLayoutBinding textureBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,
@@ -432,9 +452,9 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
             drawable->baseColorTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
         imageInfos.push_back(imageInfo);
     }
-    if (drawable->material->m_pNormalMap)
+    if (drawable->m_material->m_pNormalMap)
     {
-        drawable->normalTexture = CreateCombinedTexture(drawable->material->m_pNormalMap);
+        drawable->normalTexture = CreateCombinedTexture(drawable->m_material->m_pNormalMap);
         vk::DescriptorSetLayoutBinding textureBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,

@@ -427,7 +427,7 @@ void Pipeline::InitSkybox()
         &assemblyInfo,
         {},
         &viewportState,
-        &rasterizerState,
+        &rasterizerState, 
         &multisampling,
         &depthStencilStateCreateInfo,
         &colorBlending,

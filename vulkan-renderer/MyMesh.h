@@ -25,7 +25,10 @@ class MyMesh
 {
 public:
     MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize);
+    MyMesh();
     ~MyMesh();
+
+    void CreateCube();
 
     int getIndexSize();
     int                     m_indexType;
@@ -33,7 +36,7 @@ public:
     std::vector<glm::vec3>  m_positions;
     std::vector<glm::vec3>  m_normals;
     std::vector<glm::vec3>  m_tangents;
-    std::vector<glm::vec2>  m_texCoords0;
+    std::vector<glm::vec3>  m_texCoords0;
     std::vector<glm::vec2>  m_texCoords1;
     std::vector<glm::vec3>  m_colors;
     void                  * m_indices;

@@ -7,7 +7,7 @@
 /************************************************************************/
 /* Meant to Control the gpu resource allocation.*/
 /************************************************************************/
-struct Drawable;
+class Drawable;
 struct VulkanTexture;
 class  MyTexture;
 class ResourceManager
@@ -20,10 +20,10 @@ public:
     void createNodeResource(std::shared_ptr<Drawable> node);
 
     std::shared_ptr<VulkanTexture> CreateCombinedTexture(std::shared_ptr<MyTexture> texture);
+    void CreateVertexBuffers(std::shared_ptr<Drawable> drawable);
+    void CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory);
+    void CreateVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset);
 private:
-    void _createVertexBuffer(std::shared_ptr<Drawable> drawable, vk::DeviceSize size, void *data_);
-    void _createVertexBuffers(std::shared_ptr<Drawable> drawable);
-    void _createIndexBuffer(std::shared_ptr<Drawable> drawable);
     void _createTextures(std::shared_ptr<Drawable> drawable);
     void _transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     vk::CommandBuffer _beginSingleTimeCommand();
