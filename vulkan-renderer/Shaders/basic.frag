@@ -10,7 +10,7 @@ layout(location = 4) in vec3 inNormal;
 layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 #if IN_UV0
-layout(location = IN_UV0_LOCATION + 3) in vec2 inUv;
+layout(location = IN_UV0_LOCATION + 3) in vec3 inUv;
 #endif
 
 //output
@@ -45,8 +45,8 @@ void main() {
     vec3 normal = texture(normalTexture, vec2(inUv.x, -inUv.y)).xyz;
     vec3 pos_dx = dFdx(inPosition);
     vec3 pos_dy = dFdy(inPosition);
-    vec3 tex_dx = dFdx(vec3(inUv, 1.0));
-    vec3 tex_dy = dFdy(vec3(inUv, 1.0));
+    vec3 tex_dx = dFdx(vec3(inUv.xy, 1.0));
+    vec3 tex_dy = dFdy(vec3(inUv.xy, 1.0));
     vec3 t = (tex_dy.t * pos_dx - tex_dx.t * pos_dy) / (tex_dx.s * tex_dy.t - tex_dy.s * tex_dx.t);
     t = normalize(t - inNormal * dot(inNormal, t));
     vec3 b = normalize(cross(inNormal, t));

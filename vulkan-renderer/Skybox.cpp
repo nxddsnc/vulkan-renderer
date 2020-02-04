@@ -10,7 +10,7 @@ Skybox::Skybox(ResourceManager *resourceManager)
 {
     m_pResourceManager = resourceManager;
     
-    std::shared_ptr<MyMesh> mesh;
+    std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>();
     mesh->CreateCube();
     vk::DeviceSize size = mesh->m_vertexNum * sizeof(mesh->m_positions[0]);
 
@@ -33,7 +33,7 @@ Skybox::Skybox(ResourceManager *resourceManager)
 
     resourceManager->CreateIndexBuffer(mesh, m_indexBuffer, m_indexBufferMemory);
 
-    
+    m_indexNum = mesh->m_indexNum;
 }
 
 
@@ -41,18 +41,7 @@ Skybox::~Skybox()
 {
 }
 
-void Skybox::LoadFromFile(std::string filename)
-{
-    loadDDS(filename.c_str());
-    //MyImage image(filename.c_str());
-    //
-    //image.width = static_cast<uint32_t>(texCube.extent().x);
-    //height = static_cast<uint32_t>(texCube.extent().y);
-    //mipLevels = static_cast<uint32_t>(texCube.levels());
-    
-}
-
-bool Skybox::loadDDS(const char* path)
+bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool descriptorPool)
 {
     // lay out variables to be used
     DDS_HEADER header;
@@ -165,7 +154,40 @@ bool Skybox::loadDDS(const char* path)
     m_pTexture->m_wrapMode[1] = WrapMode::WRAP;
     m_pTexture->m_wrapMode[2] = WrapMode::WRAP;
 
-    m_pResourceManager->CreateCombinedTexture(m_pTexture);
+    m_pCubeMap = m_pResourceManager->CreateCombinedTexture(m_pTexture);
+
+    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+    std::vector<vk::DescriptorImageInfo> imageInfos;
+    vk::DescriptorSetLayoutBinding textureBinding(0,
+        vk::DescriptorType::eCombinedImageSampler,
+        1,
+        vk::ShaderStageFlagBits::eFragment,
+        {});
+    textureBindings.push_back(textureBinding);
+
+    vk::DescriptorImageInfo imageInfo(m_pCubeMap->imageSampler,
+        m_pCubeMap->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfos.push_back(imageInfo);
+
+    vk::DescriptorSetLayout descriptorSetLayout;
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
+    descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+
+    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
+
+    device.allocateDescriptorSets(&allocInfo, &m_textureDescriptorSet);
+
+    vk::WriteDescriptorSet descriptorWrite(m_textureDescriptorSet,
+        uint32_t(0),
+        uint32_t(0),
+        static_cast<uint32_t>(imageInfos.size()),
+        vk::DescriptorType::eCombinedImageSampler,
+        imageInfos.data(),
+        {},
+        {});
+    device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    device.destroyDescriptorSetLayout(descriptorSetLayout);
 
     fclose(f);
 }

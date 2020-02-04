@@ -39,5 +39,6 @@ private:
     VmaAllocator                                  _memoryAllocator;
     vk::DescriptorPool                            _descriptorPool;
     std::vector<std::shared_ptr<Drawable>>        _nodes;
+    std::vector<std::shared_ptr<VulkanTexture>>   _textures;
 };
 

@@ -63,7 +63,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
     _skybox = new Skybox(_resourceManager);
-    _skybox->LoadFromFile("./TestModel/Skybox/env.dds");
+    _skybox->LoadFromDDS("./TestModel/Skybox/env.dds", _device, _descriptorPool);
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -628,8 +628,12 @@ void VulkanRenderer::_createCommandBuffers()
         // skybox
         PipelineId skyBoxPipelineId;
         skyBoxPipelineId.type = PipelineType::SKYBOX;
+        skyBoxPipelineId.model.primitivePart.info.bits.positionVertexData = 1;
+        skyBoxPipelineId.model.primitivePart.info.bits.normalVertexData = 0;
+        skyBoxPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
+        skyBoxPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
+        skyBoxPipelineId.model.primitivePart.info.bits.countColor = 0;
         std::shared_ptr<Pipeline> pipelineSkybox = _pipelineManager->GetPipeline(skyBoxPipelineId);
-
         
        
         PipelineId lastPipelineId;
@@ -670,11 +674,11 @@ void VulkanRenderer::_createCommandBuffers()
 
        // skybox command buffer
        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
-       commandBuffer.bindVertexBuffers(0, _skybox->m_pDrawable->m_vertexBuffers.size(), _skybox->m_pDrawable->m_vertexBuffers.data(), _skybox->m_pDrawable->m_vertexBufferOffsets.data());
-       commandBuffer.bindIndexBuffer(_skybox->m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
+       commandBuffer.bindVertexBuffers(0, _skybox->m_vertexBuffers.size(), _skybox->m_vertexBuffers.data(), _skybox->m_vertexBufferOffsets.data());
+       commandBuffer.bindIndexBuffer(_skybox->m_indexBuffer, 0, vk::IndexType::eUint16);
        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
-       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_pDrawable->textureDescriptorSet, 0, nullptr);
-       commandBuffer.drawIndexed(_skybox->m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_textureDescriptorSet, 0, nullptr);
+       commandBuffer.drawIndexed(_skybox->m_indexNum, 1, 0, 0, 0);
 
        // draw drawables
        for (auto it : _drawableMap)

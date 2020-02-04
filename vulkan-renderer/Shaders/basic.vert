@@ -16,7 +16,7 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 
 #if IN_UV0
-layout(location = IN_UV0_LOCATION) in vec2 inUv;
+layout(location = IN_UV0_LOCATION) in vec3 inUv;
 #endif
 
 #if IN_TANGENT
@@ -29,7 +29,7 @@ layout(location = 3) out vec3 outPosition;
 layout(location = 4) out vec3 outNormal;
 
 #if IN_UV0
-layout(location = IN_UV0_LOCATION + 3) out vec2 outUv;
+layout(location = IN_UV0_LOCATION + 3) out vec3 outUv;
 #endif
 
 void main() {

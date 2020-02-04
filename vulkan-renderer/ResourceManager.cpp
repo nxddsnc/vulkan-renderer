@@ -42,6 +42,8 @@ ResourceManager::~ResourceManager()
                 _device.destroySampler(drawable->normalTexture->imageSampler);
             }
         }
+
+        
     }
 }
 
@@ -321,6 +323,8 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     std::shared_ptr<MyImage> myImage = texture->m_pImage;
     std::shared_ptr<VulkanTexture> vulkanTexture = std::make_shared<VulkanTexture>();
 
+    _textures.push_back(vulkanTexture);
+
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
     switch (myImage->m_format)
     {
@@ -333,8 +337,16 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     }
 
     auto properties = _gpu.getFormatProperties(imageFormat);
+
+    vk::ImageViewType imageViewType = vk::ImageViewType::e2D;
+    vk::ImageCreateFlags flags = {};
+    if (texture->m_pImage->m_layerCount == 6)
+    {
+        imageViewType = vk::ImageViewType::eCube;
+        flags = vk::ImageCreateFlagBits::eCubeCompatible;
+    }
     // create image
-    vk::ImageCreateInfo imageCreateInfo( {},
+    vk::ImageCreateInfo imageCreateInfo(  flags,
                                           vk::ImageType::e2D,
                                           imageFormat,
                                           vk::Extent3D({
@@ -364,11 +376,12 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         0,
         myImage->m_layerCount
     );
+
     // create image view
     vk::ImageViewCreateInfo imageViewCreateInfo({
         {},
         vulkanTexture->image,
-        vk::ImageViewType::e2D,
+        imageViewType,
         imageFormat,
         vk::ComponentMapping({
             vk::ComponentSwizzle::eR,

@@ -191,7 +191,6 @@ typedef struct {
     DWORD           dwReserved2;
 } DDS_HEADER;
 
-class MyTexture;
 typedef struct {
     DXGI_FORMAT              dxgiFormat;
     D3D10_RESOURCE_DIMENSION resourceDimension;
@@ -202,20 +201,17 @@ typedef struct {
 
 class ResourceManager;
 class Drawable;
+class MyTexture;
+struct VulkanTexture;
+class VulkanCamera;
 #pragma once
 class Skybox
 {
 public:
     Skybox(ResourceManager *resourceManager);
     ~Skybox();
-
-    void LoadFromFile(std::string filename);
-
+    bool LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool descriptorPool);
 public:
-    std::shared_ptr<Drawable>       m_pDrawable;
-private:
-    bool loadDDS(const char* path);
-
     ResourceManager *m_pResourceManager;
 
     std::vector<vk::Buffer>       m_vertexBuffers;
@@ -224,6 +220,10 @@ private:
     vk::Buffer                    m_indexBuffer;
     VmaAllocation                 m_indexBufferMemory;
 
-    std::shared_ptr<MyTexture>      m_pTexture;
+    std::shared_ptr<MyTexture>    m_pTexture;
+    std::shared_ptr<VulkanTexture> m_pCubeMap;
+    uint32_t                      m_indexNum;
+
+    vk::DescriptorSet            m_textureDescriptorSet;
 };
 

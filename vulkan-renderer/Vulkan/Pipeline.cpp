@@ -72,8 +72,8 @@ void Pipeline::InitModel()
     // Set vertex data attributes for dynamic attributes
     if (_id.model.primitivePart.info.bits.countTexCoord > 0)
     {
-        _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
-        _addAttributes(2, 2, vk::Format::eR32G32Sfloat, 0);
+        _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+        _addAttributes(2, 2, vk::Format::eR32G32B32Sfloat, 0);
     }
 
     if (_id.model.primitivePart.info.bits.tangentVertexData)
@@ -304,8 +304,8 @@ void Pipeline::InitSkybox()
     _addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
 
     // uv coord
-    _addInputBinding(sizeof(glm::vec2), vk::VertexInputRate::eVertex);
-    _addAttributes(2, 2, vk::Format::eR32G32Sfloat, 0);
+    _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+    _addAttributes(1, 1, vk::Format::eR32G32B32Sfloat, 0);
 
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
         static_cast<uint32_t>(_inputBindings.size()),
@@ -315,6 +315,7 @@ void Pipeline::InitSkybox()
 
     // Set input assembly state
     vk::PipelineInputAssemblyStateCreateInfo assemblyInfo;
+    assemblyInfo.topology = vk::PrimitiveTopology::eTriangleList;
     vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
 
     uint32_t width, height;
@@ -383,7 +384,7 @@ void Pipeline::InitSkybox()
     vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({ {},
         static_cast<vk::Bool32>(true),
         static_cast<vk::Bool32>(true),
-        vk::CompareOp::eLess,
+        vk::CompareOp::eLessOrEqual,
         static_cast<vk::Bool32>(false),
         static_cast<vk::Bool32>(false),
         {},
@@ -403,7 +404,7 @@ void Pipeline::InitSkybox()
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
-    vk::DescriptorSetLayoutBinding skyboxSamplerBinding({ 1,
+    vk::DescriptorSetLayoutBinding skyboxSamplerBinding({ 0,
         vk::DescriptorType::eCombinedImageSampler,
         1,
         vk::ShaderStageFlagBits::eFragment,

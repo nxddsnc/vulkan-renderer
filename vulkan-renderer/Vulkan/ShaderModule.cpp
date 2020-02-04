@@ -116,6 +116,7 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
     }
     case PipelineType::SKYBOX:
     {
+
         break;
 
     }
