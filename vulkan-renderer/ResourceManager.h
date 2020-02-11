@@ -19,13 +19,15 @@ public:
 
     void createNodeResource(std::shared_ptr<Drawable> node);
 
+    std::shared_ptr<VulkanTexture> CreateVulkanTexture(std::shared_ptr<MyTexture> texture);
     std::shared_ptr<VulkanTexture> CreateCombinedTexture(std::shared_ptr<MyTexture> texture);
     void CreateVertexBuffers(std::shared_ptr<Drawable> drawable);
     void CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory);
     void CreateVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset);
+    void SetImageLayout(vk::CommandBuffer &command, vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+    void SetImageLayoutInSingleCmd(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 private:
     void _createTextures(std::shared_ptr<Drawable> drawable);
-    void _transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     vk::CommandBuffer _beginSingleTimeCommand();
     void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage);

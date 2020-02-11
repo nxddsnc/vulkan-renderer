@@ -3,7 +3,8 @@
 enum PipelineType
 {
   MODEL,
-  SKYBOX
+  SKYBOX,
+  PREFILTERED_CUBE_MAP
 };
 
 enum class PrimitiveMode : uint8_t {
@@ -80,6 +81,7 @@ class Pipeline
 {
 public:
     Pipeline(VulkanRenderer *renderer, PipelineId id);
+    Pipeline(PipelineId id);
     ~Pipeline();
 
     void Destroy();
@@ -87,9 +89,11 @@ public:
     vk::PipelineLayout GetPipelineLayout();
     void InitModel();
     void InitSkybox();
+    void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
 private:
     PipelineId _id;
     VulkanRenderer    * _renderer;
+    vk::Device          m_device;
     vk::RenderPass      _renderPass;
     vk::Pipeline        _graphicsPipeline;
     vk::PipelineLayout  _pipelineLayout;

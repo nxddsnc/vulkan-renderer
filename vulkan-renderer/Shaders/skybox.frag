@@ -2,8 +2,7 @@
 
 layout (set = 1, binding = 0) uniform samplerCube samplerEnv;
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inUv;
+layout(location = 0) in vec3 inUVW;
 
 layout (location = 0) out vec4 outColor;
 
@@ -13,24 +12,24 @@ layout (location = 0) out vec4 outColor;
 // 	float gamma;
 // } uboParams;
 
-// // From http://filmicworlds.com/blog/filmic-tonemapping-operators/
-// vec3 Uncharted2Tonemap(vec3 color)
-// {
-// 	float A = 0.15;
-// 	float B = 0.50;
-// 	float C = 0.10;
-// 	float D = 0.20;
-// 	float E = 0.02;
-// 	float F = 0.30;
-// 	float W = 11.2;
-// 	return ((color*(A*color+C*B)+D*E)/(color*(A*color+B)+D*F))-E/F;
-// }
+// From http://filmicworlds.com/blog/filmic-tonemapping-operators/
+vec3 Uncharted2Tonemap(vec3 color)
+{
+	float A = 0.15;
+	float B = 0.50;
+	float C = 0.10;
+	float D = 0.20;
+	float E = 0.02;
+	float F = 0.30;
+	float W = 11.2;
+	return ((color*(A*color+C*B)+D*E)/(color*(A*color+B)+D*F))-E/F;
+}
 
 void main() 
 {
-	vec3 color = texture(samplerEnv, inUv).rgb;
+	vec3 color = texture(samplerEnv, inUVW).rgb;
+	// color = Uncharted2Tonemap(color);
 	outColor = vec4(color, 1.0);
-
 	// outColor = vec4(abs(inPosition.x + 0.5 - inUv.x), abs(inPosition.y + 0.5 - inUv.y), abs(inPosition.z + 0.5 - inUv.z), 1.0);
 
 	// outColor = vec4(inUv.x, inUv.y, inUv.z, 1.0);

@@ -28,4 +28,5 @@ public:
     uint32_t      m_blockSize;
     uint32_t      m_bufferSize;
     bool          m_bCompressed;
+    bool          m_bFramebuffer;
 };

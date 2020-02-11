@@ -9,6 +9,7 @@ MyImage::MyImage(const char *filename)
     m_layerCount = 1;
     m_blockSize = 1;
     m_bCompressed = false;
+    m_bFramebuffer = false;
 }
 
 MyImage::~MyImage() 

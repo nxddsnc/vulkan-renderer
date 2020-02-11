@@ -273,20 +273,18 @@ void ResourceManager::CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
 
-void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
 {
-    vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
-
-    vk::ImageMemoryBarrier barrier({
-        {},
-        {},
+    vk::ImageMemoryBarrier barrier(
+    {},
+    {},
         oldLayout,
         newLayout,
         {},
         {},
         image,
         subResourceRange
-    });
+    );
 
     std::array<vk::ImageMemoryBarrier, 1> barriers = { barrier };
 
@@ -308,17 +306,47 @@ void ResourceManager::_transitionImageLayout(vk::Image &image, vk::Format format
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     }
+    else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::eTransferSrcOptimal)
+    {
+        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+        destinationStage = vk::PipelineStageFlagBits::eTransfer;
+    }
+    else if (oldLayout == vk::ImageLayout::eTransferSrcOptimal && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
+    {
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTransfer;
+        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
+    else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
+    {
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTransfer;
+        destinationStage = vk::PipelineStageFlagBits::eTopOfPipe;
+    }
     else {
         throw std::invalid_argument("unsupported layout transition!");
     }
 
     commandBuffer.pipelineBarrier(sourceStage, destinationStage,
         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, barriers);
+}
+void ResourceManager::SetImageLayoutInSingleCmd(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+{
+    vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
+
+    SetImageLayout(commandBuffer, image, format, subResourceRange, oldLayout, newLayout);
 
     _endSingleTimeCommand(commandBuffer);
 }
 
-std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
+std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_ptr<MyTexture> texture)
 {
     std::shared_ptr<MyImage> myImage = texture->m_pImage;
     std::shared_ptr<VulkanTexture> vulkanTexture = std::make_shared<VulkanTexture>();
@@ -336,8 +364,6 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         break;
     }
 
-    auto properties = _gpu.getFormatProperties(imageFormat);
-
     vk::ImageViewType imageViewType = vk::ImageViewType::e2D;
     vk::ImageCreateFlags flags = {};
     if (texture->m_pImage->m_layerCount == 6)
@@ -346,23 +372,29 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         flags = vk::ImageCreateFlagBits::eCubeCompatible;
     }
     // create image
-    vk::ImageCreateInfo imageCreateInfo(  flags,
-                                          vk::ImageType::e2D,
-                                          imageFormat,
-                                          vk::Extent3D({
-                                              static_cast<uint32_t>(myImage->m_width),
-                                              static_cast<uint32_t>(myImage->m_height),
-                                              1
-                                          }),
-                                          myImage->m_mipmapCount,
-                                          myImage->m_layerCount,
-                                          vk::SampleCountFlagBits::e1,
-                                          vk::ImageTiling::eOptimal,
-                                          vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-                                          vk::SharingMode::eExclusive,
-                                          1,
-                                          &_graphicsQueueFamilyIndex,
-                                          vk::ImageLayout::eUndefined);
+
+    vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst;
+    if (texture->m_pImage->m_bFramebuffer)
+    {
+        usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+    }
+    vk::ImageCreateInfo imageCreateInfo(flags,
+        vk::ImageType::e2D,
+        imageFormat,
+        vk::Extent3D({
+        static_cast<uint32_t>(myImage->m_width),
+        static_cast<uint32_t>(myImage->m_height),
+        1
+    }),
+        myImage->m_mipmapCount,
+        myImage->m_layerCount,
+        vk::SampleCountFlagBits::e1,
+        vk::ImageTiling::eOptimal,
+        usage,
+        vk::SharingMode::eExclusive,
+        1,
+        &_graphicsQueueFamilyIndex,
+        vk::ImageLayout::eUndefined);
     VmaAllocationCreateInfo allocationCreateInfo = {};
 
     allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -384,14 +416,32 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         imageViewType,
         imageFormat,
         vk::ComponentMapping({
-            vk::ComponentSwizzle::eR,
-            vk::ComponentSwizzle::eG,
-            vk::ComponentSwizzle::eB,
-            vk::ComponentSwizzle::eA
-        }),
+        vk::ComponentSwizzle::eR,
+        vk::ComponentSwizzle::eG,
+        vk::ComponentSwizzle::eB,
+        vk::ComponentSwizzle::eA
+    }),
         subResourceRange
     });
     vulkanTexture->imageView = _device.createImageView(imageViewCreateInfo);
+
+    return vulkanTexture;
+}
+
+std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
+{
+    std::shared_ptr<VulkanTexture> vulkanTexture = CreateVulkanTexture(texture);
+
+    vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+    switch (texture->m_pImage->m_format)
+    {
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
+        imageFormat = vk::Format::eR8G8B8A8Unorm;
+        break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
+        imageFormat = vk::Format::eR16G16B16A16Sfloat;
+        break;
+    }
 
     // create image sampler
     vk::SamplerCreateInfo createInfo(
@@ -431,10 +481,18 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     memcpy(data, texture->m_pImage->m_data, static_cast<size_t>(stagingBufferInfo.size));
     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
 
-    _transitionImageLayout(vulkanTexture->image, imageFormat, subResourceRange,
+    vk::ImageSubresourceRange subResourceRange(
+        vk::ImageAspectFlagBits::eColor,
+        0,
+        texture->m_pImage->m_mipmapCount,
+        0,
+        texture->m_pImage->m_layerCount
+    );
+
+    SetImageLayoutInSingleCmd(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-    _copyBufferToImage(stagingBuffer, vulkanTexture->image, myImage);
-    _transitionImageLayout(vulkanTexture->image, imageFormat, subResourceRange,
+    _copyBufferToImage(stagingBuffer, vulkanTexture->image, texture->m_pImage);
+    SetImageLayoutInSingleCmd(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
 

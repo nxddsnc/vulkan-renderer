@@ -62,7 +62,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _initSynchronizations();
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
-    _skybox = new Skybox(_resourceManager);
+    _skybox = new Skybox(_resourceManager, _context);
     _skybox->LoadFromDDS("./TestModel/Skybox/env.dds", _device, _descriptorPool);
 }
 

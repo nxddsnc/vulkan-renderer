@@ -41,23 +41,18 @@ vk::RenderPass RenderPass::Get()
         0,
         vk::ImageLayout::eColorAttachmentOptimal
     });
-    vk::AttachmentReference subpassDepthStencilAttachment({
-        1,
-        vk::ImageLayout::eDepthStencilAttachmentOptimal
-    });
 
-    vk::SubpassDescription subpass({
-        {},
-        vk::PipelineBindPoint::eGraphics,
-        0,
-        {},
-        1,
-        &subpassColorAttachment,
-        {},
-        &subpassDepthStencilAttachment,
-        0,
-        {}
-    });
+    vk::SubpassDescription subpass;
+    subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &subpassColorAttachment;
+
+    // TODO: modified for multiple color attachments.
+    if (_attachments.size() == 2)
+    {
+        vk::AttachmentReference subpassDepthStencilAttachment(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        subpass.pDepthStencilAttachment = &subpassDepthStencilAttachment;
+    }
 
     vk::RenderPassCreateInfo createInfo({
         {},

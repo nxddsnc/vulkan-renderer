@@ -25,6 +25,8 @@ std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id)
   case SKYBOX:
       pipeline->InitSkybox();
       break;
+  //case PREFILTERED_CUBE_MAP:
+  //    pipeline->InitPrefilteredCubeMap();
   }
   
   return pipeline;
