@@ -164,6 +164,7 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     m_pTextureEnvMap->m_wrapMode[1] = WrapMode::WRAP;
     m_pTextureEnvMap->m_wrapMode[2] = WrapMode::WRAP;
     m_pVulkanTextureEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTextureEnvMap);
+    m_pResourceManager->InitVulkanTextureData(m_pTextureEnvMap, m_pVulkanTextureEnvMap);
 
     std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
     std::vector<vk::DescriptorImageInfo> imageInfos;
@@ -223,7 +224,8 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
     offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
     offscreenTexture->m_wrapMode[2] = WrapMode::CLAMP;
 
-    std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
+    std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateCombinedTexture(offscreenTexture);
+    //std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
 
 
     m_pTexturePrefilteredEnvMap = std::make_shared<MyTexture>();
@@ -244,7 +246,7 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
     m_pTexturePrefilteredEnvMap->m_wrapMode[0] = WrapMode::CLAMP;
     m_pTexturePrefilteredEnvMap->m_wrapMode[1] = WrapMode::CLAMP;
     m_pTexturePrefilteredEnvMap->m_wrapMode[2] = WrapMode::CLAMP;
-    m_pVulkanTexturePrefilteredEnvMap = m_pResourceManager->CreateVulkanTexture(m_pTexturePrefilteredEnvMap);
+    m_pVulkanTexturePrefilteredEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTexturePrefilteredEnvMap);
 
     vk::Device device = m_pContext->GetLogicalDevice();
     RenderPass renderPass(&device);
@@ -275,6 +277,19 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
         height,
         uint32_t(1));
     vk::Framebuffer framebuffer = device.createFramebuffer(createInfo);
+
+    std::array<vk::ClearValue, 1> clearValues{};
+    clearValues[0].color.float32[0] = 0.0;
+    clearValues[0].color.float32[1] = 0.0;
+    clearValues[0].color.float32[2] = 0.0;
+    clearValues[0].color.float32[3] = 1.0f;
+
+    vk::RenderPassBeginInfo renderPassInfo(
+        vulkanRenderPass,
+        framebuffer,
+        vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)),
+        (uint32_t)clearValues.size(),
+        clearValues.data());
 
     PipelineId id;
     id.type = PREFILTERED_CUBE_MAP;
@@ -310,8 +325,6 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
         // NEGATIVE_Z
         glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
     };
-
-
    
     vk::CommandBuffer commandBuffer;
     device.allocateCommandBuffers(&commandBufferAllocateInfo, &commandBuffer);
@@ -345,27 +358,15 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
             commandBuffer.setViewport(0, 1, &viewport);
             commandBuffer.setScissor(0, 1, &sissor);
 
-            std::array<vk::ClearValue, 1> clearValues{};
-            clearValues[0].color.float32[0] = 0.0;
-            clearValues[0].color.float32[1] = 0.0;
-            clearValues[0].color.float32[2] = 0.0;
-            clearValues[0].color.float32[3] = 1.0f;
-
-            vk::RenderPassBeginInfo renderPassInfo({ vulkanRenderPass,
-                framebuffer,
-                vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D()),
-                (uint32_t)clearValues.size(),
-                clearValues.data() });
-
             commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
-
+           
             // skybox command buffer
             commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.GetPipeline());
             commandBuffer.bindVertexBuffers(0, m_vertexBuffers.size(), m_vertexBuffers.data(), m_vertexBufferOffsets.data());
             commandBuffer.bindIndexBuffer(m_indexBuffer, 0, vk::IndexType::eUint16);
 
             commandBuffer.pushConstants(pipeline.GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(pushBlock), reinterpret_cast<void*>(&pushBlock));
-            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.GetPipelineLayout(), 0, 1, &m_textureDescriptorSet, 0, nullptr);
+            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.GetPipelineLayout(), 0, 1, &m_dsSkybox, 0, nullptr);
 
             commandBuffer.drawIndexed(m_indexNum, 1, 0, 0, 0);
 
@@ -375,24 +376,28 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
                 vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
             // Copy region for transfer from framebuffer to cube face
-            vk::ImageCopy copyRegion(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+            vk::ImageCopy copyRegion(
+                vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
                 vk::Offset3D(0, 0, 0),
                 vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, level, i, 1),
                 vk::Offset3D(0, 0, 0),
                 vk::Extent3D(viewport.width, viewport.height, 1));
 
-            copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
-            copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
-            copyRegion.extent.depth = 1;
-
             commandBuffer.copyImage(offscreenVulkanTexture->image, vk::ImageLayout::eTransferSrcOptimal, 
                 m_pVulkanTexturePrefilteredEnvMap->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
-
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
-                vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
-
+            //if (level == mipmapCount - 1 && i == 5)
+            //{
+            //    // transit offscreen image layout to shaderReadOnly
+            //    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            //        vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+            //}
+            //else
+            //{
+                m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+                    vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
+            //}
         }
     }
 

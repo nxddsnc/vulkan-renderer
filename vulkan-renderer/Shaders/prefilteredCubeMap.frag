@@ -102,4 +102,6 @@ void main()
 {		
 	vec3 N = normalize(inPos);
 	outColor = vec4(prefilterEnvMap(N, consts.roughness), 1.0);
+
+	// outColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

@@ -306,29 +306,37 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     }
+    else if (oldLayout == vk::ImageLayout::eTransferSrcOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+    {
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTransfer;
+        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
     else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::eTransferSrcOptimal)
     {
-        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
         barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
 
-        sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+        sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eTransfer;
     }
     else if (oldLayout == vk::ImageLayout::eTransferSrcOptimal && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
     {
         barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
-        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+        destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     }
     else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
     {
         barrier.srcAccessMask = {};
         barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
 
-        sourceStage = vk::PipelineStageFlagBits::eTransfer;
-        destinationStage = vk::PipelineStageFlagBits::eTopOfPipe;
+        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+        destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     }
     else {
         throw std::invalid_argument("unsupported layout transition!");
@@ -376,7 +384,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst;
     if (texture->m_pImage->m_bFramebuffer)
     {
-        usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+        usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled;
     }
     vk::ImageCreateInfo imageCreateInfo(flags,
         vk::ImageType::e2D,
@@ -428,10 +436,9 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     return vulkanTexture;
 }
 
-std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
+// TODO: Refactor the following function and usage.
+void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, std::shared_ptr<VulkanTexture> vulkanTexture)
 {
-    std::shared_ptr<VulkanTexture> vulkanTexture = CreateVulkanTexture(texture);
-
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
     switch (texture->m_pImage->m_format)
     {
@@ -442,28 +449,6 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         imageFormat = vk::Format::eR16G16B16A16Sfloat;
         break;
     }
-
-    // create image sampler
-    vk::SamplerCreateInfo createInfo(
-        {},
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        0.0,
-        vk::Bool32(true),
-        16.0,
-        vk::Bool32(false),
-        vk::CompareOp::eAlways,
-        0.0,
-        0.0,
-        vk::BorderColor::eFloatOpaqueWhite,
-        vk::Bool32(false)
-    );
-
-    vulkanTexture->imageSampler = _device.createSampler(createInfo);
 
     // transfer data from RAM to GPU memory
     VkBuffer stagingBuffer;
@@ -495,6 +480,44 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     SetImageLayoutInSingleCmd(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+}
+
+std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
+{
+    std::shared_ptr<VulkanTexture> vulkanTexture = CreateVulkanTexture(texture);
+
+    vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+    switch (texture->m_pImage->m_format)
+    {
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
+        imageFormat = vk::Format::eR8G8B8A8Unorm;
+        break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
+        imageFormat = vk::Format::eR16G16B16A16Sfloat;
+        break;
+    }
+
+    // create image sampler
+    vk::SamplerCreateInfo createInfo(
+        {},
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        0.0,
+        vk::Bool32(true),
+        16.0,
+        vk::Bool32(false),
+        vk::CompareOp::eAlways,
+        0.0,
+        texture->m_pImage->m_mipmapCount - 1,
+        vk::BorderColor::eFloatOpaqueWhite,
+        vk::Bool32(false)
+    );
+
+    vulkanTexture->imageSampler = _device.createSampler(createInfo);
 
     return vulkanTexture;
 }
@@ -512,6 +535,8 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
     if (drawable->m_material->m_pDiffuseMap)
     {
         drawable->baseColorTexture = CreateCombinedTexture(drawable->m_material->m_pDiffuseMap);
+        InitVulkanTextureData(drawable->m_material->m_pDiffuseMap, drawable->baseColorTexture);
+
         vk::DescriptorSetLayoutBinding textureBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,
@@ -526,6 +551,7 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
     if (drawable->m_material->m_pNormalMap)
     {
         drawable->normalTexture = CreateCombinedTexture(drawable->m_material->m_pNormalMap);
+        InitVulkanTextureData(drawable->m_material->m_pNormalMap, drawable->normalTexture);
         vk::DescriptorSetLayoutBinding textureBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,

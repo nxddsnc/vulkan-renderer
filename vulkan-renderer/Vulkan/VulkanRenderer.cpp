@@ -677,7 +677,9 @@ void VulkanRenderer::_createCommandBuffers()
        commandBuffer.bindVertexBuffers(0, _skybox->m_vertexBuffers.size(), _skybox->m_vertexBuffers.data(), _skybox->m_vertexBufferOffsets.data());
        commandBuffer.bindIndexBuffer(_skybox->m_indexBuffer, 0, vk::IndexType::eUint16);
        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
-       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_textureDescriptorSet, 0, nullptr);
+       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_dsSkybox, 0, nullptr);
+       // todo: for test only 
+       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 2, 1, &_skybox->m_dsPrefilteredMap, 0, nullptr);
        commandBuffer.drawIndexed(_skybox->m_indexNum, 1, 0, 0, 0);
 
        // draw drawables

@@ -24,7 +24,7 @@ struct FrameData
     vk::Semaphore                   renderFinishedSemaphore{};
     std::vector<vk::Semaphore>      imageReadySemaphores{};
     std::vector<vk::CommandBuffer>  cmdBuffers;
-    vk::Framebuffer                    framebuffer;
+    vk::Framebuffer                 framebuffer;
     //std::vector<DescriptorSet>      descriptorSets;
 };
 
