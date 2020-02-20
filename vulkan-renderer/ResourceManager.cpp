@@ -338,6 +338,14 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     }
+    else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+    {
+        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
     else {
         throw std::invalid_argument("unsupported layout transition!");
     }

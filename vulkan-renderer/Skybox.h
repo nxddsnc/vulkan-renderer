@@ -233,5 +233,6 @@ public:
 
 private:
     void generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool);
+    void generateBRDFLUT(vk::DescriptorPool &descriptorPool);
 };
 

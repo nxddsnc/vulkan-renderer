@@ -4,13 +4,14 @@ enum PipelineType
 {
   MODEL,
   SKYBOX,
-  PREFILTERED_CUBE_MAP
+  PREFILTERED_CUBE_MAP,
+  GENERATE_BRDF_LUT
 };
 
 enum class PrimitiveMode : uint8_t {
     Points = 0,         ///< Each vertex defines a separate point
     Lines = 1,          ///< The first two vertices define the first segment, with subsequent pairs of vertices each defining one more segment
-    LineStrip = 3,      ///< The first vertex specifies the first segment��s start point while the second vertex specifies the first segment��s endpoint and the second segment��s start point
+    LineStrip = 3,      ///< The first vertex specifies the first segments start point while the second vertex specifies the first segments endpoint and the second segments start point
     Triangles = 4,      ///<
     TriangleStrip = 5,  ///<
     TriangleFan = 6     ///<
@@ -90,6 +91,7 @@ public:
     void InitModel();
     void InitSkybox();
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
+    void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);
 private:
     PipelineId _id;
     VulkanRenderer    * _renderer;

@@ -620,6 +620,153 @@ void Pipeline::InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPa
     }
 }
 
+void Pipeline::InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass)
+{
+    m_device = device;
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+    // set shader state
+    ShaderModule vertexShader(&device, _id);
+    vertexShader.BuildFromFile("Shaders/genbrdflut.vert", ShaderStage::VERTEX, "main");
+
+    ShaderModule fragmentShader(&device, _id);
+    fragmentShader.BuildFromFile("Shaders/genbrdflut.frag", ShaderStage::FRAGMENT, "main");
+
+    shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
+    shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
+
+    // set vertex input state
+    // vertex
+    //_addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+    //_addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
+        static_cast<uint32_t>(_inputBindings.size()),
+        _inputBindings.data(),
+        static_cast<uint32_t>(_inputAttributes.size()),
+        _inputAttributes.data() });
+
+    // Set input assembly state
+    vk::PipelineInputAssemblyStateCreateInfo assemblyInfo;
+    assemblyInfo.topology = vk::PrimitiveTopology::eTriangleList;
+    vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
+
+    uint32_t width = 1, height = 1;
+    // Set viewport state
+    const vk::Viewport viewport{
+        /* viewport.x */ 0.0f,
+        /* viewport.y */ 0.0f,
+        /* viewport.width */  (float)width,
+        /* viewport.height */ (float)height,
+        /* viewport.minDepth */ 0.0f,
+        /* viewport.maxDepth */ 1.0f,
+    };
+
+    const vk::Rect2D scissor{
+        /* scissor.offset */{ 0, 0 },
+        /* scissor.extent */{ width, height } };
+
+    vk::PipelineViewportStateCreateInfo viewportState({ {},
+        1,
+        &viewport,
+        1,
+        &scissor });
+
+    // Rasterizer
+    vk::PipelineRasterizationStateCreateInfo rasterizerState({ {},
+        static_cast<vk::Bool32>(false),
+        static_cast<vk::Bool32>(false),
+        polygonMode,
+        vk::CullModeFlagBits::eBack,
+        vk::FrontFace::eClockwise,
+        static_cast<vk::Bool32>(false),
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f });
+
+    // Multisampling
+    vk::PipelineMultisampleStateCreateInfo multisampling({ {},
+        vk::SampleCountFlagBits::e1,
+        static_cast<vk::Bool32>(false),
+        {},
+        {},
+        static_cast<vk::Bool32>(false),
+        static_cast<vk::Bool32>(false) });
+
+    // Color blending
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment({ static_cast<vk::Bool32>(false),
+        vk::BlendFactor::eOne,
+        vk::BlendFactor::eZero,
+        vk::BlendOp::eAdd,
+        vk::BlendFactor::eOne,
+        vk::BlendFactor::eZero,
+        vk::BlendOp::eAdd,
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA });
+
+    std::array<float, 4> blendConsts = { 0, 0, 0, 0 };
+    vk::PipelineColorBlendStateCreateInfo colorBlending({ {},
+        static_cast<vk::Bool32>(false),
+        vk::LogicOp::eCopy,
+        1,
+        &colorBlendAttachment,
+        blendConsts });
+
+    // Depth and stencil testing
+    vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({ {},
+        static_cast<vk::Bool32>(true),
+        static_cast<vk::Bool32>(true),
+        vk::CompareOp::eLessOrEqual,
+        static_cast<vk::Bool32>(false),
+        static_cast<vk::Bool32>(false),
+        {},
+        {},
+        0.0f,
+        1.0f });
+
+    // descriptor set layout
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+
+    std::vector<vk::PushConstantRange> pushConstantRanges;
+
+    // pipeline layout
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo({},
+        static_cast<uint32_t>(descriptorSetLayouts.size()),
+        descriptorSetLayouts.data(),
+        static_cast<uint32_t>(pushConstantRanges.size()),
+        pushConstantRanges.data());
+
+    _pipelineLayout = m_device.createPipelineLayout(pipelineLayoutInfo);
+
+    std::array<vk::DynamicState, 2> dynamicStates;
+    dynamicStates[0] = vk::DynamicState::eViewport;
+    dynamicStates[1] = vk::DynamicState::eScissor;
+    vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo({}, dynamicStates.size(), dynamicStates.data());
+    vk::GraphicsPipelineCreateInfo pipelineInfo({},
+        static_cast<uint32_t>(shaderStages.size()),
+        shaderStages.data(),
+        &vertexInputInfo,
+        &assemblyInfo,
+        {},
+        &viewportState,
+        &rasterizerState,
+        &multisampling,
+        &depthStencilStateCreateInfo,
+        &colorBlending,
+        &dynamicStateCreateInfo,
+        _pipelineLayout,
+        renderPass,
+        {},
+        {},
+        static_cast<int32_t>(-1));
+
+    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+
+    for (auto descriptorSetLayout : descriptorSetLayouts)
+    {
+        m_device.destroyDescriptorSetLayout(descriptorSetLayout);
+    }
+}
+
 vk::Pipeline Pipeline::GetPipeline()
 {
     return _graphicsPipeline;

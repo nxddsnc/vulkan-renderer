@@ -202,6 +202,7 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     fclose(f);
 
     generatePrefilteredCubeMap(descriptorPool);
+    generateBRDFLUT(descriptorPool);
 }
 
 void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
@@ -455,3 +456,160 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
     device.destroyDescriptorSetLayout(descriptorSetLayout);
 }
 
+// Generate a BRDF integration map used as a look - up - table(stores roughness / NdotV)
+void Skybox::generateBRDFLUT(vk::DescriptorPool &descriptorPool)
+{
+    uint32_t width = m_pTextureEnvMap->m_pImage->m_width;
+    uint32_t height = m_pTextureEnvMap->m_pImage->m_height;
+    uint32_t mipmapCount = static_cast<uint32_t>(floor(log2(width)) + +1);
+    std::shared_ptr<MyTexture> offscreenTexture = std::make_shared<MyTexture>();
+    offscreenTexture->m_pImage = std::make_shared<MyImage>("generated-brdf-lut-colorAttachment");
+    offscreenTexture->m_pImage->m_width = width;
+    offscreenTexture->m_pImage->m_height = height;
+    offscreenTexture->m_pImage->m_channels = 4;
+    offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+    offscreenTexture->m_pImage->m_mipmapCount = 1;
+    offscreenTexture->m_pImage->m_layerCount = 1;
+    offscreenTexture->m_pImage->m_bFramebuffer = true;
+    offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+
+    offscreenTexture->m_wrapMode[0] = WrapMode::CLAMP;
+    offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
+    offscreenTexture->m_wrapMode[2] = WrapMode::CLAMP;
+
+    std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateCombinedTexture(offscreenTexture);
+
+    vk::Device device = m_pContext->GetLogicalDevice();
+    RenderPass renderPass(&device);
+    vk::AttachmentDescription colorAttachment(
+    {},
+        vk::Format::eR16G16B16A16Sfloat,
+        vk::SampleCountFlagBits::e1,
+        vk::AttachmentLoadOp::eClear,
+        vk::AttachmentStoreOp::eStore,
+        vk::AttachmentLoadOp::eDontCare,
+        vk::AttachmentStoreOp::eDontCare,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal
+    );
+
+    renderPass.AddAttachment(colorAttachment);
+
+    vk::RenderPass vulkanRenderPass = renderPass.Get();
+
+    std::array<vk::ImageView, 1> attachments{};
+    attachments[0] = offscreenVulkanTexture->imageView;
+
+    vk::FramebufferCreateInfo createInfo({},
+        vulkanRenderPass,
+        (uint32_t)attachments.size(),
+        attachments.data(),
+        width,
+        height,
+        uint32_t(1));
+    vk::Framebuffer framebuffer = device.createFramebuffer(createInfo);
+
+    PipelineId id;
+    id.type = GENERATE_BRDF_LUT;
+    id.model.primitivePart.info.bits.positionVertexData = 0;
+    id.model.primitivePart.info.bits.normalVertexData = 0;
+    id.model.primitivePart.info.bits.countTexCoord = 0;
+    Pipeline pipeline(id);
+    pipeline.InitGenerateBrdfLut(m_pContext->GetLogicalDevice(), vulkanRenderPass);
+
+    std::array<vk::ClearValue, 1> clearValues{};
+    clearValues[0].color.float32[0] = 0.0;
+    clearValues[0].color.float32[1] = 0.0;
+    clearValues[0].color.float32[2] = 0.0;
+    clearValues[0].color.float32[3] = 1.0f;
+
+    vk::CommandBufferAllocateInfo commandBufferAllocateInfo({
+        m_pContext->GetCommandPool() ,
+        vk::CommandBufferLevel::ePrimary,
+        static_cast<uint32_t>(1)
+    });
+    vk::CommandBuffer commandBuffer;
+    device.allocateCommandBuffers(&commandBufferAllocateInfo, &commandBuffer);
+    vk::CommandBufferBeginInfo beginInfo({
+        vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+        nullptr
+    });
+
+    commandBuffer.begin(beginInfo);
+
+    // transit offscreen image layout
+    vk::ImageSubresourceRange srrOffscreen(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::Extent2D brdfLutExtent(512, 512);
+    vk::Viewport viewport(0, 0, brdfLutExtent.width, brdfLutExtent.height, 0, 1);
+    vk::Rect2D sissor(vk::Offset2D(0, 0), brdfLutExtent);
+    commandBuffer.setViewport(0, 1, &viewport);
+    commandBuffer.setScissor(0, 1, &sissor);
+
+    vk::RenderPassBeginInfo renderPassInfo(
+        vulkanRenderPass,
+        framebuffer,
+        vk::Rect2D(vk::Offset2D(0, 0), brdfLutExtent),
+        (uint32_t)clearValues.size(),
+        clearValues.data());
+    commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
+
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.GetPipeline());
+    commandBuffer.draw(3, 1, 0, 0);
+    commandBuffer.endRenderPass();
+
+    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+        vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+
+    commandBuffer.end();
+
+    vk::SubmitInfo submitInfo({
+        {},
+        {},
+        {},
+        (uint32_t)1,
+        &commandBuffer,
+        {},
+        {}
+    });
+    m_pContext->GetDeviceQueue().submit((uint32_t)1, &submitInfo, nullptr);
+    m_pContext->GetDeviceQueue().waitIdle();
+    device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
+
+    // Test for prefiltered cubemap
+    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+    std::vector<vk::DescriptorImageInfo> imageInfos;
+    vk::DescriptorSetLayoutBinding textureBinding(0,
+        vk::DescriptorType::eCombinedImageSampler,
+        1,
+        vk::ShaderStageFlagBits::eFragment,
+        {});
+    textureBindings.push_back(textureBinding);
+
+    vk::DescriptorImageInfo imageInfo(offscreenVulkanTexture->imageSampler,
+        offscreenVulkanTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+    imageInfos.push_back(imageInfo);
+
+    vk::DescriptorSetLayout descriptorSetLayout;
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
+    descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+
+    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
+
+    device.allocateDescriptorSets(&allocInfo, &m_dsPrefilteredMap);
+
+    vk::WriteDescriptorSet descriptorWrite(m_dsPrefilteredMap,
+        uint32_t(0),
+        uint32_t(0),
+        static_cast<uint32_t>(imageInfos.size()),
+        vk::DescriptorType::eCombinedImageSampler,
+        imageInfos.data(),
+        {},
+        {});
+    device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    device.destroyDescriptorSetLayout(descriptorSetLayout);
+}
