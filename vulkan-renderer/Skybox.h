@@ -232,8 +232,7 @@ public:
 
     uint32_t                       m_indexNum;
     vk::DescriptorSet              m_dsSkybox;
-    vk::DescriptorSet              m_dsPrefilteredMap;
-    vk::DescriptorSet              m_dsBrdfLut;
+    vk::DescriptorSet              m_preFilteredDescriptorSet;
 
 private:
     std::shared_ptr<VulkanTexture> generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool);
