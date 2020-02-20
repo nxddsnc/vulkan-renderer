@@ -43,7 +43,6 @@ ResourceManager::~ResourceManager()
             }
         }
 
-        
     }
 }
 
@@ -488,6 +487,49 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
     SetImageLayoutInSingleCmd(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+}
+
+vk::DescriptorSet ResourceManager::CreateTextureDescriptorSet(std::vector<std::shared_ptr<VulkanTexture>> textures)
+{
+    vk::DescriptorSet descriptorSet;
+    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+    std::vector<vk::DescriptorImageInfo> imageInfos;
+
+    for (size_t i = 0; i < textures.size(); ++i)
+    {
+        vk::DescriptorSetLayoutBinding textureBinding(i,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {});
+        textureBindings.push_back(textureBinding);
+
+        vk::DescriptorImageInfo imageInfo(textures[i]->imageSampler,
+            textures[i]->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfos.push_back(imageInfo);
+    }
+
+    vk::DescriptorSetLayout descriptorSetLayout;
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
+    descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
+
+    vk::DescriptorSetAllocateInfo allocInfo(_descriptorPool, 1, &descriptorSetLayout);
+
+    _device.allocateDescriptorSets(&allocInfo, &descriptorSet);
+
+    vk::WriteDescriptorSet descriptorWrite(descriptorSet,
+        uint32_t(0),
+        uint32_t(0),
+        static_cast<uint32_t>(imageInfos.size()),
+        vk::DescriptorType::eCombinedImageSampler,
+        imageInfos.data(),
+        {},
+        {});
+    _device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    _device.destroyDescriptorSetLayout(descriptorSetLayout);
+
+    return descriptorSet;
 }
 
 std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)

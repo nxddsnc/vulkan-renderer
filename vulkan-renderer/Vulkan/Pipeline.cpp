@@ -200,21 +200,20 @@ void Pipeline::InitModel()
     // descriptor set layout
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
     // camera uniform buffer
-    vk::DescriptorSetLayoutBinding cameraBinding({ 0,
-                                                  vk::DescriptorType::eUniformBuffer,
-                                                  1,
-                                                  vk::ShaderStageFlagBits::eVertex,
-                                                  {} });
+    vk::DescriptorSetLayoutBinding cameraBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, {});
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
     // light uniform buffer.
-    vk::DescriptorSetLayoutBinding lightBidning({ 0,
-                                                  vk::DescriptorType::eUniformBuffer,
-                                                  1,
-                                                  vk::ShaderStageFlagBits::eFragment,
-                                                  {} });
+    vk::DescriptorSetLayoutBinding lightBidning(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment, {});
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ lightBidning }));
+
+    // Prefiltered environment map and brdf look up table.
+    vk::DescriptorSetLayoutBinding preFileteredEnvMapBinding(0, vk::DescriptorType::eCombinedImageSampler,
+        1, vk::ShaderStageFlagBits::eFragment, {});
+    vk::DescriptorSetLayoutBinding brdfLutBinding(1, vk::DescriptorType::eCombinedImageSampler,
+        1, vk::ShaderStageFlagBits::eFragment, {});
+    descriptorSetLayouts.push_back(_createDescriptorSetLayout({ preFileteredEnvMapBinding, brdfLutBinding }));
 
     // per drawable
     std::vector<vk::DescriptorSetLayoutBinding> perDrawableBindings;
@@ -412,15 +411,6 @@ void Pipeline::InitSkybox()
         {}
     );
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ skyboxSamplerBinding }));
-
-    // TODO: The following binding is For test only
-    vk::DescriptorSetLayoutBinding prefilteredSamplerBinding(0,
-        vk::DescriptorType::eCombinedImageSampler,
-        1,
-        vk::ShaderStageFlagBits::eFragment,
-        {}
-    );
-    descriptorSetLayouts.push_back(_createDescriptorSetLayout({ prefilteredSamplerBinding }));
      
     // pipeline layout
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({},

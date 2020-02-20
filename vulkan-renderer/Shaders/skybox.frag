@@ -2,7 +2,7 @@
 
 layout (set = 1, binding = 0) uniform samplerCube samplerEnv;
 
-layout (set = 2, binding = 0) uniform sampler2D samplerPreFilteredCubeMap;
+// layout (set = 2, binding = 0) uniform samplerCube samplerPreFilteredCubeMap;
 // layout (set = 2, binding = 0) uniform samplerCube samplerPreFilteredCubeMap;
 
 layout(location = 0) in vec3 inUVW;
@@ -32,7 +32,7 @@ void main()
 {
 	vec3 color = texture(samplerEnv, inUVW).rgb;
 
-	color = textureLod(samplerPreFilteredCubeMap, inUVW.xy, 0).rgb;
+	// color = textureLod(samplerPreFilteredCubeMap, inUVW, 20).rgb;
 	// color = Uncharted2Tonemap(color);
 	outColor = vec4(color, 1.0);
 

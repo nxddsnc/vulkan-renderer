@@ -213,26 +213,30 @@ public:
     ~Skybox();
     bool LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool);
 public:
-    ResourceManager *m_pResourceManager;
-    VulkanContext   *m_pContext;
-    std::vector<vk::Buffer>       m_vertexBuffers;
-    std::vector<vk::DeviceSize>   m_vertexBufferOffsets;
-    std::vector<VmaAllocation>    m_vertexBufferMemorys;
-    vk::Buffer                    m_indexBuffer;
-    VmaAllocation                 m_indexBufferMemory;
+    ResourceManager               *m_pResourceManager;
+    VulkanContext                 *m_pContext;
+    std::vector<vk::Buffer>        m_vertexBuffers;
+    std::vector<vk::DeviceSize>    m_vertexBufferOffsets;
+    std::vector<VmaAllocation>     m_vertexBufferMemorys;
+    vk::Buffer                     m_indexBuffer;
+    VmaAllocation                  m_indexBufferMemory;
 
-    std::shared_ptr<MyTexture>    m_pTextureEnvMap;
+    // TODO: Seems that it's not necessary to store MyTexture.
+    std::shared_ptr<MyTexture>     m_pTextureEnvMap;
     std::shared_ptr<VulkanTexture> m_pVulkanTextureEnvMap;
 
-    std::shared_ptr<MyTexture>    m_pTexturePrefilteredEnvMap;
+    std::shared_ptr<MyTexture>     m_pTexturePrefilteredEnvMap;
     std::shared_ptr<VulkanTexture> m_pVulkanTexturePrefilteredEnvMap;
 
-    uint32_t                      m_indexNum;
-    vk::DescriptorSet             m_dsSkybox;
-    vk::DescriptorSet             m_dsPrefilteredMap;
+    std::shared_ptr<VulkanTexture> m_pVulkanTextureBRDFLUT;
+
+    uint32_t                       m_indexNum;
+    vk::DescriptorSet              m_dsSkybox;
+    vk::DescriptorSet              m_dsPrefilteredMap;
+    vk::DescriptorSet              m_dsBrdfLut;
 
 private:
-    void generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool);
-    void generateBRDFLUT(vk::DescriptorPool &descriptorPool);
+    std::shared_ptr<VulkanTexture> generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool);
+    std::shared_ptr<VulkanTexture> generateBRDFLUT(vk::DescriptorPool &descriptorPool);
 };
 

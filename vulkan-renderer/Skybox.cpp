@@ -201,11 +201,13 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
 
     fclose(f);
 
-    generatePrefilteredCubeMap(descriptorPool);
-    generateBRDFLUT(descriptorPool);
+    m_pVulkanTexturePrefilteredEnvMap = generatePrefilteredCubeMap(descriptorPool);
+    m_pVulkanTextureBRDFLUT = generateBRDFLUT(descriptorPool);
+
+    m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureBRDFLUT });
 }
 
-void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
+std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
 {
     uint32_t width = m_pTextureEnvMap->m_pImage->m_width;
     uint32_t height = m_pTextureEnvMap->m_pImage->m_height;
@@ -225,8 +227,8 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
     offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
     offscreenTexture->m_wrapMode[2] = WrapMode::CLAMP;
 
-    std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateCombinedTexture(offscreenTexture);
-    //std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
+    //std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateCombinedTexture(offscreenTexture);
+    std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
 
 
     m_pTexturePrefilteredEnvMap = std::make_shared<MyTexture>();
@@ -388,17 +390,8 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
                 m_pVulkanTexturePrefilteredEnvMap->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
-            //if (level == mipmapCount - 1 && i == 5)
-            //{
-            //    // transit offscreen image layout to shaderReadOnly
-            //    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
-            //        vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-            //}
-            //else
-            //{
                 m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
                     vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
-            //}
         }
     }
 
@@ -421,43 +414,11 @@ void Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
 
-    // Test for prefiltered cubemap
-    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
-    std::vector<vk::DescriptorImageInfo> imageInfos;
-    vk::DescriptorSetLayoutBinding textureBinding(0,
-        vk::DescriptorType::eCombinedImageSampler,
-        1,
-        vk::ShaderStageFlagBits::eFragment,
-        {});
-    textureBindings.push_back(textureBinding);
-
-    vk::DescriptorImageInfo imageInfo(m_pVulkanTexturePrefilteredEnvMap->imageSampler,
-        m_pVulkanTexturePrefilteredEnvMap->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-    imageInfos.push_back(imageInfo);
-
-    vk::DescriptorSetLayout descriptorSetLayout;
-
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
-    descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
-
-    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
-
-    device.allocateDescriptorSets(&allocInfo, &m_dsPrefilteredMap);
-
-    vk::WriteDescriptorSet descriptorWrite(m_dsPrefilteredMap,
-        uint32_t(0),
-        uint32_t(0),
-        static_cast<uint32_t>(imageInfos.size()),
-        vk::DescriptorType::eCombinedImageSampler,
-        imageInfos.data(),
-        {},
-        {});
-    device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-    device.destroyDescriptorSetLayout(descriptorSetLayout);
+    return m_pVulkanTexturePrefilteredEnvMap;
 }
 
 // Generate a BRDF integration map used as a look - up - table(stores roughness / NdotV)
-void Skybox::generateBRDFLUT(vk::DescriptorPool &descriptorPool)
+std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descriptorPool)
 {
     uint32_t width = m_pTextureEnvMap->m_pImage->m_width;
     uint32_t height = m_pTextureEnvMap->m_pImage->m_height;
@@ -482,7 +443,7 @@ void Skybox::generateBRDFLUT(vk::DescriptorPool &descriptorPool)
     vk::Device device = m_pContext->GetLogicalDevice();
     RenderPass renderPass(&device);
     vk::AttachmentDescription colorAttachment(
-    {},
+        {},
         vk::Format::eR16G16B16A16Sfloat,
         vk::SampleCountFlagBits::e1,
         vk::AttachmentLoadOp::eClear,
@@ -579,37 +540,5 @@ void Skybox::generateBRDFLUT(vk::DescriptorPool &descriptorPool)
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
 
-    // Test for prefiltered cubemap
-    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
-    std::vector<vk::DescriptorImageInfo> imageInfos;
-    vk::DescriptorSetLayoutBinding textureBinding(0,
-        vk::DescriptorType::eCombinedImageSampler,
-        1,
-        vk::ShaderStageFlagBits::eFragment,
-        {});
-    textureBindings.push_back(textureBinding);
-
-    vk::DescriptorImageInfo imageInfo(offscreenVulkanTexture->imageSampler,
-        offscreenVulkanTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-    imageInfos.push_back(imageInfo);
-
-    vk::DescriptorSetLayout descriptorSetLayout;
-
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
-    descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
-
-    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
-
-    device.allocateDescriptorSets(&allocInfo, &m_dsPrefilteredMap);
-
-    vk::WriteDescriptorSet descriptorWrite(m_dsPrefilteredMap,
-        uint32_t(0),
-        uint32_t(0),
-        static_cast<uint32_t>(imageInfos.size()),
-        vk::DescriptorType::eCombinedImageSampler,
-        imageInfos.data(),
-        {},
-        {});
-    device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-    device.destroyDescriptorSetLayout(descriptorSetLayout);
+    return offscreenVulkanTexture;
 }

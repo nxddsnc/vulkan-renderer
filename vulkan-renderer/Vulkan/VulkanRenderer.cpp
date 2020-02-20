@@ -713,9 +713,10 @@ void VulkanRenderer::_createCommandBuffers()
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
+                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 2, 1, &_skybox->m_preFilteredDescriptorSet, 0, nullptr);
                     if (drawable->baseColorTexture || drawable->normalTexture)
                     {
-                        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 2, 1, &drawable->textureDescriptorSet, 0, nullptr);
+                        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 3, 1, &drawable->textureDescriptorSet, 0, nullptr);
                     }
 
                     uint32_t offset = 0;
