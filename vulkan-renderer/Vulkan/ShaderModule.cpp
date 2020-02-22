@@ -82,7 +82,12 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
     {
     case PipelineType::MODEL:
     {
-        uint8_t bindings = 2;
+        uint8_t bindings = 1;
+        if (_id.model.primitivePart.info.bits.normalVertexData)
+        {
+            options->AddMacroDefinition("IN_NORMAL", "1");
+            options->AddMacroDefinition("IN_NORMAL_LOCATION", std::to_string(bindings++));
+        }
         if (_id.model.primitivePart.info.bits.countTexCoord)
         {
             options->AddMacroDefinition("IN_UV0", "1");
@@ -92,6 +97,11 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
         {
             options->AddMacroDefinition("IN_TANGENT", "1");
             options->AddMacroDefinition("IN_TANGENT_LOCATION", std::to_string(bindings++));
+        }
+        if (_id.model.primitivePart.info.bits.countColor)
+        {
+            options->AddMacroDefinition("IN_COLOR", "1");
+            options->AddMacroDefinition("IN_COLOR_LOCATION", std::to_string(bindings++));
         }
 
         bindings = 0;

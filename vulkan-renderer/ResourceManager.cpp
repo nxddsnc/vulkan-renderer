@@ -46,10 +46,15 @@ ResourceManager::~ResourceManager()
     }
 }
 
-void ResourceManager::createNodeResource(std::shared_ptr<Drawable> drawable)
+void ResourceManager::InitVulkanBuffers(std::shared_ptr<Drawable> drawable)
 {
     CreateVertexBuffers(drawable);
     CreateIndexBuffer(drawable->m_mesh, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
+}
+
+void ResourceManager::InitVulkanResource(std::shared_ptr<Drawable> drawable)
+{
+    InitVulkanBuffers(drawable);
     _createTextures(drawable);
     _nodes.push_back(drawable);
 }
@@ -145,7 +150,7 @@ void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
     _endSingleTimeCommand(commandBuffer);
 }
 
-void ResourceManager::CreateVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset)
+void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset)
 {
     vk::BufferCreateInfo bufferInfo({
         {},
@@ -193,19 +198,22 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
     vk::Buffer positionBuffer;
     VmaAllocation positionBufferMemory;
     vk::DeviceSize positionBufferOffset;
-    CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
+    InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
     drawable->m_vertexBuffers.push_back(std::move(positionBuffer));
     drawable->m_vertexBufferMemorys.push_back(std::move(positionBufferMemory));
     drawable->m_vertexBufferOffsets.push_back(std::move(positionBufferOffset));
 
-    vk::Buffer normalBuffer;
-    VmaAllocation normalBufferMemory;
-    vk::DeviceSize normalBufferOffset;
-    size = sizeof(drawable->m_mesh->m_normals[0]) * drawable->m_mesh->m_normals.size();
-    CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_normals.data()), normalBuffer, normalBufferMemory, normalBufferOffset);
-    drawable->m_vertexBuffers.push_back(std::move(normalBuffer));
-    drawable->m_vertexBufferMemorys.push_back(std::move(normalBufferMemory));
-    drawable->m_vertexBufferOffsets.push_back(std::move(normalBufferOffset));
+    if (drawable->m_mesh->m_normals.size() > 0)
+    {
+        vk::Buffer normalBuffer;
+        VmaAllocation normalBufferMemory;
+        vk::DeviceSize normalBufferOffset;
+        size = sizeof(drawable->m_mesh->m_normals[0]) * drawable->m_mesh->m_normals.size();
+        InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_normals.data()), normalBuffer, normalBufferMemory, normalBufferOffset);
+        drawable->m_vertexBuffers.push_back(std::move(normalBuffer));
+        drawable->m_vertexBufferMemorys.push_back(std::move(normalBufferMemory));
+        drawable->m_vertexBufferOffsets.push_back(std::move(normalBufferOffset));
+    }
 
     if (drawable->m_mesh->m_texCoords0.size() > 0)
     {
@@ -213,7 +221,7 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
         VmaAllocation uvBufferMemory;
         vk::DeviceSize uvBufferOffset;
         size = sizeof(drawable->m_mesh->m_texCoords0[0]) * drawable->m_mesh->m_texCoords0.size();
-        CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_texCoords0.data()), uvBuffer, uvBufferMemory, uvBufferOffset);
+        InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_texCoords0.data()), uvBuffer, uvBufferMemory, uvBufferOffset);
         drawable->m_vertexBuffers.push_back(std::move(uvBuffer));
         drawable->m_vertexBufferMemorys.push_back(std::move(uvBufferMemory));
         drawable->m_vertexBufferOffsets.push_back(std::move(uvBufferOffset));
@@ -224,10 +232,21 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
         VmaAllocation tangentBufferMemory;
         vk::DeviceSize tangentBufferOffset;
         size = sizeof(drawable->m_mesh->m_tangents[0]) * drawable->m_mesh->m_tangents.size();
-        CreateVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_tangents.data()), tangentBuffer, tangentBufferMemory, tangentBufferOffset);
+        InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_tangents.data()), tangentBuffer, tangentBufferMemory, tangentBufferOffset);
         drawable->m_vertexBuffers.push_back(std::move(tangentBuffer));
         drawable->m_vertexBufferMemorys.push_back(std::move(tangentBufferMemory));
         drawable->m_vertexBufferOffsets.push_back(std::move(tangentBufferOffset));
+    }
+    if (drawable->m_mesh->m_colors.size() > 0)
+    {
+        vk::Buffer colorBuffer;
+        VmaAllocation colorBufferMemory;
+        vk::DeviceSize colorBufferOffset;
+        size = sizeof(drawable->m_mesh->m_colors[0]) * drawable->m_mesh->m_colors.size();
+        InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_colors.data()), colorBuffer, colorBufferMemory, colorBufferOffset);
+        drawable->m_vertexBuffers.push_back(std::move(colorBuffer));
+        drawable->m_vertexBufferMemorys.push_back(std::move(colorBufferMemory));
+        drawable->m_vertexBufferOffsets.push_back(std::move(colorBufferOffset));
     }
 }
 

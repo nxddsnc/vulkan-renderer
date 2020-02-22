@@ -109,7 +109,7 @@
       <PreprocessorDefinitions>_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);NOMINMAX </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/includes/assimp;Vulkan;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/includes/assimp;Vulkan;./;Debug;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,6 +161,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Context.cpp" />
+    <ClCompile Include="Debug\Axis.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyImage.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="BUILD_OPTIONS.h" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Context.h" />
+    <ClInclude Include="Debug\Axis.h" />
     <ClInclude Include="MyImage.h" />
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />

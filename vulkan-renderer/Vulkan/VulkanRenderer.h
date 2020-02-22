@@ -3,11 +3,13 @@
 #include <unordered_map>
 #include "Pipeline.h"
 #include "Platform.h"
+
 class Window;
 class VulkanCamera;
 class Drawable;
 struct Vertex;
 class SHLight;
+class Axis;
 #pragma once
 
 struct UniformBufferObject {
@@ -66,8 +68,8 @@ private:
     void _endRender(std::vector<VkSemaphore> waitSemaphores);
     void _updateUniformBuffer();
 
-      void _cleanupSwapchain();
-    
+    void _cleanupSwapchain();
+
     void _initSwapchain();
     void _deInitSwapchain();
 
@@ -89,7 +91,7 @@ private:
     void _initSynchronizations();
     void _deInitSynchronizations();
 
-      //void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
+    //void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
     void _createCommandBuffers();
     VulkanContext                        *   _context;
 
@@ -100,12 +102,12 @@ private:
     vk::PhysicalDevice                       _gpu;
     vk::Device                               _device;
     vk::Queue                                _queue;
-      vk::CommandPool                        _commandPool;
-      vk::PhysicalDeviceProperties           _gpuProperties;
+    vk::CommandPool                        _commandPool;
+    vk::PhysicalDeviceProperties           _gpuProperties;
     vk::PhysicalDeviceMemoryProperties       _gpuMemoryProperties;
     uint32_t                                 _graphicsQueueFamilyIndex = 0;
 
-      VmaAllocator                           _memoryAllocator;
+    VmaAllocator                           _memoryAllocator;
 
     ResourceManager                     *    _resourceManager;
 
@@ -114,7 +116,7 @@ private:
     vk::SurfaceKHR                           _surface;
     std::vector<vk::Image>                   _swapchainImages;
     std::vector<vk::ImageView>               _swapchainImageViews;
-      std::vector<FrameData>                 _framesData;
+    std::vector<FrameData>                 _framesData;
     vk::RenderPass                           _renderPass;
     std::vector<VkDescriptorSet>             _descriptorSets;
     vk::DescriptorSetLayout                  _frameDescriptorSetLayout;
@@ -148,5 +150,6 @@ private:
     SHLight                           *     _light;
 
     Skybox                            *     _skybox;
+    std::shared_ptr<Axis>                   _axis;
 };
 

@@ -21,6 +21,7 @@
 #include "Camera.hpp"
 #include "SHLight.h"
 #include "Skybox.h"
+#include "Axis.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -64,6 +65,8 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
     _skybox = new Skybox(_resourceManager, _context);
     _skybox->LoadFromDDS("./TestModel/Skybox/env.dds", _device, _descriptorPool);
+
+    _axis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -634,7 +637,6 @@ void VulkanRenderer::_createCommandBuffers()
         skyBoxPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
         skyBoxPipelineId.model.primitivePart.info.bits.countColor = 0;
         std::shared_ptr<Pipeline> pipelineSkybox = _pipelineManager->GetPipeline(skyBoxPipelineId);
-        
        
         PipelineId lastPipelineId;
        lastPipelineId.model.primitivePart.info.bits.positionVertexData = 0;
@@ -678,11 +680,13 @@ void VulkanRenderer::_createCommandBuffers()
        commandBuffer.bindIndexBuffer(_skybox->m_indexBuffer, 0, vk::IndexType::eUint16);
        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_dsSkybox, 0, nullptr);
-       // todo: for test only 
-       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 2, 1, &_skybox->m_dsPrefilteredMap, 0, nullptr);
        commandBuffer.drawIndexed(_skybox->m_indexNum, 1, 0, 0, 0);
 
+       // drawAxis
+       _axis->CreateDrawCommand(commandBuffer);
+
        // draw drawables
+       // TODO: Create a render queue to do the following works.
        for (auto it : _drawableMap)
        {
            PipelineId pipelineId = it.first;
@@ -714,6 +718,7 @@ void VulkanRenderer::_createCommandBuffers()
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 2, 1, &_skybox->m_preFilteredDescriptorSet, 0, nullptr);
+                    
                     if (drawable->baseColorTexture || drawable->normalTexture)
                     {
                         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 3, 1, &drawable->textureDescriptorSet, 0, nullptr);
@@ -747,7 +752,7 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
     for (int i = 0; i < drawables.size(); ++i) 
     {
         std::shared_ptr<Drawable> drawable = drawables[i];
-        _resourceManager->createNodeResource(drawable);
+        _resourceManager->InitVulkanResource(drawable);
 
         PipelineId id;
 

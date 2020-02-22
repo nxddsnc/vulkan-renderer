@@ -19,6 +19,9 @@
     <Filter Include="源文件\Vulkan">
       <UniqueIdentifier>{57b8f33e-434d-4dcd-8b47-cbe0b68681f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Debug">
+      <UniqueIdentifier>{2189929d-9c49-4f73-997b-14bcf1db840d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -83,6 +86,9 @@
     </ClCompile>
     <ClCompile Include="Skybox.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\Axis.cpp">
+      <Filter>头文件\Debug</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="Skybox.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Debug\Axis.h">
+      <Filter>头文件\Debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

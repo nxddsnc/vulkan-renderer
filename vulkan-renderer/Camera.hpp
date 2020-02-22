@@ -66,8 +66,8 @@ public:
         glm::mat4 view;
     } matrices;
 
-    vk::Buffer                    uniformBuffer;
-    VmaAllocation                uniformBufferMemory;
+    vk::Buffer                  uniformBuffer;
+    VmaAllocation               uniformBufferMemory;
     vk::DescriptorSet           descriptorSet;
 
     struct
@@ -141,7 +141,7 @@ public:
         vk::DescriptorSetLayoutBinding cameraBinding({ 0,
             vk::DescriptorType::eUniformBuffer,
             1,
-            vk::ShaderStageFlagBits::eVertex,
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
             {} });
 
         vk::DescriptorSetLayoutCreateInfo layoutInfo({ {},

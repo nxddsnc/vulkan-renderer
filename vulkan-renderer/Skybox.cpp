@@ -27,7 +27,7 @@ Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
     vk::Buffer positionBuffer;
     VmaAllocation positionBufferMemory;
     vk::DeviceSize positionBufferOffset;
-    resourceManager->CreateVertexBuffer(size, reinterpret_cast<void*>(mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
+    resourceManager->InitVertexBuffer(size, reinterpret_cast<void*>(mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
     m_vertexBuffers.push_back(positionBuffer);
     m_vertexBufferMemorys.push_back(positionBufferMemory);
     m_vertexBufferOffsets.push_back(positionBufferOffset);

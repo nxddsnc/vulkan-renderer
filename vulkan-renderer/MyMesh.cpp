@@ -145,6 +145,58 @@ void MyMesh::CreateCube()
     indices[iOffset + 3] = 2 + vOffset;       indices[iOffset + 4] = 3 + vOffset;         indices[iOffset + 5] = 0 + vOffset;
 }
 
+void MyMesh::CreateAixs()
+{
+    m_mode = Mode::LineList;
+    m_vertexNum = 8;
+    m_indexNum = 6;
+    m_vertexBits.hasNormal    = false;
+    m_vertexBits.hasTangent   = false;
+    m_vertexBits.hasColor     = true;
+    m_vertexBits.hasTexCoord0 = false;
+    m_vertexBits.hasTexCoord1 = false;
+
+    m_positions.resize(m_vertexNum);
+    m_colors.resize(m_vertexNum);
+    m_indexType = 2;
+    m_indices = new uint16_t[m_indexNum];
+    uint16_t* indices = reinterpret_cast<uint16_t*>(m_indices);
+
+    int vOffset = 0, iOffset = 0;
+
+    // x
+    m_positions[vOffset].x     = 0;   m_positions[vOffset].y     = 0;   m_positions[vOffset].z     = 0;
+    m_positions[vOffset + 1].x = 1;   m_positions[vOffset + 1].y = 0;   m_positions[vOffset + 1].z = 0;
+
+    m_colors[vOffset].x     = 1.0;    m_colors[vOffset].y     = 0;      m_colors[vOffset].z     = 0;
+    m_colors[vOffset + 1].x = 1.0;    m_colors[vOffset + 1].y = 0;      m_colors[vOffset + 1].z = 0; 
+
+    indices[iOffset] = iOffset + 0;   indices[iOffset + 1] = iOffset + 1;
+
+    vOffset += 2;
+    iOffset += 2;
+
+    // y
+    m_positions[vOffset].x     = 0;   m_positions[vOffset].y     = 0;   m_positions[vOffset].z     = 0;
+    m_positions[vOffset + 1].x = 0;   m_positions[vOffset + 1].y = 1;   m_positions[vOffset + 1].z = 0;
+
+    m_colors[vOffset].x     = 0.0;    m_colors[vOffset].y     = 1;      m_colors[vOffset].z     = 0;
+    m_colors[vOffset + 1].x = 0.0;    m_colors[vOffset + 1].y = 1;      m_colors[vOffset + 1].z = 0;
+
+    indices[iOffset] = iOffset + 0;   indices[iOffset + 1] = iOffset + 1;
+
+    vOffset += 2;
+    iOffset += 2;
+    // z
+    m_positions[vOffset].x     = 0;   m_positions[vOffset].y     = 0;   m_positions[vOffset].z     = 0;
+    m_positions[vOffset + 1].x = 0;   m_positions[vOffset + 1].y = 0;   m_positions[vOffset + 1].z = 1;
+
+    m_colors[vOffset].x     = 0.0;    m_colors[vOffset].y     = 0;      m_colors[vOffset].z     = 1;
+    m_colors[vOffset + 1].x = 0.0;    m_colors[vOffset + 1].y = 0;      m_colors[vOffset + 1].z = 1;
+
+    indices[iOffset] = iOffset + 0;   indices[iOffset + 1] = iOffset + 1;
+}
+
 int MyMesh::getIndexSize()
 {
     return m_indexType;

@@ -56,13 +56,25 @@ vk::DescriptorSetLayout Pipeline::_createDescriptorSetLayout(std::vector<vk::Des
 void Pipeline::InitModel()
 {
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-    // set shader state
     vk::Device device = m_device;
+    
+    // set shader state
+    char shaderName[32] = "pbr";
+    switch (_id.model.primitivePart.info.bits.primitiveMode)
+    {
+    case PrimitiveMode::Lines:
+        strcpy(shaderName, "basic");
+        break;
+    }
+    char vertexShaderPath[128];
+    char fragmenentShaderPath[128];
+    sprintf(vertexShaderPath, "Shaders/%s.vert", shaderName);
+    sprintf(fragmenentShaderPath, "Shaders/%s.frag", shaderName);
     ShaderModule vertexShader(&device, _id);
-    vertexShader.BuildFromFile("Shaders/basic.vert", ShaderStage::VERTEX, "main");
+    vertexShader.BuildFromFile(vertexShaderPath, ShaderStage::VERTEX, "main");
 
     ShaderModule fragmentShader(&device, _id);
-    fragmentShader.BuildFromFile("Shaders/basic.frag", ShaderStage::FRAGMENT, "main");
+    fragmentShader.BuildFromFile(fragmenentShaderPath, ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
     shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
@@ -71,21 +83,34 @@ void Pipeline::InitModel()
     _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
     _addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
 
-    // We always have normal
-    _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-    _addAttributes(1, 1, vk::Format::eR32G32B32Sfloat, 0);
-
-    // Set vertex data attributes for dynamic attributes
-    if (_id.model.primitivePart.info.bits.countTexCoord > 0)
+    uint32_t attributeIndex = 1;
+    if (_id.model.primitivePart.info.bits.normalVertexData)
     {
         _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-        _addAttributes(2, 2, vk::Format::eR32G32B32Sfloat, 0);
+        _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
+        attributeIndex++;
+    }
+
+    // Set vertex data attributes for dynamic attributes
+    if (_id.model.primitivePart.info.bits.countTexCoord)
+    {
+        _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+        _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
+        attributeIndex++;
     }
 
     if (_id.model.primitivePart.info.bits.tangentVertexData)
     {
         _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-        _addAttributes(3, 3, vk::Format::eR32G32B32Sfloat, 0);
+        _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
+        attributeIndex++;
+    }
+
+    if (_id.model.primitivePart.info.bits.countColor)
+    {
+        _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
+        _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
+        attributeIndex++;
     }
 
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
@@ -200,7 +225,7 @@ void Pipeline::InitModel()
     // descriptor set layout
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
     // camera uniform buffer
-    vk::DescriptorSetLayoutBinding cameraBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, {});
+    vk::DescriptorSetLayoutBinding cameraBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, {});
 
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
@@ -400,7 +425,7 @@ void Pipeline::InitSkybox()
     vk::DescriptorSetLayoutBinding cameraBinding(0,
         vk::DescriptorType::eUniformBuffer,
         1,
-        vk::ShaderStageFlagBits::eVertex,
+        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
         {});
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 

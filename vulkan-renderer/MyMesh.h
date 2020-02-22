@@ -14,7 +14,7 @@ struct VertexBits
 
 enum class Mode : uint8_t {
     Points = 0,        ///< Each vertex defines a separate point
-    Lines = 1,         ///< The first two vertices define the first segment, with subsequent pairs of vertices each defining one more segment
+    LineList = 1,         ///< The first two vertices define the first segment, with subsequent pairs of vertices each defining one more segment
     LineStrip = 3,     ///< The first vertex specifies the first segment’s start point while the second vertex specifies the first segment’s endpoint and the second segment’s start point
     Triangles = 4,     ///<
     TriangleStrip = 5, ///<
@@ -29,7 +29,7 @@ public:
     ~MyMesh();
 
     void CreateCube();
-
+    void CreateAixs();
     int getIndexSize();
     int                     m_indexType;
     VertexBits              m_vertexBits;
