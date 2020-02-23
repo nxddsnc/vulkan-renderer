@@ -17,13 +17,22 @@ Pipeline::Pipeline(PipelineId id)
 
 Pipeline::~Pipeline()
 {
-   
+    Destroy();
 }
 
 void Pipeline::Destroy()
 {
-    m_device.destroyPipeline(_graphicsPipeline);
-    m_device.destroyPipelineLayout(_pipelineLayout);
+    if (_graphicsPipeline)
+    {
+        m_device.destroyPipeline(_graphicsPipeline);
+        _graphicsPipeline = nullptr;
+    }
+    
+    if (_pipelineLayout)
+    {
+        m_device.destroyPipelineLayout(_pipelineLayout);
+        _pipelineLayout = nullptr;
+    }
 }
 
 void Pipeline::_addInputBinding(uint32_t stride, vk::VertexInputRate inputRate)

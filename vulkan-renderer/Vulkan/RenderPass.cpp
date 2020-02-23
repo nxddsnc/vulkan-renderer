@@ -8,6 +8,7 @@ RenderPass::RenderPass(vk::Device *device)
 
 RenderPass::~RenderPass()
 {
+
 }
 
 void RenderPass::AddAttachment(vk::AttachmentDescription attachmentDescription)

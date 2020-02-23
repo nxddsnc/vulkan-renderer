@@ -30,6 +30,7 @@ Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
 
 Skybox::~Skybox()
 {
+
 }
 
 bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool)
@@ -394,6 +395,8 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     m_pContext->GetDeviceQueue().submit((uint32_t)1, &submitInfo, nullptr);
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
+    device.destroyFramebuffer(framebuffer);
+    device.destroyRenderPass(renderPass.Get());
 
     return m_pVulkanTexturePrefilteredEnvMap;
 }
@@ -520,6 +523,8 @@ std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descr
     m_pContext->GetDeviceQueue().submit((uint32_t)1, &submitInfo, nullptr);
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
+    device.destroyFramebuffer(framebuffer);
+    device.destroyRenderPass(renderPass.Get());
 
     return offscreenVulkanTexture;
 }
