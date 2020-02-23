@@ -12,7 +12,7 @@ public:
     Axis(ResourceManager *pResourceManager, PipelineManager *pPipelineManager);
     ~Axis();
 
-    void CreateDrawCommand(vk::CommandBuffer &commandBuffer);
+    void CreateDrawCommand(vk::CommandBuffer &commandBuffer, vk::DescriptorSet descriptorSet);
 
     std::shared_ptr<Drawable> m_pDrawable;
 

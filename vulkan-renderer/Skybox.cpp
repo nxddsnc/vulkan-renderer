@@ -20,30 +20,11 @@ Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
     m_pResourceManager = resourceManager;
     m_pContext = context;
     
-    std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>();
-    mesh->CreateCube();
-    vk::DeviceSize size = mesh->m_vertexNum * sizeof(mesh->m_positions[0]);
+    m_pDrawable = std::make_shared<Drawable>();
+    m_pDrawable->m_mesh = std::make_shared<MyMesh>();
+    m_pDrawable->m_mesh->CreateCube();
 
-    vk::Buffer positionBuffer;
-    VmaAllocation positionBufferMemory;
-    vk::DeviceSize positionBufferOffset;
-    resourceManager->InitVertexBuffer(size, reinterpret_cast<void*>(mesh->m_positions.data()), positionBuffer, positionBufferMemory, positionBufferOffset);
-    m_vertexBuffers.push_back(positionBuffer);
-    m_vertexBufferMemorys.push_back(positionBufferMemory);
-    m_vertexBufferOffsets.push_back(positionBufferOffset);
-
-    //size = mesh->m_vertexNum * sizeof(mesh->m_texCoords0[0]);
-    //vk::Buffer uvBuffer;
-    //VmaAllocation uvBufferMemory;
-    //vk::DeviceSize uvBufferOffset;
-    //resourceManager->CreateVertexBuffer(size, reinterpret_cast<void*>(mesh->m_texCoords0.data()), uvBuffer, uvBufferMemory, uvBufferOffset);
-    //m_vertexBuffers.push_back(uvBuffer);
-    //m_vertexBufferMemorys.push_back(uvBufferMemory);
-    //m_vertexBufferOffsets.push_back(uvBufferOffset);
-
-    resourceManager->CreateIndexBuffer(mesh, m_indexBuffer, m_indexBufferMemory);
-
-    m_indexNum = mesh->m_indexNum;
+    resourceManager->InitVulkanBuffers(m_pDrawable);
 }
 
 
@@ -365,13 +346,13 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
            
             // skybox command buffer
             commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.GetPipeline());
-            commandBuffer.bindVertexBuffers(0, m_vertexBuffers.size(), m_vertexBuffers.data(), m_vertexBufferOffsets.data());
-            commandBuffer.bindIndexBuffer(m_indexBuffer, 0, vk::IndexType::eUint16);
+            commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
+            commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
 
             commandBuffer.pushConstants(pipeline.GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(pushBlock), reinterpret_cast<void*>(&pushBlock));
             commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.GetPipelineLayout(), 0, 1, &m_dsSkybox, 0, nullptr);
 
-            commandBuffer.drawIndexed(m_indexNum, 1, 0, 0, 0);
+            commandBuffer.drawIndexed(m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
 
             commandBuffer.endRenderPass();
 

@@ -59,17 +59,19 @@ void Pipeline::InitModel()
     vk::Device device = m_device;
     
     // set shader state
-    char shaderName[32] = "pbr";
+    char vertexShaderName[32] = "pbr";
+    char fragmentShaderName[32] = "pbr";
     switch (_id.model.primitivePart.info.bits.primitiveMode)
     {
     case PrimitiveMode::Lines:
-        strcpy(shaderName, "basic");
+        strcpy(fragmentShaderName, "plain");
+        strcpy(vertexShaderName, "basic");
         break;
     }
     char vertexShaderPath[128];
     char fragmenentShaderPath[128];
-    sprintf(vertexShaderPath, "Shaders/%s.vert", shaderName);
-    sprintf(fragmenentShaderPath, "Shaders/%s.frag", shaderName);
+    sprintf(vertexShaderPath, "Shaders/%s.vert", vertexShaderName);
+    sprintf(fragmenentShaderPath, "Shaders/%s.frag", fragmentShaderName);
     ShaderModule vertexShader(&device, _id);
     vertexShader.BuildFromFile(vertexShaderPath, ShaderStage::VERTEX, "main");
 

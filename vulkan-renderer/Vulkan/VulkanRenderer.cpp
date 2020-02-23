@@ -676,14 +676,14 @@ void VulkanRenderer::_createCommandBuffers()
 
        // skybox command buffer
        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
-       commandBuffer.bindVertexBuffers(0, _skybox->m_vertexBuffers.size(), _skybox->m_vertexBuffers.data(), _skybox->m_vertexBufferOffsets.data());
-       commandBuffer.bindIndexBuffer(_skybox->m_indexBuffer, 0, vk::IndexType::eUint16);
+       commandBuffer.bindVertexBuffers(0, _skybox->m_pDrawable->m_vertexBuffers.size(), _skybox->m_pDrawable->m_vertexBuffers.data(), _skybox->m_pDrawable->m_vertexBufferOffsets.data());
+       commandBuffer.bindIndexBuffer(_skybox->m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_dsSkybox, 0, nullptr);
-       commandBuffer.drawIndexed(_skybox->m_indexNum, 1, 0, 0, 0);
+       commandBuffer.drawIndexed(_skybox->m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
 
        // drawAxis
-       _axis->CreateDrawCommand(commandBuffer);
+       _axis->CreateDrawCommand(commandBuffer, _camera->descriptorSet);
 
        // draw drawables
        // TODO: Create a render queue to do the following works.

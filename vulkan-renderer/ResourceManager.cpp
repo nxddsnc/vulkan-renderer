@@ -20,29 +20,44 @@ ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPoo
 
 ResourceManager::~ResourceManager()
 {
-    for (auto drawable : _nodes)
+    for (auto drawable : _drawables)
     {
         for (int i = 0; i < drawable->m_vertexBuffers.size(); ++i)
         {
             vmaDestroyBuffer(_memoryAllocator, drawable->m_vertexBuffers[i], drawable->m_vertexBufferMemorys[i]);
         }
         vmaDestroyBuffer(_memoryAllocator, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
-        if (drawable->baseColorTexture)
-        {
-            if (drawable->baseColorTexture)
-            {
-                vmaDestroyImage(_memoryAllocator, drawable->baseColorTexture->image, drawable->baseColorTexture->imageMemory);
-                _device.destroyImageView(drawable->baseColorTexture->imageView);
-                _device.destroySampler(drawable->baseColorTexture->imageSampler);
-            }
-            if (drawable->normalTexture)
-            {
-                vmaDestroyImage(_memoryAllocator, drawable->normalTexture->image, drawable->normalTexture->imageMemory);
-                _device.destroyImageView(drawable->normalTexture->imageView);
-                _device.destroySampler(drawable->normalTexture->imageSampler);
-            }
-        }
 
+        
+        //if (drawable->baseColorTexture)
+        //{
+            //if (drawable->baseColorTexture)
+            //{
+            //    vmaDestroyImage(_memoryAllocator, drawable->baseColorTexture->image, drawable->baseColorTexture->imageMemory);
+            //    _device.destroyImageView(drawable->baseColorTexture->imageView);
+            //    _device.destroySampler(drawable->baseColorTexture->imageSampler);
+            //}
+            //if (drawable->normalTexture)
+            //{
+            //    vmaDestroyImage(_memoryAllocator, drawable->normalTexture->image, drawable->normalTexture->imageMemory);
+            //    _device.destroyImageView(drawable->normalTexture->imageView);
+            //    _device.destroySampler(drawable->normalTexture->imageSampler);
+            //}
+        //}
+
+    }
+
+    for (auto texture : _textures)
+    {
+        vmaDestroyImage(_memoryAllocator, texture->image, texture->imageMemory);
+        if (texture->imageView)
+        {
+            _device.destroyImageView(texture->imageView);
+        }
+        if (texture->imageSampler)
+        {
+            _device.destroySampler(texture->imageSampler);
+        }
     }
 }
 
@@ -50,13 +65,13 @@ void ResourceManager::InitVulkanBuffers(std::shared_ptr<Drawable> drawable)
 {
     CreateVertexBuffers(drawable);
     CreateIndexBuffer(drawable->m_mesh, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
+    _drawables.push_back(drawable);
 }
 
 void ResourceManager::InitVulkanResource(std::shared_ptr<Drawable> drawable)
 {
     InitVulkanBuffers(drawable);
     _createTextures(drawable);
-    _nodes.push_back(drawable);
 }
 
 vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()

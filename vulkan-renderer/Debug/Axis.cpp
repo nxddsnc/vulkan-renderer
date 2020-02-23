@@ -22,7 +22,7 @@ Axis::~Axis()
     
 }
 
-void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer)
+void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer, vk::DescriptorSet descriptorSet)
 {
     PipelineId pipelineId;
     PipelineId linesPipelineId;
@@ -35,6 +35,8 @@ void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer)
     linesPipelineId.model.primitivePart.info.bits.countColor = 1;
     std::shared_ptr<Pipeline> pipelineLines = m_pPipelineMananger->GetPipeline(linesPipelineId);
 
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipeline());
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
     commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
     commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
 

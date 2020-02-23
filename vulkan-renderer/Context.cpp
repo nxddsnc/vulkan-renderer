@@ -284,6 +284,7 @@ void VulkanContext::_initDevice()
         _deviceExtensions.data(),
         &physicalDeviceFeatures
     });
+    physicalDeviceFeatures.fillModeNonSolid = true;
 
     _device = _gpu.createDevice(deviceCreateInfo);
     _queue = _device.getQueue(_graphicsQueueFamilyIndex, 0);

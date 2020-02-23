@@ -215,11 +215,11 @@ public:
 public:
     ResourceManager               *m_pResourceManager;
     VulkanContext                 *m_pContext;
-    std::vector<vk::Buffer>        m_vertexBuffers;
-    std::vector<vk::DeviceSize>    m_vertexBufferOffsets;
-    std::vector<VmaAllocation>     m_vertexBufferMemorys;
-    vk::Buffer                     m_indexBuffer;
-    VmaAllocation                  m_indexBufferMemory;
+    //std::vector<vk::Buffer>        m_vertexBuffers;
+    //std::vector<vk::DeviceSize>    m_vertexBufferOffsets;
+    //std::vector<VmaAllocation>     m_vertexBufferMemorys;
+    //vk::Buffer                     m_indexBuffer;
+    //VmaAllocation                  m_indexBufferMemory;
 
     // TODO: Seems that it's not necessary to store MyTexture.
     std::shared_ptr<MyTexture>     m_pTextureEnvMap;
@@ -230,7 +230,7 @@ public:
 
     std::shared_ptr<VulkanTexture> m_pVulkanTextureBRDFLUT;
 
-    uint32_t                       m_indexNum;
+    std::shared_ptr<Drawable>      m_pDrawable;
     vk::DescriptorSet              m_dsSkybox;
     vk::DescriptorSet              m_preFilteredDescriptorSet;
 

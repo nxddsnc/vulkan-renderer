@@ -3,14 +3,18 @@
 
 // varyings
 layout(location = 0) in mat3 inTBN;
-layout(location = 3) in vec3 inPosition;
-layout(location = 4) in vec3 inNormal;
+layout(location = 5) in vec3 inPosition;
+
+#if IN_NORMAL
+layout(location = IN_NORMAL_LOCATION) in vec3 inNormal;
+#endif 
 
 #if IN_TANGENT
 layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
+
 #if IN_UV0
-layout(location = IN_UV0_LOCATION + 3) in vec3 inUv;
+layout(location = IN_UV0_LOCATION) in vec3 inUv;
 #endif
 
 //output
@@ -52,8 +56,10 @@ void main() {
     vec3 b = normalize(cross(inNormal, t));
     mat3 tbn = mat3(t, b, inNormal);
     vec3 worldNormal = normalize(tbn * normal);
-#else
+#elif IN_NORMAL
     vec3 worldNormal = inNormal;
+#else
+    vec3 worldNormal = vec3(0);
 #endif
 
     vec3 diffuse;
