@@ -14,7 +14,10 @@ layout(push_constant) uniform UniformPerDrawable
 } uniformPerDrawable;
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inNormal;
+
+#if IN_NORMAL
+layout(location = IN_NORMAL_LOCATION) in vec3 inNormal;
+#endif
 
 #if IN_UV0
 layout(location = IN_UV0_LOCATION) in vec3 inUv;
@@ -25,18 +28,29 @@ layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 
 // varyings
-layout(location = 0) out mat3 outTBN;
-layout(location = 3) out vec3 outPosition;
-layout(location = 4) out vec3 outNormal;
+#if IN_TANGENT && IN_NORMAL
+// mat3 consumes 3 location.
+layout(location = 5) out mat3 outTBN;
+#endif
+
+layout(location = 0) out vec3 outPosition;
+
+#if IN_NORMAL
+layout(location = IN_NORMAL_LOCATION) out vec3 outNormal;
+#endif
 
 #if IN_UV0
-layout(location = IN_UV0_LOCATION + 3) out vec3 outUv;
+layout(location = IN_UV0_LOCATION) out vec3 outUv;
 #endif
+
 
 void main() {
     outPosition = (uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0)).xyz;
     gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
-    outNormal = (uniformPerDrawable.normalMatrix * vec4(inNormal, 1.0)).xyz;
+#if IN_NORMAL
+    outNormal = (uniformPerDrawable.normalMatrix * vec4(inNormal, 0.0)).xyz;
+#endif
+
 #if IN_UV0
     outUv = inUv;
 #endif

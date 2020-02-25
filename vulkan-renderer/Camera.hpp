@@ -35,7 +35,7 @@ public:
         _memoryAllocator = memoryAllocator;
 
         vk::BufferCreateInfo createInfo({{},
-                                         vk::DeviceSize(sizeof(matrices)),
+                                         vk::DeviceSize(sizeof(matrices) + sizeof(position)),
                                          vk::BufferUsageFlagBits::eUniformBuffer,
                                          {},
                                          {},
@@ -159,7 +159,7 @@ public:
         vk::DescriptorBufferInfo bufferInfo({
             uniformBuffer,
             0,
-            sizeof(matrices)
+            sizeof(matrices) + sizeof(glm::vec3)
         });
 
         vk::WriteDescriptorSet descriptorWrite({
@@ -179,10 +179,17 @@ public:
 
     void UpdateUniformBuffer() 
     {
+        glm::vec3 cameraPos;
+        glm::mat4 mat = glm::inverse(matrices.view);
+        cameraPos.x = mat[3][0];
+        cameraPos.y = mat[3][1];
+        cameraPos.z = mat[3][2];
+
         matrices.perspective[1][1] *= -1;
         void* data;
         vmaMapMemory(*_memoryAllocator, uniformBufferMemory, &data);
         memcpy(data, &matrices, sizeof(matrices));
+        memcpy(reinterpret_cast<char*>(data) + sizeof(matrices), &cameraPos, sizeof(cameraPos));
         vmaUnmapMemory(*_memoryAllocator, uniformBufferMemory);
         matrices.perspective[1][1] *= -1;
     }

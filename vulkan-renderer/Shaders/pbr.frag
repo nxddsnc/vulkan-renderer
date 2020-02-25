@@ -2,15 +2,16 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // varyings
-layout(location = 0) in mat3 inTBN;
-layout(location = 3) in vec3 inPosition;
-layout(location = 4) in vec3 inNormal;
+// mat3 consumes 3 locations.
+layout(location = 5) in mat3 inTBN;
+layout(location = 0) in vec3 inPosition;
 
-#if IN_TANGENT
-layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
-#endif
+#if IN_NORMAL
+layout(location = IN_NORMAL_LOCATION) in vec3 inNormal;
+#endif 
+
 #if IN_UV0
-layout(location = IN_UV0_LOCATION + 3) in vec3 inUv;
+layout(location = IN_UV0_LOCATION) in vec3 inUv;
 #endif
 
 //output
@@ -41,7 +42,8 @@ layout(set = 3, binding = TEXTURE_NORMAL_LOCATION) uniform sampler2D normalTextu
 vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
 {
     float NoV = clamp(dot(N, V), 0, 1);
-    vec3 R = 2 * dot(V, N) * N - V;
+    // vec3 R = 2 * dot(V, N) * N - V;
+    vec3 R = reflect(V, N);
     
     const float MAX_REFLECTION_LOD = 9.0;
 	float lod = Roughness * MAX_REFLECTION_LOD;
@@ -57,6 +59,7 @@ void main() {
     vec3 normal = texture(normalTexture, vec2(inUv.x, inUv.y)).xyz;
     vec3 worldNormal = inTBN * normal; 
 #elif IN_UV0 && TEXTURE_NORMAL
+    // http://www.thetenthplanet.de/archives/1180
     vec3 normal = texture(normalTexture, vec2(inUv.x, inUv.y)).xyz;
     vec3 pos_dx = dFdx(inPosition);
     vec3 pos_dy = dFdy(inPosition);
@@ -67,8 +70,10 @@ void main() {
     vec3 b = normalize(cross(inNormal, t));
     mat3 tbn = mat3(t, b, inNormal);
     vec3 worldNormal = normalize(tbn * normal);
-#else
+#elif IN_NORMAL
     vec3 worldNormal = inNormal;
+#else
+    vec3 worldNormal = vec3(0);
 #endif
 
     vec3 V = ubo.cameraPos - inPosition;
@@ -85,17 +90,6 @@ void main() {
     outColor.rgb = ApproximateSpecularIBL(baseColor, 0.0, worldNormal, V);
     
     // outColor.rgb = worldNormal;
-    // if (outColor.r > outColor.g && outColor.r > outColor.b)
-    // {
-    //     outColor = vec4(1, 0, 0, 1);
-    // }
-    // else if (outColor.g > outColor.r && outColor.g > outColor.b)
-    // {
-    //     outColor = vec4(0, 1, 0, 1);
-    // }
-    // else
-    // {
-    //     outColor = vec4(0, 0, 1, 1);
-    // }
+
     outColor.a = 1.0;
 }

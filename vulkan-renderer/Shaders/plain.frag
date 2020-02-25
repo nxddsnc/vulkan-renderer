@@ -3,9 +3,9 @@
 
 // varyings
 #if IN_NORMAL
-layout(location = 0) in mat3 inTBN;
+layout(location = 5) in mat3 inTBN;
 #endif
-layout(location = 5) in vec3 inPosition;
+layout(location = 0) in vec3 inPosition;
 
 #if IN_NORMAL
 layout(location = IN_NORMAL_LOCATION) in vec3 inNormal;

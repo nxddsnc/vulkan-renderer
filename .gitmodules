@@ -1,4 +1,0 @@
-[submodule "vulkan-renderer/third-party/includes/gli"]
-	path = vulkan-renderer/third-party/includes/gli
-	url = https://github.com/g-truc/gli.git
-	branch = 0.8.2

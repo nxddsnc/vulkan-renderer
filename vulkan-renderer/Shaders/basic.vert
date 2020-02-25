@@ -15,7 +15,7 @@ layout(push_constant) uniform UniformPerDrawable
 layout(location = 0) in vec3 inPosition;
 
 #if IN_NORMAL
-layout(location = IN_UV0_NORMAL) in vec3 inNormal;
+layout(location = IN_NORMAL_LOCATION) in vec3 inNormal;
 #endif
 
 #if IN_UV0
@@ -30,11 +30,12 @@ layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 layout(location = IN_COLOR_LOCATION) in vec3 inColor;
 #endif
 // varyings
-#if IN_NORMAL
-layout(location = 0) out mat3 outTBN;
+#if IN_NORMAL && IN_TANGENT
+// mat3 consumes 3 locations.
+layout(location = 5) out mat3 outTBN;
 #endif
 
-layout(location = 5) out vec3 outPosition;
+layout(location = 0) out vec3 outPosition;
 
 #if IN_NORMAL
 layout(location = IN_NORMAL_LOCATION) out vec3 outNormal;

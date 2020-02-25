@@ -38,6 +38,14 @@ void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer, vk::DescriptorSe
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipeline());
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
     commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
+   
+    uint32_t offset = 0;
+    auto matrix = glm::mat4(1.0);
+    commandBuffer.pushConstants(pipelineLines->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&matrix));
+    offset += sizeof(glm::mat4);
+    commandBuffer.pushConstants(pipelineLines->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&matrix));
+    offset += sizeof(glm::mat4);
+
     commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
 
     commandBuffer.drawIndexed(m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);

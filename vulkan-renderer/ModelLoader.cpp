@@ -71,7 +71,7 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
         drawable->m_mesh = mesh;
         drawable->m_material = material;
         drawable->m_matrix = matrix;
-        drawable->m_normalMatrix = glm::inverse(matrix);
+        drawable->m_normalMatrix = glm::transpose(glm::inverse(matrix));
         m_pScene->AddDrawable(drawable);
     }
 
