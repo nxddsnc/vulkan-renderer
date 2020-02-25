@@ -719,7 +719,7 @@ void VulkanRenderer::_createCommandBuffers()
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 2, 1, &_skybox->m_preFilteredDescriptorSet, 0, nullptr);
                     
-                    if (drawable->baseColorTexture || drawable->normalTexture)
+                    if (drawable->baseColorTexture || drawable->normalTexture || drawable->metallicRoughnessTexture)
                     {
                         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 3, 1, &drawable->textureDescriptorSet, 0, nullptr);
                     }
@@ -733,6 +733,12 @@ void VulkanRenderer::_createCommandBuffers()
                     if (pipelineId.model.materialPart.info.bits.baseColorInfo)
                     {
                         commandBuffer.pushConstants(pipelineModel->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec4), reinterpret_cast<void*>(&drawable->m_material->m_baseColor));
+                        offset += sizeof(glm::vec4);
+                    }
+                    if (pipelineId.model.materialPart.info.bits.metallicRoughnessInfo)
+                    {
+                        commandBuffer.pushConstants(pipelineModel->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec2), reinterpret_cast<void*>(&drawable->m_material->m_metallicRoughness));
+                        offset += sizeof(glm::vec2);
                     }
 
                     commandBuffer.drawIndexed(drawable->m_mesh->m_indexNum, 1, 0, 0, 0);

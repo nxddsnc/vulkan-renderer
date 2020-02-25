@@ -257,36 +257,47 @@ void Pipeline::InitModel()
     std::vector<vk::PushConstantRange> pushConstantRanges;
 
     uint32_t offset = 0;
-    pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4) * 2));
-    offset += sizeof(glm::mat4) * 2;
-    //pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4)));
-    //offset += sizeof(glm::mat4);
-
+    uint32_t size = sizeof(glm::mat4) * 2;
+    pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, size));
+    offset += size;
+    
+    size = 0;
     if (_id.model.materialPart.info.bits.baseColorInfo)
     {
-        pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, offset, sizeof(glm::vec4)));
-        offset += sizeof(glm::vec4);
+        size += sizeof(glm::vec4);
     }
+    if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
+    {
+        size += sizeof(glm::vec2);
+    }
+    pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, offset, size));
 
     uint32_t bindings = 0;
     if (_id.model.materialPart.info.bits.baseColorMap)
     {
-        vk::DescriptorSetLayoutBinding materialSamplerBinding({ bindings++,
+        vk::DescriptorSetLayoutBinding materialSamplerBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,
             vk::ShaderStageFlagBits::eFragment,
-            {}
-        });
+            {});
         perDrawableBindings.push_back(materialSamplerBinding);
     }
     if (_id.model.materialPart.info.bits.normalMap)
     {
-        vk::DescriptorSetLayoutBinding materialSamplerBinding({ bindings++,
+        vk::DescriptorSetLayoutBinding materialSamplerBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
             1,
             vk::ShaderStageFlagBits::eFragment,
-            {}
-        });
+            {});
+        perDrawableBindings.push_back(materialSamplerBinding);
+    }
+    if (_id.model.materialPart.info.bits.metallicRoughnessMap)
+    {
+        vk::DescriptorSetLayoutBinding materialSamplerBinding(bindings++,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {});
         perDrawableBindings.push_back(materialSamplerBinding);
     }
     descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));

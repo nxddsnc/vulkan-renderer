@@ -111,6 +111,10 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
             {
                 options->AddMacroDefinition("BASE_COLOR", "1");
             }
+            if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
+            {
+                options->AddMacroDefinition("METALLIC_ROUGHNESS", "1");
+            }
             if (_id.model.materialPart.info.bits.baseColorMap)
             {
                 options->AddMacroDefinition("TEXTURE_BASE_COLOR", "1");
@@ -120,6 +124,11 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
             {
                 options->AddMacroDefinition("TEXTURE_NORMAL", "1");
                 options->AddMacroDefinition("TEXTURE_NORMAL_LOCATION", std::to_string(bindings++));
+            }
+            if (_id.model.materialPart.info.bits.metallicRoughnessMap)
+            {
+                options->AddMacroDefinition("TEXTURE_METALLIC_ROUGHNESS", "1");
+                options->AddMacroDefinition("TEXTURE_METALLIC_ROUGHNESS_LOCATION", std::to_string(bindings++));
             }
         }
         break;

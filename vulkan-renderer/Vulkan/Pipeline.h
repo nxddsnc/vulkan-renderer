@@ -49,6 +49,7 @@ struct PipelineId
           unsigned int emissiveInfo:           2;
           bool baseColorMap:                   1;
           bool normalMap:                      1;
+          bool metallicRoughnessMap:           1;
         } bits;
 
         uint32_t value;

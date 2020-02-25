@@ -106,6 +106,7 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
         vertexBits.hasNormal         = _mesh->HasNormals();
         vertexBits.hasTangent        = _mesh->HasTangentsAndBitangents();
         vertexBits.hasTexCoord0      = _mesh->HasTextureCoords(0);
+        
         std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(vertexBits, _mesh->mNumVertices, _mesh->mNumFaces * 3);
 
         for (size_t i = 0; i < _mesh->mNumVertices; ++i)
@@ -131,7 +132,7 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
              {
                  aiVector3D uv = _mesh->mTextureCoords[0][i];
                  mesh->m_texCoords0[i].x = uv.x;
-                 mesh->m_texCoords0[i].y = uv.y;
+                 mesh->m_texCoords0[i].y = 1 - uv.y;
              }
          }
          if (vertexBits.hasTangent)
@@ -203,21 +204,31 @@ std::shared_ptr<MyMaterial> ModelLoader::_extractMaterial(unsigned int idx)
         myMaterial->m_baseColor.g = diffuse.g;
         myMaterial->m_baseColor.b = diffuse.b;
 
+        // We should get the actual value if we can.
+        myMaterial->m_metallicRoughness.r = 1.0;
+        myMaterial->m_metallicRoughness.g = 0.0;
+
+        aiString texturePath;
+        int textureMapMode[3] = { aiTextureMapMode_Wrap };
         if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
         {
-            aiString texturePath;
-            int textureMapMode[3] = { aiTextureMapMode_Wrap };
             aiReturn res = material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath, NULL, NULL, NULL, NULL,
                 reinterpret_cast<aiTextureMapMode*>(textureMapMode));
             myMaterial->m_pDiffuseMap = _extractTexture(texturePath.data, textureMapMode);
         }
         if (material->GetTextureCount(aiTextureType_NORMALS) > 0)
         {
-            aiString texturePath;
-            int textureMapMode[3];
             aiReturn res = material->GetTexture(aiTextureType_NORMALS, 0, &texturePath, NULL, NULL, NULL, NULL,
                 reinterpret_cast<aiTextureMapMode*>(textureMapMode));
             myMaterial->m_pNormalMap = _extractTexture(texturePath.data, textureMapMode);
+        }
+        // In gltf, the unknown texture refers to the metallic roughness texture.
+        // May cause some error when importing other formats.
+        if (material->GetTextureCount(aiTextureType_UNKNOWN) > 0)
+        {
+            aiReturn res = material->GetTexture(aiTextureType_UNKNOWN, 0, &texturePath, NULL, NULL, NULL, NULL,
+                reinterpret_cast<aiTextureMapMode*>(textureMapMode));
+            myMaterial->m_pMetallicRoughnessMap = _extractTexture(texturePath.data, textureMapMode);
         }
         //TODO: load other types of texture later.
 

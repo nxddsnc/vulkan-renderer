@@ -40,6 +40,7 @@ public:
     // texture samplers
     std::shared_ptr<VulkanTexture> baseColorTexture;
     std::shared_ptr<VulkanTexture> normalTexture;
+    std::shared_ptr<VulkanTexture> metallicRoughnessTexture;
     vk::DescriptorSet              textureDescriptorSet;
 
     //vk::DescriptorSet              textureDescriptorSet;

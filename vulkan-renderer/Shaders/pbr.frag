@@ -3,7 +3,10 @@
 
 // varyings
 // mat3 consumes 3 locations.
+#if IN_NORMAL && IN_TANGENT
 layout(location = 5) in mat3 inTBN;
+#endif
+
 layout(location = 0) in vec3 inPosition;
 
 #if IN_NORMAL
@@ -26,6 +29,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 layout(push_constant) uniform UniformPerDrawable
 {
     layout(offset = 128) vec4 baseColor;
+    layout(offset = 144) vec2 metallicRoughness;
 } uniformPerDrawable;
 
 layout(set = 2, binding = 0) uniform samplerCube u_prefileteredCubemap;
@@ -37,7 +41,9 @@ layout(set = 3, binding = TEXUTRE_BASE_COLOR_LOCATION) uniform sampler2D baseCol
 #if TEXTURE_NORMAL
 layout(set = 3, binding = TEXTURE_NORMAL_LOCATION) uniform sampler2D normalTexture;
 #endif
-
+#if TEXTURE_METALLIC_ROUGHNESS
+layout(set = 3, binding = TEXTURE_METALLIC_ROUGHNESS_LOCATION) uniform sampler2D metallicRoughnessTexture;
+#endif
 
 vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
 {
@@ -84,11 +90,21 @@ void main() {
     baseColor = uniformPerDrawable.baseColor.rgb;
 #endif
 #if TEXTURE_BASE_COLOR
-    baseColor *= texture(baseColorTexture, vec2(inUv.x, -inUv.y)).xyz;
+    baseColor *= texture(baseColorTexture, vec2(inUv.x, inUv.y)).xyz;
+#endif
+    vec2 metallicRoughness = vec2(0, 1);
+
+#if METALLIC_ROUGHNESS
+    metallicRoughness = uniformPerDrawable.metallicRoughness;
 #endif
 
-    outColor.rgb = ApproximateSpecularIBL(baseColor, 0.0, worldNormal, V);
+#if TEXTURE_METALLIC_ROUGHNESS
+    metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;
+#endif
+
+    outColor.rgb = ApproximateSpecularIBL(baseColor, metallicRoughness.y, worldNormal, V);
     
+    // outColor.rgb = vec3(0, metallicRoughness);
     // outColor.rgb = worldNormal;
 
     outColor.a = 1.0;

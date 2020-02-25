@@ -648,6 +648,22 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
             vk::ImageLayout::eShaderReadOnlyOptimal);
         imageInfos.push_back(imageInfo);
     }
+    if (drawable->m_material->m_pMetallicRoughnessMap)
+    {
+        drawable->metallicRoughnessTexture = CreateCombinedTexture(drawable->m_material->m_pMetallicRoughnessMap);
+        InitVulkanTextureData(drawable->m_material->m_pMetallicRoughnessMap, drawable->metallicRoughnessTexture);
+        vk::DescriptorSetLayoutBinding textureBinding(bindings++,
+            vk::DescriptorType::eCombinedImageSampler,
+            1,
+            vk::ShaderStageFlagBits::eFragment,
+            {});
+        textureBindings.push_back(textureBinding);
+
+        vk::DescriptorImageInfo imageInfo(drawable->metallicRoughnessTexture->imageSampler,
+            drawable->metallicRoughnessTexture->imageView,
+            vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfos.push_back(imageInfo);
+    }
 
     vk::DescriptorSetLayout descriptorSetLayout;
 
