@@ -48,9 +48,9 @@ layout(set = 3, binding = TEXTURE_METALLIC_ROUGHNESS_LOCATION) uniform sampler2D
 vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
 {
     float NoV = clamp(dot(N, V), 0, 1);
-    // vec3 R = 2 * dot(V, N) * N - V;
-    vec3 R = reflect(V, N);
-    
+    vec3 R = (2 * dot(V, N) * N - V).xyz;
+    // vec3 R = reflect(V, N);
+    // return R;
     const float MAX_REFLECTION_LOD = 9.0;
 	float lod = Roughness * MAX_REFLECTION_LOD;
     
@@ -102,10 +102,11 @@ void main() {
     metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;
 #endif
 
-    outColor.rgb = ApproximateSpecularIBL(baseColor, metallicRoughness.y, worldNormal, V);
+    outColor.rgb = ApproximateSpecularIBL(baseColor, 0, worldNormal, V);
     
+    // outColor.rgb = (-normalize(reflect(V, worldNormal))).rbg;
     // outColor.rgb = vec3(0, metallicRoughness);
-    // outColor.rgb = worldNormal;
+    outColor.rgb = worldNormal;
 
     outColor.a = 1.0;
 }

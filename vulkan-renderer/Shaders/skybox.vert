@@ -12,7 +12,7 @@ layout(location = 0) out vec3 outUVW;
 
 void main() 
 {
-    outUVW = vec3(inPosition.x, inPosition.z, inPosition.y);
+    outUVW = vec3(inPosition.x, inPosition.y, inPosition.z);
     mat3 view = mat3(ubo.view);
 	gl_Position = ubo.proj * vec4( view * inPosition.xyz, 1.0);
     gl_Position.w = gl_Position.z;
