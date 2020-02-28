@@ -62,11 +62,11 @@ vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
 void main() {
 
 #if IN_TANGENT && TEXTURE_NORMAL
-    vec3 normal = texture(normalTexture, vec2(inUv.x, inUv.y)).xyz;
+    vec3 normal = texture(normalTexture, vec2(inUv.x, inUv.y)).xyz * 2 - 1;
     vec3 worldNormal = inTBN * normal; 
 #elif IN_UV0 && TEXTURE_NORMAL
     // http://www.thetenthplanet.de/archives/1180
-    vec3 normal = texture(normalTexture, vec2(inUv.x, inUv.y)).xyz;
+    vec3 normal = texture(normalTexture, vec2(inUv.x, inUv.y)).xyz * 2 - 1;
     vec3 pos_dx = dFdx(inPosition);
     vec3 pos_dy = dFdy(inPosition);
     vec3 tex_dx = dFdx(vec3(inUv.xy, 1.0));
@@ -102,11 +102,11 @@ void main() {
     metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;
 #endif
 
-    outColor.rgb = ApproximateSpecularIBL(baseColor, 0, worldNormal, V);
+    outColor.rgb = ApproximateSpecularIBL(baseColor, metallicRoughness.y, worldNormal, V);
     
     // outColor.rgb = (-normalize(reflect(V, worldNormal))).rbg;
     // outColor.rgb = vec3(0, metallicRoughness);
-    outColor.rgb = worldNormal;
+    // outColor.rgb = worldNormal;
 
     outColor.a = 1.0;
 }
