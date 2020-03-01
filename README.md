@@ -3,7 +3,7 @@
 A test project for learning Vulkan API.
 
 ### Progress Update
-2020-03-01. Implement Image based lighiting according to https://cdn2-unrealengine-1251447533.file.myqcloud.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
+2020-03-01. Implement Image based lighiting according to [epic games presentation in Siggraph 2013](https://cdn2-unrealengine-1251447533.file.myqcloud.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf)
 
 ### Screen Shots
 <img src="https://github.com/nxddsnc/vulkan-renderer/blob/master/ScreenShots/screenShot_IBL.png"></img>
@@ -18,11 +18,11 @@ A test project for learning Vulkan API.
  https://vulkan-tutorial.com/.
 
 ### Third Party Library
-(Assimp)[https://github.com/assimp/assimp]
+[Assimp](https://github.com/assimp/assimp)
 
-(Vulkan Examples)[https://github.com/SaschaWillems/Vulkan]
+[Vulkan Examples](https://github.com/SaschaWillems/Vulkan)
 
-(ShaderC)[https://github.com/google/shaderc]
+[ShaderC](https://github.com/google/shaderc)
 
 
 
