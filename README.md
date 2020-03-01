@@ -18,11 +18,11 @@ A test project for learning Vulkan API.
  https://vulkan-tutorial.com/.
 
 ### Third Party Library
-Assimp[https://github.com/assimp/assimp]
+(Assimp)[https://github.com/assimp/assimp]
 
-Vulkan Examples[https://github.com/SaschaWillems/Vulkan]
+(Vulkan Examples)[https://github.com/SaschaWillems/Vulkan]
 
-ShaderC[https://github.com/google/shaderc]
+(ShaderC)[https://github.com/google/shaderc]
 
 
 
