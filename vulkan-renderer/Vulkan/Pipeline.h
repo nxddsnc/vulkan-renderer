@@ -2,10 +2,11 @@
 #pragma once
 enum PipelineType
 {
-  MODEL,
-  SKYBOX,
-  PREFILTERED_CUBE_MAP,
-  GENERATE_BRDF_LUT
+    MODEL,
+    SKYBOX,
+    PREFILTERED_CUBE_MAP,
+    IRRADIANCE_MAP,
+    GENERATE_BRDF_LUT
 };
 
 enum class PrimitiveMode : uint8_t {
@@ -92,6 +93,7 @@ public:
     void InitModel();
     void InitSkybox();
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
+    void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
     void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);
 private:
     PipelineId _id;

@@ -64,7 +64,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
     _skybox = new Skybox(_resourceManager, _context);
-    _skybox->LoadFromDDS("./TestModel/Skybox/env.dds", _device, _descriptorPool);
+    _skybox->LoadFromDDS("./TestModel/Skybox/environment.dds", _device, _descriptorPool);
 
     _axis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
 }

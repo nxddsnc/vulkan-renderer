@@ -227,6 +227,7 @@ public:
 
     std::shared_ptr<MyTexture>     m_pTexturePrefilteredEnvMap;
     std::shared_ptr<VulkanTexture> m_pVulkanTexturePrefilteredEnvMap;
+    std::shared_ptr<VulkanTexture> m_pVulkanTextureIrradianceMap;
 
     std::shared_ptr<VulkanTexture> m_pVulkanTextureBRDFLUT;
 
@@ -236,6 +237,7 @@ public:
 
 private:
     std::shared_ptr<VulkanTexture> generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool);
+    std::shared_ptr<VulkanTexture> generateIrradianceMap(vk::DescriptorPool &descriptorPool);
     std::shared_ptr<VulkanTexture> generateBRDFLUT(vk::DescriptorPool &descriptorPool);
 };
 

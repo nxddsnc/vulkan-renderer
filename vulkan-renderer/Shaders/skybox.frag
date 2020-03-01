@@ -41,10 +41,11 @@ void main()
 
 	// outColor = vec4(inUv.x, inUv.y, inUv.z, 1.0);
 	// // Tone mapping
-	// color = Uncharted2Tonemap(color * uboParams.exposure);
-	// color = color * (1.0f / Uncharted2Tonemap(vec3(11.2f)));	
-	// // Gamma correction
-	// color = pow(color, vec3(1.0f / uboParams.gamma));
+    float exposure = 2.0;
+	outColor.rgb = Uncharted2Tonemap(outColor.rgb * exposure);
+	outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2f)));	
+	// Gamma correction
+	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
 	
 	// outColor = vec4(color, 1.0);
 }

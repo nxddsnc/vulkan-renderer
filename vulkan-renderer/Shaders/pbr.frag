@@ -33,7 +33,8 @@ layout(push_constant) uniform UniformPerDrawable
 } uniformPerDrawable;
 
 layout(set = 2, binding = 0) uniform samplerCube u_prefileteredCubemap;
-layout(set = 2, binding = 1) uniform sampler2D   u_brdfLut;
+layout(set = 2, binding = 1) uniform samplerCube u_IrradianceMap;
+layout(set = 2, binding = 2) uniform sampler2D   u_brdfLut;
 
 #if TEXTURE_BASE_COLOR
 layout(set = 3, binding = TEXUTRE_BASE_COLOR_LOCATION) uniform sampler2D baseColorTexture;
@@ -45,12 +46,33 @@ layout(set = 3, binding = TEXTURE_NORMAL_LOCATION) uniform sampler2D normalTextu
 layout(set = 3, binding = TEXTURE_METALLIC_ROUGHNESS_LOCATION) uniform sampler2D metallicRoughnessTexture;
 #endif
 
+// From http://filmicgames.com/archives/75
+vec3 Uncharted2Tonemap(vec3 x)
+{
+	float A = 0.15;
+	float B = 0.50;
+	float C = 0.10;
+	float D = 0.20;
+	float E = 0.02;
+	float F = 0.30;
+	return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+
+vec3 F_Schlick(float cosTheta, vec3 F0)
+{
+	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
+{
+	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
 vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
 {
     float NoV = clamp(dot(N, V), 0, 1);
-    vec3 R = (2 * dot(V, N) * N - V).xyz;
-    // vec3 R = reflect(V, N);
-    // return R;
+    // vec3 R = (2 * dot(V, N) * N - V).xyz;
+    vec3 R = -reflect(V, N).xzy;
+    
     const float MAX_REFLECTION_LOD = 9.0;
 	float lod = Roughness * MAX_REFLECTION_LOD;
     
@@ -82,7 +104,7 @@ void main() {
     vec3 worldNormal = vec3(0);
 #endif
 
-    vec3 V = ubo.cameraPos - inPosition;
+    vec3 V = normalize(ubo.cameraPos - inPosition);
 
     vec3 baseColor = vec3(1);
 
@@ -102,11 +124,28 @@ void main() {
     metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;
 #endif
 
-    outColor.rgb = ApproximateSpecularIBL(baseColor, metallicRoughness.y, worldNormal, V);
+	vec3 F0 = vec3(0.04); 
+	F0 = mix(F0, baseColor.rgb, metallicRoughness.x);
+
+    vec3 F = F_SchlickR(max(dot(worldNormal, V), 0.0), F0, metallicRoughness.y);
+
+    outColor.rgb = ApproximateSpecularIBL(F, 0, worldNormal, V);
     
+    vec3 irradiance = texture(u_IrradianceMap, worldNormal.xzy).rgb;
+
+    vec3 diffuse = baseColor * irradiance * (1 - F) * (1 - metallicRoughness.x);
+
+    outColor.rgb += diffuse;
     // outColor.rgb = (-normalize(reflect(V, worldNormal))).rbg;
     // outColor.rgb = vec3(0, metallicRoughness);
     // outColor.rgb = worldNormal;
+
+    // Tone mapping
+    float exposure = 2.0;
+	outColor.rgb = Uncharted2Tonemap(outColor.rgb * exposure);
+	outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2f)));	
+	// Gamma correction
+	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
 
     outColor.a = 1.0;
 }

@@ -60,6 +60,7 @@ private:
 private:
     const aiScene     *m_pAiScene;
     MyScene           *m_pScene;
+    bool               m_flipYZ;
 
     std::string        m_baseDirectory;
 
