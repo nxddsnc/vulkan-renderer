@@ -1,10 +1,12 @@
 #include "Platform.h"
 #pragma once
 
+class ResourceManager;
+class MyTexture;
 class SHLight
 {
 public:
-    SHLight(VmaAllocator *memoryAllocator);
+    SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<MyTexture>> textures);
     ~SHLight();
 
     void CreateDescriptorSet(vk::Device &device, vk::DescriptorPool &descriptorPool);
@@ -14,7 +16,7 @@ private:
     glm::mat4           m_matrixG;
     glm::mat4           m_matrixB;
 
-    VmaAllocator      * m_pMemoryAllocator;
+	ResourceManager   * m_pResourceManager;
 
 public:
     vk::Buffer          m_uniformBuffer;

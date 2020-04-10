@@ -30,6 +30,10 @@ public:
     void SetImageLayoutInSingleCmd(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     void InitVulkanTextureData(std::shared_ptr<MyTexture> texture, std::shared_ptr<VulkanTexture> vulkanTexture);
     vk::DescriptorSet CreateTextureDescriptorSet(std::vector<std::shared_ptr<VulkanTexture>> textures);
+	void CreateUniformBuffer(size_t size, VkBuffer* buffer, VmaAllocation* bufferMemory);
+	void DestroyUniformBuffer(vk::Buffer &buffer, VmaAllocation &bufferMemory);
+	void UpdateBuffer(VmaAllocation bufferMemory, char* src, int size);
+	void TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, std::shared_ptr<MyTexture> dst);
 private:
     void _createTextures(std::shared_ptr<Drawable> drawable);
     vk::CommandBuffer _beginSingleTimeCommand();

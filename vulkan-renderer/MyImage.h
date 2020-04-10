@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <glm/vec3.hpp>
 #pragma once
 
 enum MyImageFormat
@@ -29,4 +30,10 @@ public:
     uint32_t      m_bufferSize;
     bool          m_bCompressed;
     bool          m_bFramebuffer;
+	bool	      m_bHostVisible;
+	bool		  m_bTransferSrc;
+
+public:
+	glm::vec3 ReadPixel(int x, int y);
+	void DumpImageHDR(char* filename);
 };

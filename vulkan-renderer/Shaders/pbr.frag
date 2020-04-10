@@ -26,6 +26,12 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 cameraPos;
 } ubo;
 
+layout(set = 1, binding = 0) uniform LightUniforms {
+    mat4 matrixR;
+    mat4 matrixG;
+    mat4 matrixB;
+} lightUniforms;
+
 layout(push_constant) uniform UniformPerDrawable
 {
     layout(offset = 128) vec4 baseColor;
@@ -148,4 +154,13 @@ void main() {
 	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
 
     outColor.a = 1.0;
+
+
+    diffuse = irradiance;
+    // diffuse.r = dot(vec4(worldNormal, 1), lightUniforms.matrixR * vec4(worldNormal, 1));   
+    // diffuse.g = dot(vec4(worldNormal, 1), lightUniforms.matrixG * vec4(worldNormal, 1));
+    // diffuse.b = dot(vec4(worldNormal, 1), lightUniforms.matrixB * vec4(worldNormal, 1));
+    // diffuse *= 3.14;
+    
+    outColor = vec4(diffuse, 1.0);
 }

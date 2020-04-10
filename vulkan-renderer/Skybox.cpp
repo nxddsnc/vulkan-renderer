@@ -14,6 +14,7 @@
 #include <math.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
+#include "SHLight.h"
 
 Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
 {
@@ -25,6 +26,7 @@ Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
     m_pDrawable->m_mesh->CreateCube();
 
     resourceManager->InitVulkanBuffers(m_pDrawable);
+
 }
 
 
@@ -131,6 +133,7 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     image->m_mipmapCount = header.dwMipMapCount;
     image->m_channels = 4;
     image->m_bufferSize = size;
+	image->m_bTransferSrc = true;
 
     if (header.dwCaps2 & 0x200)
     {
@@ -188,6 +191,10 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     m_pVulkanTexturePrefilteredEnvMap = generatePrefilteredCubeMap(descriptorPool);
     m_pVulkanTextureIrradianceMap = generateIrradianceMap(descriptorPool);
     m_pVulkanTextureBRDFLUT = generateBRDFLUT(descriptorPool);
+
+	initSHLight();
+
+	m_pSHLight->CreateDescriptorSet(device, descriptorPool);
 
     //{
 
@@ -777,4 +784,105 @@ std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descr
     device.destroyRenderPass(renderPass.Get());
 
     return offscreenVulkanTexture;
+}
+
+void Skybox::initSHLight()
+{
+	uint32_t width = m_pTextureEnvMap->m_pImage->m_width;
+	uint32_t height = m_pTextureEnvMap->m_pImage->m_height;
+	uint32_t mipmapCount = static_cast<uint32_t>(floor(log2(width)) + +1);
+
+	std::vector<std::shared_ptr<MyTexture>> textures;
+	std::vector<std::shared_ptr<VulkanTexture>> vulkanTextures;
+
+	vk::Device device = m_pContext->GetLogicalDevice();
+
+	vk::CommandBufferAllocateInfo commandBufferAllocateInfo({
+		m_pContext->GetCommandPool() ,
+		vk::CommandBufferLevel::ePrimary,
+		static_cast<uint32_t>(1)
+	});
+
+	vk::CommandBuffer commandBuffer;
+	device.allocateCommandBuffers(&commandBufferAllocateInfo, &commandBuffer);
+	vk::CommandBufferBeginInfo beginInfo({
+		vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+		nullptr
+	});
+
+	commandBuffer.begin(beginInfo);
+
+	vk::ImageSubresourceRange srrEnvMap(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 6);
+	m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTextureEnvMap->image, vk::Format::eR16G16B16A16Sfloat, srrEnvMap,
+		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eTransferSrcOptimal);
+
+	for (int i = 0; i < 6; ++i)
+	{
+		std::shared_ptr<MyTexture> offscreenTexture = std::make_shared<MyTexture>();
+
+		char name[32];
+		std::sprintf(name, "cubemap-%d", i);
+		offscreenTexture->m_pImage = std::make_shared<MyImage>(name);
+		offscreenTexture->m_pImage->m_width = width;
+		offscreenTexture->m_pImage->m_height = height;
+		offscreenTexture->m_pImage->m_channels = 4;
+		offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+		offscreenTexture->m_pImage->m_mipmapCount = 1;
+		offscreenTexture->m_pImage->m_layerCount = 1;
+		offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+		offscreenTexture->m_pImage->m_bHostVisible = true;
+		offscreenTexture->m_pImage->m_bTransferSrc = true;
+
+		offscreenTexture->m_wrapMode[0] = WrapMode::CLAMP;
+		offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
+		offscreenTexture->m_wrapMode[2] = WrapMode::CLAMP;
+
+		std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
+		// transit offscreen image layout
+		vk::ImageSubresourceRange srrOffscreen(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+		m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+			vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+
+		// Copy region for transfer from framebuffer to cube face
+		vk::ImageCopy copyRegion(
+			vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, i, 1),
+			vk::Offset3D(0, 0, 0),
+			vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+			vk::Offset3D(0, 0, 0),
+			vk::Extent3D(width, height, 1));
+
+		commandBuffer.copyImage(m_pVulkanTextureEnvMap->image, vk::ImageLayout::eTransferSrcOptimal,
+			offscreenVulkanTexture->image, vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
+
+		//m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+		//	vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal);
+
+		textures.push_back(offscreenTexture);
+		vulkanTextures.push_back(offscreenVulkanTexture);
+	}
+
+	m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTextureEnvMap->image, vk::Format::eR16G16B16A16Sfloat, srrEnvMap,
+		vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+	commandBuffer.end();
+
+	vk::SubmitInfo submitInfo({
+		{},
+		{},
+		{},
+		(uint32_t)1,
+		&commandBuffer,
+		{},
+		{}
+	});
+	m_pContext->GetDeviceQueue().submit((uint32_t)1, &submitInfo, nullptr);
+	m_pContext->GetDeviceQueue().waitIdle();
+	device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
+
+	for (int i = 0; i < textures.size(); ++i)
+	{
+		m_pResourceManager->TransferGPUTextureToCPU(vulkanTextures[i], textures[i]);
+	}
+
+	m_pSHLight = std::make_shared<SHLight>(m_pResourceManager, textures);
 }

@@ -147,7 +147,6 @@ private:
     Window                            *     _window = nullptr;
 
     VulkanCamera                      *     _camera;
-    SHLight                           *     _light;
 
     Skybox                            *     _skybox;
     std::shared_ptr<Axis>                   _axis;
