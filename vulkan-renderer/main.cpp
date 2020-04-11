@@ -80,8 +80,9 @@ int main()
     glfwSetCursorPosCallback(_window, MouseMoveCallback);
 
     auto timer = std::chrono::steady_clock();
-    auto last_time = timer.now();
-    uint64_t frame_counter = 0;
+    auto lastTime = timer.now();
+    auto lastFrameTime = timer.now();
+    uint64_t frameCounter = 0;
     uint64_t fps = 0;
 
     MyScene myScene;
@@ -99,11 +100,20 @@ int main()
 
     while (renderer->Run())
     {
-        ++frame_counter;
-        if (last_time + std::chrono::seconds(1) < timer.now()) {
-            last_time = timer.now();
-            fps = frame_counter;
-            frame_counter = 0;
+        if (lastFrameTime + std::chrono::milliseconds(16) < timer.now())
+        {
+            lastFrameTime = timer.now();
+        }
+        else
+        {
+            continue;
+        }
+
+        ++frameCounter;
+        if (lastTime + std::chrono::seconds(1) < timer.now()) {
+            lastTime = timer.now();
+            fps = frameCounter;
+            frameCounter = 0;
             std::cout << "FPS: " << fps << std::endl;
         }
         renderer->DrawFrame();
