@@ -126,7 +126,7 @@ void main() {
     metallicRoughness = uniformPerDrawable.metallicRoughness;
 #endif
 
-#if TEXTURE_METALLIC_ROUGHNESS
+#if TEXTURE_METALLIC_ROUGHNESS && IN_UV0
     metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;
 #endif
 
@@ -137,9 +137,19 @@ void main() {
 
     outColor.rgb = ApproximateSpecularIBL(F, 0, worldNormal, V);
     
-    vec3 irradiance = texture(u_IrradianceMap, worldNormal.xzy).rgb;
+    vec3 irradiance;
+
+#if USE_IRRADIANCE_MAP
+    irradiance = texture(u_IrradianceMap, worldNormal.xzy).rgb;
+#else
+    irradiance.r = dot(vec4(worldNormal.xzy, 1), lightUniforms.matrixR * vec4(worldNormal.xzy, 1));   
+    irradiance.g = dot(vec4(worldNormal.xzy, 1), lightUniforms.matrixG * vec4(worldNormal.xzy, 1));
+    irradiance.b = dot(vec4(worldNormal.xzy, 1), lightUniforms.matrixB * vec4(worldNormal.xzy, 1));
+#endif
 
     vec3 diffuse = baseColor * irradiance * (1 - F) * (1 - metallicRoughness.x);
+
+    // diffuse /= 3.14;
 
     outColor.rgb += diffuse;
     // outColor.rgb = (-normalize(reflect(V, worldNormal))).rbg;
@@ -154,13 +164,4 @@ void main() {
 	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
 
     outColor.a = 1.0;
-
-
-    diffuse = irradiance;
-    // diffuse.r = dot(vec4(worldNormal, 1), lightUniforms.matrixR * vec4(worldNormal, 1));   
-    // diffuse.g = dot(vec4(worldNormal, 1), lightUniforms.matrixG * vec4(worldNormal, 1));
-    // diffuse.b = dot(vec4(worldNormal, 1), lightUniforms.matrixB * vec4(worldNormal, 1));
-    // diffuse *= 3.14;
-    
-    outColor = vec4(diffuse, 1.0);
 }

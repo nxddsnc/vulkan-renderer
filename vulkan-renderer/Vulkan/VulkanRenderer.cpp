@@ -50,7 +50,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _camera = new VulkanCamera(&_memoryAllocator);
     _camera->type = VulkanCamera::CameraType::lookat;
     _camera->setPosition(glm::vec3(0, 0, 0));
-    _camera->setRotation(glm::vec3(-45, 0, 45));
+    //_camera->setRotation(glm::vec3(-45, 0, 45));
     _camera->setPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 10.0f);
 
     _initSwapchain();

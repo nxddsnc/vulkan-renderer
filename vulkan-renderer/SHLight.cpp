@@ -28,17 +28,18 @@ SHLight::SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<M
 
 	std::vector<FaceAixs> directions;
 	// +X
-	directions.push_back(FaceAixs(glm::vec3(0, 0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
-	// -X
-	directions.push_back(FaceAixs(glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(-1, 0, 0)));
-	// +Y
-	directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)));
-	// -Y
-	directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0)));
-	// +Z
-	directions.push_back(FaceAixs(glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)));
-	// -Z
-	directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, -1)));
+    directions.push_back(FaceAixs(glm::vec3(0, 0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
+    // -X
+    directions.push_back(FaceAixs(glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(-1, 0, 0)));
+    // +Y
+    directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)));
+    // -Y
+    directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0)));
+    // +Z
+    directions.push_back(FaceAixs(glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)));
+    // -Z
+    directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, -1)));
+
 
 	//// +X
 	//directions.push_back(FaceAixs(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)));
@@ -94,19 +95,19 @@ SHLight::SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<M
 
 				float deltaSolidAngle = pow(1.0 + u * u + v * v, -3.0 / 2.0);
 
-				glm::vec3 color = textures[faceIndex]->m_pImage->ReadPixel(x, y);
+                glm::vec3 color = textures[faceIndex]->m_pImage->ReadPixel(x, y);
 
 				l00  += Ylm[0] * color * deltaSolidAngle;
 
 				l1_1 += Ylm[1] * color * deltaSolidAngle * worldDirection.x;
-				l10  += Ylm[2] * color * deltaSolidAngle * worldDirection.y;
-				l11  += Ylm[3] * color * deltaSolidAngle * worldDirection.z;
+				l10  += Ylm[2] * color * deltaSolidAngle * worldDirection.z;
+				l11  += Ylm[3] * color * deltaSolidAngle * worldDirection.y;
 
 				l21  += Ylm[4] * color * deltaSolidAngle * worldDirection.x * worldDirection.z;
 				l2_1 += Ylm[5] * color * deltaSolidAngle * worldDirection.y * worldDirection.z;
 				l2_2 += Ylm[6] * color * deltaSolidAngle * worldDirection.x * worldDirection.y;
 
-				l20 += Ylm[7] * color * deltaSolidAngle * (3 * worldDirection.z * worldDirection.z - 1);
+				l20  += Ylm[7] * color * deltaSolidAngle * (3 * worldDirection.z * worldDirection.z - 1);
 
 				l22  += Ylm[8] * color * deltaSolidAngle * (worldDirection.x * worldDirection.x - worldDirection.y * worldDirection.y);
 
@@ -114,10 +115,11 @@ SHLight::SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<M
 
 				totalSolidAngle += deltaSolidAngle;
 			}
-			u = u + dv;
+			v += dv;
 		}
 	}
 
+    totalSolidAngle = totalSolidAngle / 4;
 	l00  /= totalSolidAngle;
 
 	l1_1 /= totalSolidAngle;
@@ -128,15 +130,16 @@ SHLight::SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<M
 	l2_1 /= totalSolidAngle;
 	l2_2 /= totalSolidAngle;
 
-	l20 /= totalSolidAngle;
+	l20  /= totalSolidAngle;
 	l22  /= totalSolidAngle;
+
 
 	float c1 = 0.429043, c2 = 0.511664, c3 = 0.743125, c4 = 0.886227, c5 = 0.247708;
 
 	glm::vec3 M00 = l22   * c1, M01 = l2_2 * c1, M02 = l21  * c1, M03 = l11  * c2;
 	glm::vec3 M10 = l2_2  * c1, M11 = -l22 * c1, M12 = l2_1 * c1, M13 = l1_1 * c2;
 	glm::vec3 M20 = l21   * c1, M21 = l2_1 * c1, M22 = l20  * c3, M23 = l10  * c2;
-	glm::vec3 M30 = l11   * c2, M31 = l1_1 * c2, M32 = l10  * c2, M33 = l00 * c4 - l20 * c5;
+	glm::vec3 M30 = l11   * c2, M31 = l1_1 * c2, M32 = l10  * c2, M33 = l00 * c4 - l20 * c5;    
 
 	float r[16] = { M00.x, M01.x, M02.x, M03.x, M10.x, M11.x, M12.x, M13.x, M20.x, M21.x, M22.x, M23.x, M30.x, M31.x, M32.x, M33.x };
 
@@ -149,7 +152,6 @@ SHLight::SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<M
 	//float g[16] = { -0.021452150000000003, -0.021452150000000003, 0.09009903, -0.03069984, -0.021452150000000003, 0.021452150000000003, -0.09438946000000001, 0.1790824, 0.09009903, -0.09438946000000001, -0.06688125, -0.09209952, -0.03069984, 0.1790824, -0.09209952, 0.41223360000000003 };
 
 	//float b[16] = { -0.1287129, -0.05148516, 0.060066020000000005, 0.00511664, -0.05148516, 0.1287129, -0.20165021, 0.3069984, 0.060066020000000005, -0.20165021, -0.11146875, -0.13814928, 0.00511664, 0.3069984, -0.13814928, 0.51571878 };
-
 
 	m_matrixR = glm::make_mat4(r);
 	m_matrixG = glm::make_mat4(g);

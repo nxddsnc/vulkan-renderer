@@ -882,7 +882,19 @@ void Skybox::initSHLight()
 	for (int i = 0; i < textures.size(); ++i)
 	{
 		m_pResourceManager->TransferGPUTextureToCPU(vulkanTextures[i], textures[i]);
+
+        char name[32];
+        sprintf(name, "cubemap-%d.hdr", i);
+        textures[i]->m_pImage->DumpImageHDR(name);
 	}
+
+    std::vector<std::shared_ptr<MyTexture>> _textures;
+    _textures.push_back(textures[0]); // +X
+    _textures.push_back(textures[1]); // -X
+    _textures.push_back(textures[4]); // +Z
+    _textures.push_back(textures[5]); // -Z
+    _textures.push_back(textures[2]); // +Y
+    _textures.push_back(textures[3]); // -Y
 
 	m_pSHLight = std::make_shared<SHLight>(m_pResourceManager, textures);
 }
