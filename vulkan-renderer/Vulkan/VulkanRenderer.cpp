@@ -22,6 +22,8 @@
 #include "Skybox.h"
 #include "Axis.h"
 #include "SHLight.h"
+#include "Framebuffer.h"
+#include "MyTexture.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -65,12 +67,16 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _skybox = new Skybox(_resourceManager, _context);
 
     _axis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
+
+	_initOffscreenRenderTargets();
 }
 
 VulkanRenderer::~VulkanRenderer()
 {
     vkDeviceWaitIdle(_device);
     vkQueueWaitIdle(_queue);
+
+	_deInitOffscreenRenderTargets();
 
     delete _skybox;
     delete _window;
@@ -183,9 +189,14 @@ vk::Format VulkanRenderer::GetDepthFormat()
     return _depthStencilFormat;
 }
 
+vk::RenderPass VulkanRenderer::GetOffscreenRenderPass()
+{
+    return _offscreenFramebuffer->m_vkRenderPass;
+}
+
 vk::RenderPass VulkanRenderer::GetRenderPass()
 {
-    return _renderPass;
+	return _renderPass;
 }
 
 VulkanCamera * VulkanRenderer::GetCamera()
@@ -521,6 +532,40 @@ void VulkanRenderer::_deInitFramebuffers()
     }
 }
 
+void VulkanRenderer::_initOffscreenRenderTargets()
+{
+	std::shared_ptr<MyTexture> colorTexture = std::make_shared<MyTexture>();
+	colorTexture->m_pImage = std::make_shared<MyImage>("offscreen-renderTarget-color");
+	// Extract the following lines to constructor of MyImage.
+	colorTexture->m_pImage->m_width = _swapchainExtent.width;
+	colorTexture->m_pImage->m_height = _swapchainExtent.height;
+	colorTexture->m_pImage->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT;
+	colorTexture->m_pImage->m_bFramebuffer = true;
+	colorTexture->m_pImage->m_blockSize = 2;
+	colorTexture->m_pImage->m_channels = 4;
+
+	std::shared_ptr<VulkanTexture> colorVulkanTexture = _resourceManager->CreateCombinedTexture(colorTexture);
+
+	std::shared_ptr<MyTexture> depthTexture = std::make_shared<MyTexture>();
+	depthTexture->m_pImage = std::make_shared<MyImage>("offscreen-renderTarget-depth");
+	// Extract the following lines to constructor of MyImage.
+	depthTexture->m_pImage->m_width = _swapchainExtent.width;
+	depthTexture->m_pImage->m_height = _swapchainExtent.height;
+	depthTexture->m_pImage->m_format = MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT;
+	depthTexture->m_pImage->m_bFramebuffer = true;
+	depthTexture->m_pImage->m_blockSize = 4;
+	depthTexture->m_pImage->m_channels = 1;
+
+	std::shared_ptr<VulkanTexture> depthVulkanTexture = _resourceManager->CreateCombinedTexture(depthTexture);
+
+	_offscreenFramebuffer = std::make_shared<Framebuffer>(_resourceManager, _descriptorPool, colorVulkanTexture, depthVulkanTexture);
+}
+
+void VulkanRenderer::_deInitOffscreenRenderTargets()
+{
+
+}
+
 void VulkanRenderer::_initDescriptorPool()
 {
     // TODO: Assign descriptor and max set according to pipeline information.
@@ -669,12 +714,18 @@ void VulkanRenderer::_createCommandBuffers()
        clearValues[1].depthStencil.depth = 1.0f;
        clearValues[1].depthStencil.stencil = 0;
 
-       vk::RenderPassBeginInfo renderPassInfo({ _renderPass,
-           _framesData[i].framebuffer,
-           vk::Rect2D({ vk::Offset2D({ 0, 0 }),
-               _swapchainExtent }),
-               (uint32_t)clearValues.size(),
-           clearValues.data() });
+       //vk::RenderPassBeginInfo renderPassInfo({ _renderPass,
+       //    _framesData[i].framebuffer,
+       //    vk::Rect2D({ vk::Offset2D({ 0, 0 }),
+       //        _swapchainExtent }),
+       //        (uint32_t)clearValues.size(),
+       //    clearValues.data() });
+
+	   vk::RenderPassBeginInfo renderPassInfo(_offscreenFramebuffer->m_vkRenderPass, _offscreenFramebuffer->m_vkFramebuffer,
+		   vk::Rect2D({ vk::Offset2D({ 0, 0 }),
+			   _swapchainExtent }),
+		   (uint32_t)clearValues.size(),
+		   clearValues.data());
 
        commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
 
@@ -751,7 +802,48 @@ void VulkanRenderer::_createCommandBuffers()
        }
 
        commandBuffer.endRenderPass();
-       commandBuffer.end();
+	   
+	   // Blit offscreen texture to swapchain framebuffer
+	   vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, vk::Format::eR16G16B16A16Sfloat, ssr,
+		   vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+	   PipelineId blitPipelineId;
+	   blitPipelineId.type = PipelineType::BLIT;
+	   blitPipelineId.model.primitivePart.info.bits.positionVertexData = 1;
+	   blitPipelineId.model.primitivePart.info.bits.normalVertexData = 0;
+	   blitPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
+	   blitPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
+	   blitPipelineId.model.primitivePart.info.bits.countColor = 0;
+
+	   std::shared_ptr<Pipeline> pipelineBlit = _pipelineManager->GetPipeline(blitPipelineId);
+	   pipelineBlit->InitBlit(_device, _renderPass);
+
+	   vk::RenderPassBeginInfo blitRenderPassInfo(
+		   _renderPass,
+		   _framesData[i].framebuffer,
+		   vk::Rect2D(vk::Offset2D(0, 0), _swapchainExtent),
+		   (uint32_t)clearValues.size(),
+		   clearValues.data());
+	   commandBuffer.beginRenderPass(&blitRenderPassInfo, vk::SubpassContents::eInline);
+
+	   commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipeline());
+
+	   vk::Viewport viewport(0, 0, _swapchainExtent.width, _swapchainExtent.height, 0, 1);
+	   vk::Rect2D sissor(vk::Offset2D(0, 0), _swapchainExtent);
+	   commandBuffer.setViewport(0, 1, &viewport);
+	   commandBuffer.setScissor(0, 1, &sissor);
+
+
+	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 0, 1, &(_offscreenFramebuffer->m_dsTexture), 0, nullptr);
+	   commandBuffer.draw(3, 1, 0, 0);
+
+	   commandBuffer.endRenderPass();
+
+	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, vk::Format::eR16G16B16A16Sfloat, ssr,
+		   vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
+
+	   commandBuffer.end();
 
        _framesData[i].cmdBuffers.push_back(commandBuffer);
     }

@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Debug\Axis.cpp" />
+    <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyImage.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="Debug\Axis.h" />
+    <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="MyImage.h" />
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />

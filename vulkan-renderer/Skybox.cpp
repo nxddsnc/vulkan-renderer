@@ -749,7 +749,6 @@ std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descr
     m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
         vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo({

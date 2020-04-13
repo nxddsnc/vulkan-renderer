@@ -43,15 +43,17 @@ private:
     void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage);
     void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
+public:
+	vk::PhysicalDevice												 m_gpu;
+	vk::Device														 m_device;
+	vk::Queue														 m_graphicsQueue;
+	vk::CommandPool													 m_commandPool;
+	uint32_t														 m_graphicsQueueFamilyIndex;
+	VmaAllocator													 m_memoryAllocator;
+	vk::DescriptorPool												 m_descriptorPool;
+
 private:
-	vk::PhysicalDevice												 _gpu;
-	vk::Device														 _device;
-	vk::Queue														 _graphicsQueue;
-	vk::CommandPool													 _commandPool;
-	uint32_t														 _graphicsQueueFamilyIndex;
-	VmaAllocator													 _memoryAllocator;
-	vk::DescriptorPool												 _descriptorPool;
-	std::vector<std::shared_ptr<Drawable>>							 _drawables;
-	std::unordered_map<std::string, std::shared_ptr<VulkanTexture>>  _textureMap;
+	std::vector<std::shared_ptr<Drawable>>							 m_drawables;
+	std::unordered_map<std::string, std::shared_ptr<VulkanTexture>>  m_textureMap;
 };
 

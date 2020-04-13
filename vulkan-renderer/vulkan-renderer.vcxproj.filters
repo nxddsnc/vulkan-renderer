@@ -93,6 +93,9 @@
     <ClCompile Include="Utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Framebuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -169,6 +172,9 @@
     </ClInclude>
     <ClInclude Include="Debug\Axis.h">
       <Filter>头文件\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Framebuffer.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

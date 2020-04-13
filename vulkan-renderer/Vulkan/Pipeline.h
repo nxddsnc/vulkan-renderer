@@ -2,11 +2,12 @@
 #pragma once
 enum PipelineType
 {
-    MODEL,
-    SKYBOX,
-    PREFILTERED_CUBE_MAP,
-    IRRADIANCE_MAP,
-    GENERATE_BRDF_LUT
+	MODEL,
+	SKYBOX,
+	PREFILTERED_CUBE_MAP,
+	IRRADIANCE_MAP,
+	GENERATE_BRDF_LUT,
+	BLIT
 };
 
 enum class PrimitiveMode : uint8_t {
@@ -60,13 +61,13 @@ struct PipelineId
 
   bool operator==(PipelineId const & rhs) const
   {
-      return model.materialPart.info.value == rhs.model.materialPart.info.value &&
+      return type == rhs.type && model.materialPart.info.value == rhs.model.materialPart.info.value &&
           model.primitivePart.info.value == rhs.model.primitivePart.info.value;
   }
 
   bool operator!=(PipelineId const & rhs) const
   {
-      return model.materialPart.info.value != rhs.model.materialPart.info.value ||
+      return type != rhs.type || model.materialPart.info.value != rhs.model.materialPart.info.value ||
           model.primitivePart.info.value != rhs.model.primitivePart.info.value;
   }
 };
@@ -95,6 +96,9 @@ public:
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
     void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
     void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);
+	void InitBrightPass(vk::Device device, vk::RenderPass renderPass);
+	void InitBlur(vk::Device device, vk::RenderPass renderPass);
+	void InitBlit(vk::Device device, vk::RenderPass renderPass);
 private:
     PipelineId _id;
     VulkanRenderer    * _renderer;

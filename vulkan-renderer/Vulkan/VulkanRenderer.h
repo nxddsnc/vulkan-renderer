@@ -34,6 +34,7 @@ class PipelineManager;
 class VulkanContext;
 class VulkanCamera;
 class Skybox;
+class Framebuffer;
 class VulkanRenderer
 {
 public:
@@ -61,7 +62,8 @@ public:
     uint32_t GetSwapchainImageCount();
     vk::SurfaceFormatKHR GetSurfaceFormat();
     vk::Format GetDepthFormat();
-    vk::RenderPass GetRenderPass();
+    vk::RenderPass GetOffscreenRenderPass();
+	vk::RenderPass GetRenderPass();
 
     void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> nodes);
 private:
@@ -84,6 +86,9 @@ private:
     void _initFramebuffers();
     void _deInitFramebuffers();
 
+	void _initOffscreenRenderTargets();
+	void _deInitOffscreenRenderTargets();
+
     void _initDescriptorPool();
     void _deInitDescriptorPool();
 
@@ -104,12 +109,12 @@ private:
     vk::PhysicalDevice                       _gpu;
     vk::Device                               _device;
     vk::Queue                                _queue;
-    vk::CommandPool                        _commandPool;
-    vk::PhysicalDeviceProperties           _gpuProperties;
+    vk::CommandPool                          _commandPool;
+    vk::PhysicalDeviceProperties             _gpuProperties;
     vk::PhysicalDeviceMemoryProperties       _gpuMemoryProperties;
     uint32_t                                 _graphicsQueueFamilyIndex = 0;
 
-    VmaAllocator                           _memoryAllocator;
+    VmaAllocator                             _memoryAllocator;
 
     ResourceManager                     *    _resourceManager;
 
@@ -118,8 +123,12 @@ private:
     vk::SurfaceKHR                           _surface;
     std::vector<vk::Image>                   _swapchainImages;
     std::vector<vk::ImageView>               _swapchainImageViews;
-    std::vector<FrameData>                 _framesData;
+    std::vector<FrameData>                   _framesData;
     vk::RenderPass                           _renderPass;
+
+
+	std::shared_ptr<Framebuffer>			 _offscreenFramebuffer;
+
     std::vector<VkDescriptorSet>             _descriptorSets;
     vk::DescriptorSetLayout                  _frameDescriptorSetLayout;
     vk::DescriptorPool                       _descriptorPool;

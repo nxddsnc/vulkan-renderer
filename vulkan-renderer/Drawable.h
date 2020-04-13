@@ -16,6 +16,7 @@ struct VulkanTexture
     VmaAllocation						imageMemory;
     vk::ImageView                       imageView;
     vk::Sampler                         imageSampler;
+	std::shared_ptr<MyTexture>			texture;
 };
 
 class Drawable
