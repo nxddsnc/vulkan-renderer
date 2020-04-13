@@ -829,7 +829,7 @@ void Pipeline::InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass)
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     // set shader state
     ShaderModule vertexShader(&device, _id);
-    vertexShader.BuildFromFile("Shaders/genbrdflut.vert", ShaderStage::VERTEX, "main");
+    vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
     ShaderModule fragmentShader(&device, _id);
     fragmentShader.BuildFromFile("Shaders/genbrdflut.frag", ShaderStage::FRAGMENT, "main");
