@@ -19,9 +19,9 @@
 #include "Drawable.h"
 #include "Context.h"
 #include "Camera.hpp"
-#include "SHLight.h"
 #include "Skybox.h"
 #include "Axis.h"
+#include "SHLight.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -50,10 +50,9 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _camera = new VulkanCamera(&_memoryAllocator);
     _camera->type = VulkanCamera::CameraType::lookat;
     _camera->setPosition(glm::vec3(0, 0, 0));
-    _camera->setRotation(glm::vec3(-45, 0, 45));
+    //_camera->setRotation(glm::vec3(-45, 0, 45));
     _camera->setPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 10.0f);
 
-    _light = new SHLight(&_memoryAllocator);
     _initSwapchain();
     _initSwapchainImages();
     _initDepthStencilImage();
@@ -64,7 +63,6 @@ VulkanRenderer::VulkanRenderer(Window *window)
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
     _skybox = new Skybox(_resourceManager, _context);
-    _skybox->LoadFromDDS("./TestModel/Skybox/environment.dds", _device, _descriptorPool);
 
     _axis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
 }
@@ -87,7 +85,6 @@ VulkanRenderer::~VulkanRenderer()
     _deInitSwapchain();
 
     delete _pipelineManager;
-    delete _light;
     delete _camera;
 
     vmaDestroyAllocator(_memoryAllocator);
@@ -206,6 +203,12 @@ void VulkanRenderer::GetExtendSize(uint32_t &width, uint32_t &height)
     height = _swapchainExtent.height;
 }
 
+void VulkanRenderer::LoadSkybox(const char * path)
+{
+	_skybox->LoadFromDDS(path, _device, _descriptorPool);
+	_createCommandBuffers();
+}
+
 void VulkanRenderer::DrawFrame()
 {
     _beginRender();
@@ -257,14 +260,14 @@ void VulkanRenderer::_updateUniformBuffer()
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    UniformBufferObject ubo = {};
+    //UniformBufferObject ubo = {};
     //ubo.model = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
     //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     //ubo.proj = glm::perspective(glm::radians(45.0f), _swapchainExtent.width / (float)_swapchainExtent.height, 0.1f, 10.0f);
     //ubo.proj[1][1] *= -1;
 
     _camera->UpdateUniformBuffer();
-    _light->UpdateUniformBuffer();
+	_skybox->m_pSHLight->UpdateUniformBuffer();
 }
 
 void VulkanRenderer::_cleanupSwapchain()
@@ -536,7 +539,6 @@ void VulkanRenderer::_initDescriptorPool()
     // Init camera uniform buffer descriptor
     // TODO: put the code below to some more appropriate place.
     _camera->createDescriptorSet(_device, _descriptorPool);
-    _light->CreateDescriptorSet(_device, _descriptorPool);
 }
 
 void VulkanRenderer::_deInitDescriptorPool()
@@ -626,6 +628,8 @@ void VulkanRenderer::_createCommandBuffers()
 {
     for (uint32_t i = 0; i < _swapchainImageCount; ++i)
     {
+		_framesData[i].cmdBuffers.clear();
+
         std::shared_ptr<Pipeline> pipelineModel = nullptr;
         
         // skybox
@@ -716,7 +720,7 @@ void VulkanRenderer::_createCommandBuffers()
 
                     //pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
-                    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 1, 1, &_light->m_descriptorSet, 0, nullptr);
+					commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 1, 1, &_skybox->m_pSHLight->m_descriptorSet, 0, nullptr);
                     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineModel->GetPipelineLayout(), 2, 1, &_skybox->m_preFilteredDescriptorSet, 0, nullptr);
                     
                     if (drawable->baseColorTexture || drawable->normalTexture || drawable->metallicRoughnessTexture)

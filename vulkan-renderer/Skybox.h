@@ -205,6 +205,7 @@ class MyTexture;
 struct VulkanTexture;
 class VulkanCamera;
 class VulkanContext;
+class SHLight;
 #pragma once
 class Skybox
 {
@@ -229,7 +230,10 @@ public:
     std::shared_ptr<VulkanTexture> m_pVulkanTexturePrefilteredEnvMap;
     std::shared_ptr<VulkanTexture> m_pVulkanTextureIrradianceMap;
 
+	std::shared_ptr<SHLight>	   m_pSHLight;
+
     std::shared_ptr<VulkanTexture> m_pVulkanTextureBRDFLUT;
+
 
     std::shared_ptr<Drawable>      m_pDrawable;
     vk::DescriptorSet              m_dsSkybox;
@@ -239,5 +243,7 @@ private:
     std::shared_ptr<VulkanTexture> generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool);
     std::shared_ptr<VulkanTexture> generateIrradianceMap(vk::DescriptorPool &descriptorPool);
     std::shared_ptr<VulkanTexture> generateBRDFLUT(vk::DescriptorPool &descriptorPool);
+
+	void initSHLight();
 };
 

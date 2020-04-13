@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <glm/vec3.hpp>
 #pragma once
 
 enum MyImageFormat
@@ -7,6 +8,7 @@ enum MyImageFormat
     MY_IMAGEFORMAT_RGBA16_FLOAT,
     MY_IMAGEFORMAT_RGBA32_FLOAT,
     MY_IMAGEFORMAT_DXT1,
+	MY_IMAGEFORMAT_DXT2,
     MY_IMAGEFORMAT_DXT3,
     MY_IMAGEFORMAT_DXT5
 };
@@ -29,4 +31,10 @@ public:
     uint32_t      m_bufferSize;
     bool          m_bCompressed;
     bool          m_bFramebuffer;
+	bool	      m_bHostVisible;
+	bool		  m_bTransferSrc;
+
+public:
+	glm::vec3 ReadPixel(int x, int y);
+	void DumpImageHDR(char* filename);
 };

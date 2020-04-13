@@ -47,6 +47,8 @@ public:
     void OnSceneChanged();
     void GetExtendSize(uint32_t &width, uint32_t &height);
 
+	void LoadSkybox(const char* path);
+
     vk::Instance GetVulkanInstance();
     vk::PhysicalDevice GetPhysicalDevice();
     vk::Device GetVulkanDevice();
@@ -147,7 +149,6 @@ private:
     Window                            *     _window = nullptr;
 
     VulkanCamera                      *     _camera;
-    SHLight                           *     _light;
 
     Skybox                            *     _skybox;
     std::shared_ptr<Axis>                   _axis;

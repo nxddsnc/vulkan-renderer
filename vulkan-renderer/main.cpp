@@ -12,6 +12,9 @@ VulkanRenderer *renderer;
 Window *window;
 double mouseX, mouseY;
 
+std::string envMaps[2] = { "./TestModel/Skybox/environment.dds", "./TestModel/Skybox/country.dds" };
+int envMapIndex = 0;
+
 void ResizeCallback(GLFWwindow* window, int width, int height)
 {
     renderer->Resize(width, height);
@@ -48,6 +51,25 @@ void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
     }
 }
 
+void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (GLFW_PRESS == action)
+	{
+		switch (key)
+		{
+		case GLFW_KEY_S:
+			// switch skybox.
+			printf("*****************************Key s pressed. Switching skybox.******************************\n");
+			envMapIndex = (envMapIndex + 1) % 2;
+			renderer->LoadSkybox(envMaps[envMapIndex].c_str());
+			printf("*****************************Switching skybox complete.******************************\n");
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
     float wheelDelta = yoffset;
@@ -72,22 +94,26 @@ int main()
 {
     window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
     renderer = new VulkanRenderer(window);
+	renderer->LoadSkybox(envMaps[envMapIndex].c_str());
     GLFWwindow *_window = window->GetGLFWWindow();
     glfwSetWindowSizeCallback(_window, ResizeCallback);
     glfwSetWindowCloseCallback(_window, CloseCallback);
     glfwSetMouseButtonCallback(_window, MouseButtonCallback);
+	glfwSetKeyCallback(_window, KeyCallback);
     glfwSetScrollCallback(_window, MouseScrollCallback);
     glfwSetCursorPosCallback(_window, MouseMoveCallback);
 
     auto timer = std::chrono::steady_clock();
-    auto last_time = timer.now();
-    uint64_t frame_counter = 0;
+    auto lastTime = timer.now();
+    auto lastFrameTime = timer.now();
+    uint64_t frameCounter = 0;
     uint64_t fps = 0;
 
     MyScene myScene;
     ModelLoader modelLoader(&myScene);
     if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
+    //if (!modelLoader.load("./TestModel/sphere1.obj"))
     {
         std::cout << "can't read gltf file!" << std::endl;
         return -1;
@@ -99,11 +125,20 @@ int main()
 
     while (renderer->Run())
     {
-        ++frame_counter;
-        if (last_time + std::chrono::seconds(1) < timer.now()) {
-            last_time = timer.now();
-            fps = frame_counter;
-            frame_counter = 0;
+        if (lastFrameTime + std::chrono::milliseconds(16) < timer.now())
+        {
+            lastFrameTime = timer.now();
+        }
+        else
+        {
+            continue;
+        }
+
+        ++frameCounter;
+        if (lastTime + std::chrono::seconds(1) < timer.now()) {
+            lastTime = timer.now();
+            fps = frameCounter;
+            frameCounter = 0;
             std::cout << "FPS: " << fps << std::endl;
         }
         renderer->DrawFrame();

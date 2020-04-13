@@ -90,6 +90,9 @@
     <ClCompile Include="Debug\Axis.cpp">
       <Filter>头文件\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">

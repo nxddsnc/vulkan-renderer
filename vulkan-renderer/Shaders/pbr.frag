@@ -26,6 +26,12 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 cameraPos;
 } ubo;
 
+layout(set = 1, binding = 0) uniform LightUniforms {
+    mat4 matrixR;
+    mat4 matrixG;
+    mat4 matrixB;
+} lightUniforms;
+
 layout(push_constant) uniform UniformPerDrawable
 {
     layout(offset = 128) vec4 baseColor;
@@ -120,7 +126,7 @@ void main() {
     metallicRoughness = uniformPerDrawable.metallicRoughness;
 #endif
 
-#if TEXTURE_METALLIC_ROUGHNESS
+#if TEXTURE_METALLIC_ROUGHNESS && IN_UV0
     metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;
 #endif
 
@@ -131,9 +137,19 @@ void main() {
 
     outColor.rgb = ApproximateSpecularIBL(F, 0, worldNormal, V);
     
-    vec3 irradiance = texture(u_IrradianceMap, worldNormal.xzy).rgb;
+    vec3 irradiance;
+
+#if USE_IRRADIANCE_MAP
+    irradiance = texture(u_IrradianceMap, worldNormal.xzy).rgb;
+#else
+    irradiance.r = dot(vec4(worldNormal.xzy, 1), lightUniforms.matrixR * vec4(worldNormal.xzy, 1));   
+    irradiance.g = dot(vec4(worldNormal.xzy, 1), lightUniforms.matrixG * vec4(worldNormal.xzy, 1));
+    irradiance.b = dot(vec4(worldNormal.xzy, 1), lightUniforms.matrixB * vec4(worldNormal.xzy, 1));
+#endif
 
     vec3 diffuse = baseColor * irradiance * (1 - F) * (1 - metallicRoughness.x);
+
+    // diffuse /= 3.14;
 
     outColor.rgb += diffuse;
     // outColor.rgb = (-normalize(reflect(V, worldNormal))).rbg;
@@ -146,6 +162,6 @@ void main() {
 	outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2f)));	
 	// Gamma correction
 	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
-
+    
     outColor.a = 1.0;
 }
