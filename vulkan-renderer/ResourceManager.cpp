@@ -27,36 +27,18 @@ ResourceManager::~ResourceManager()
             vmaDestroyBuffer(_memoryAllocator, drawable->m_vertexBuffers[i], drawable->m_vertexBufferMemorys[i]);
         }
         vmaDestroyBuffer(_memoryAllocator, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
-
-        
-        //if (drawable->baseColorTexture)
-        //{
-            //if (drawable->baseColorTexture)
-            //{
-            //    vmaDestroyImage(_memoryAllocator, drawable->baseColorTexture->image, drawable->baseColorTexture->imageMemory);
-            //    _device.destroyImageView(drawable->baseColorTexture->imageView);
-            //    _device.destroySampler(drawable->baseColorTexture->imageSampler);
-            //}
-            //if (drawable->normalTexture)
-            //{
-            //    vmaDestroyImage(_memoryAllocator, drawable->normalTexture->image, drawable->normalTexture->imageMemory);
-            //    _device.destroyImageView(drawable->normalTexture->imageView);
-            //    _device.destroySampler(drawable->normalTexture->imageSampler);
-            //}
-        //}
-
     }
 
-    for (auto texture : _textures)
+    for (auto pair : _textureMap)
     {
-        vmaDestroyImage(_memoryAllocator, texture->image, texture->imageMemory);
-        if (texture->imageView)
+        vmaDestroyImage(_memoryAllocator, pair.second->image, pair.second->imageMemory);
+        if (pair.second->imageView)
         {
-            _device.destroyImageView(texture->imageView);
+            _device.destroyImageView(pair.second->imageView);
         }
-        if (texture->imageSampler)
+        if (pair.second->imageSampler)
         {
-            _device.destroySampler(texture->imageSampler);
+            _device.destroySampler(pair.second->imageSampler);
         }
     }
 }
@@ -422,9 +404,24 @@ void ResourceManager::SetImageLayoutInSingleCmd(vk::Image &image, vk::Format for
 std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_ptr<MyTexture> texture)
 {
 	std::shared_ptr<MyImage> myImage = texture->m_pImage;
-	std::shared_ptr<VulkanTexture> vulkanTexture = std::make_shared<VulkanTexture>();
 
-	_textures.push_back(vulkanTexture);
+	std::shared_ptr<VulkanTexture> vulkanTexture;
+
+	char key[512];
+
+	sprintf(key, "%s-%d-%d", texture->m_pImage->m_fileName, texture->m_pImage->m_width, texture->m_pImage->m_height);
+
+	if (_textureMap.count(key) > 0)
+	{
+		vulkanTexture = _textureMap.at(key);
+		return vulkanTexture;
+	}
+	else
+	{
+		vulkanTexture = std::make_shared<VulkanTexture>();
+		_textureMap.insert(std::make_pair(key, vulkanTexture));
+	}
+
 
 	vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
 	switch (myImage->m_format)
@@ -642,7 +639,11 @@ void ResourceManager::TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src
 std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
 {
     std::shared_ptr<VulkanTexture> vulkanTexture = CreateVulkanTexture(texture);
-
+	
+	if (vulkanTexture->imageSampler)
+	{
+		return vulkanTexture;
+	}
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
     switch (texture->m_pImage->m_format)
     {
@@ -677,6 +678,21 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     vulkanTexture->imageSampler = _device.createSampler(createInfo);
 
     return vulkanTexture;
+}
+
+std::shared_ptr<VulkanTexture> ResourceManager::GetVulkanTexture(std::shared_ptr<MyTexture> texture)
+{
+	char key[512];
+	sprintf(key, "%s-%d-%d", texture->m_pImage->m_fileName, texture->m_pImage->m_width, texture->m_pImage->m_height);
+
+	if (_textureMap.count(key) > 0)
+	{
+		return _textureMap.at(key);
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)

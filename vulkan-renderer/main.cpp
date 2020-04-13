@@ -12,6 +12,9 @@ VulkanRenderer *renderer;
 Window *window;
 double mouseX, mouseY;
 
+std::string envMaps[2] = { "./TestModel/Skybox/environment.dds", "./TestModel/Skybox/country.dds" };
+int envMapIndex = 0;
+
 void ResizeCallback(GLFWwindow* window, int width, int height)
 {
     renderer->Resize(width, height);
@@ -48,6 +51,25 @@ void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
     }
 }
 
+void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (GLFW_PRESS == action)
+	{
+		switch (key)
+		{
+		case GLFW_KEY_S:
+			// switch skybox.
+			printf("*****************************Key s pressed. Switching skybox.******************************\n");
+			envMapIndex = (envMapIndex + 1) % 2;
+			renderer->LoadSkybox(envMaps[envMapIndex].c_str());
+			printf("*****************************Switching skybox complete.******************************\n");
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
     float wheelDelta = yoffset;
@@ -72,10 +94,12 @@ int main()
 {
     window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
     renderer = new VulkanRenderer(window);
+	renderer->LoadSkybox(envMaps[envMapIndex].c_str());
     GLFWwindow *_window = window->GetGLFWWindow();
     glfwSetWindowSizeCallback(_window, ResizeCallback);
     glfwSetWindowCloseCallback(_window, CloseCallback);
     glfwSetMouseButtonCallback(_window, MouseButtonCallback);
+	glfwSetKeyCallback(_window, KeyCallback);
     glfwSetScrollCallback(_window, MouseScrollCallback);
     glfwSetCursorPosCallback(_window, MouseMoveCallback);
 

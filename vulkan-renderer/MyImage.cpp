@@ -55,11 +55,15 @@ void MyImage::DumpImageHDR(char * filename)
 		uint16_t *src = reinterpret_cast<uint16_t*>(m_data);
 
 		int size = m_width * m_height * m_channels;
-		for (int i = 0; i < size; ++i) 
+		for (int i = 0; i < size; ++i)
 		{
 			float32(&(data[i]), src[i]);
 		}
 		stbi_write_hdr(filename, m_width, m_height, m_channels, reinterpret_cast<const float*>(data));
+	}
+	else if (MY_IMAGEFORMAT_RGBA32_FLOAT == m_format)
+	{
+		stbi_write_hdr(filename, m_width, m_height, m_channels, reinterpret_cast<const float*>(m_data));
 	}
 	else
 	{

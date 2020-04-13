@@ -37,119 +37,142 @@ Skybox::~Skybox()
 
 bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool)
 {
-    // lay out variables to be used
-    DDS_HEADER header;
 
-    unsigned int blockSize;
+	// lay out variables to be used
+	DDS_HEADER header;
 
-    // open the DDS file for binary reading and get file size
-    FILE* f;
-    if ((f = fopen(path, "rb")) == 0)
-        return false;
-    fseek(f, 0, SEEK_END);
-    long file_size = ftell(f);
-    fseek(f, 0, SEEK_SET);
+	unsigned int blockSize;
 
-    // allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
-    // read in 128 bytes from the file
-    unsigned char* magic = new unsigned char[4];
-    fread(magic, 1, 4, f);
-    // compare the `DDS ` signature
-    if (memcmp(magic, "DDS ", 4) != 0)
-    {
-        std::cout << "Header is not DDS." << std::endl;
-        return false;
-    }
+	// open the DDS file for binary reading and get file size
+	FILE* f;
+	if ((f = fopen(path, "rb")) == 0)
+		return false;
+	fseek(f, 0, SEEK_END);
+	long file_size = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-    fread(&header, 1, 124, f);
+	// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
+	// read in 128 bytes from the file
+	unsigned char* magic = new unsigned char[4];
+	fread(magic, 1, 4, f);
+	// compare the `DDS ` signature
+	if (memcmp(magic, "DDS ", 4) != 0)
+	{
+		std::cout << "Header is not DDS." << std::endl;
+		return false;
+	}
 
-    std::shared_ptr<MyImage> image = std::make_shared<MyImage>(path);
-    vk::Format format;
-    // figure out what format to use for what fourCC file type it is
-    // block size is about physical chunk storage of compressed data in file (important)
-    uint32_t size = 0;
-    if (header.ddspf.dwFlags & DDPF_FOURCC) {
-        switch (header.ddspf.dwFourCC) {
-        case DDS_FORMAT::DXT1: // DXT1
-            image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT1;
-            image->m_blockSize = 1;
-            break;
-        case DDS_FORMAT::DXT3: // DXT3
-            image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT3;
-            image->m_blockSize = 2;
-            break;
-        case DDS_FORMAT::DXT5: // DXT5
-            image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT5;
-            image->m_blockSize = 2;
-            break;
-        case DDS_FORMAT::DX10: // DX10
-            DDS_HEADER_DXT10 dx10Header;
-            fread(&dx10Header, 1, sizeof(dx10Header), f);
-            switch (dx10Header.dxgiFormat)
-            {
-            case DXGI_FORMAT_R16G16B16A16_FLOAT:
-                image->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT;
-                image->m_blockSize = 2;
-                break;
-            case DXGI_FORMAT_R32G32B32A32_FLOAT:
-                image->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT;
-                image->m_blockSize = 4;
-                break;
-                //case DXGI_FORMAT_BC1_UNORM:
-                //    image->m_format = ImageFormat::RGBA16_FLOAT;
-                //    break;
-                //case DXGI_FORMAT_BC2_UNORM:
-                //    format = vk::Format::eBc2UnormBlock;
-                //    break;
-            }
-            break;
-        default:
-            image->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT;
-            image->m_blockSize = 2;
-            break;
-        }
+	fread(&header, 1, 124, f);
 
-        if (header.ddspf.dwFourCC == DDS_FORMAT::DX10)
-        {
-            size = file_size - 128 - sizeof(DDS_HEADER_DXT10);
-            image->m_data = new unsigned char[size];
-        }
-        else
-        {
-            size = file_size - 128;
-            image->m_data = new unsigned char[size];
-        }
-    }
-    else // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
-    {
-        return false;
-    }
+	std::shared_ptr<MyImage> image = std::make_shared<MyImage>(path);
+	vk::Format format;
+	// figure out what format to use for what fourCC file type it is
+	// block size is about physical chunk storage of compressed data in file (important)
+	// FIXME: Still some formats are not supported.
+	uint32_t size = 0;
+	if (header.ddspf.dwFlags & DDPF_FOURCC) {
+		switch (header.ddspf.dwFourCC) {
+		case DDS_FORMAT::DXT1: // DXT1
+			image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT1;
+			image->m_blockSize = 1;
+			break;
+		case DDS_FORMAT::DXT2:
+			image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT2;
+			image->m_blockSize = 1;
+			break;
+		case DDS_FORMAT::DXT3: // DXT3
+			image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT3;
+			image->m_blockSize = 2;
+			break;
+		case DDS_FORMAT::DXT4:
+			break;
+		case DDS_FORMAT::DXT5: // DXT5
+			image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT5;
+			image->m_blockSize = 2;
+			break;
+		case DDS_FORMAT::BC4U:
+		case DDS_FORMAT::BC4S:
+		case DDS_FORMAT::BC5U:
+		case DDS_FORMAT::BC5S:
+		case DDS_FORMAT::ETC:
+		case DDS_FORMAT::ETC1:
+		case DDS_FORMAT::ATC:
+		case DDS_FORMAT::ATCA:
+		case DDS_FORMAT::ATCI:
+			image->m_format = MyImageFormat::MY_IMAGEFORMAT_DXT5;
+			image->m_blockSize = 2;
+			break;	
+		case DDS_FORMAT::DX10: // DX10
+			DDS_HEADER_DXT10 dx10Header;
+			fread(&dx10Header, 1, sizeof(dx10Header), f);
+			switch (dx10Header.dxgiFormat)
+			{
+			case DXGI_FORMAT_R16G16B16A16_FLOAT:
+				image->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT;
+				image->m_blockSize = 2;
+				break;
+			case DXGI_FORMAT_R32G32B32A32_FLOAT:
+				image->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT;
+				image->m_blockSize = 4;
+				break;
+				//case DXGI_FORMAT_BC1_UNORM:
+				//    image->m_format = ImageFormat::RGBA16_FLOAT;
+				//    break;
+				//case DXGI_FORMAT_BC2_UNORM:
+				//    format = vk::Format::eBc2UnormBlock;
+				//    break;
+			}
+			break;
+		default:
+			image->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT;
+			image->m_blockSize = 2;
+			break;
+		}
 
-    // read rest of file
-    fread(image->m_data, 1, size, f);
+		if (header.ddspf.dwFourCC == DDS_FORMAT::DX10)
+		{
+			size = file_size - 128 - sizeof(DDS_HEADER_DXT10);
+			image->m_data = new unsigned char[size];
+		}
+		else
+		{
+			size = file_size - 128;
+			image->m_data = new unsigned char[size];
+		}
+	}
+	else // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
+	{
+		return false;
+	}
 
-    image->m_width = header.dwWidth;
-    image->m_height = header.dwHeight;
-    image->m_mipmapCount = header.dwMipMapCount;
-    image->m_channels = 4;
-    image->m_bufferSize = size;
+	// read rest of file
+	fread(image->m_data, 1, size, f);
+
+	image->m_width = header.dwWidth;
+	image->m_height = header.dwHeight;
+	image->m_mipmapCount = header.dwMipMapCount;
+	image->m_channels = 4;
+	image->m_bufferSize = size;
 	image->m_bTransferSrc = true;
 
-    if (header.dwCaps2 & 0x200)
-    {
-        image->m_layerCount = 6;
-    }
-    else
-    {
-        image->m_layerCount = 1;
-    }
-    m_pTextureEnvMap = std::make_shared<MyTexture>();
-    m_pTextureEnvMap->m_pImage = image;
-    m_pTextureEnvMap->m_wrapMode[0] = WrapMode::WRAP;
-    m_pTextureEnvMap->m_wrapMode[1] = WrapMode::WRAP;
-    m_pTextureEnvMap->m_wrapMode[2] = WrapMode::WRAP;
-    m_pVulkanTextureEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTextureEnvMap);
-    m_pResourceManager->InitVulkanTextureData(m_pTextureEnvMap, m_pVulkanTextureEnvMap);
+	if (header.dwCaps2 & 0x200)
+	{
+		image->m_layerCount = 6;
+	}
+	else
+	{
+		image->m_layerCount = 1;
+	}
+	m_pTextureEnvMap = std::make_shared<MyTexture>();
+	m_pTextureEnvMap->m_pImage = image;
+	m_pTextureEnvMap->m_wrapMode[0] = WrapMode::WRAP;
+	m_pTextureEnvMap->m_wrapMode[1] = WrapMode::WRAP;
+	m_pTextureEnvMap->m_wrapMode[2] = WrapMode::WRAP;
+
+	m_pVulkanTextureEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTextureEnvMap);
+	m_pResourceManager->InitVulkanTextureData(m_pTextureEnvMap, m_pVulkanTextureEnvMap);
+	fclose(f);
+
     
     {
         std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
@@ -186,8 +209,6 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
         device.destroyDescriptorSetLayout(descriptorSetLayout);
     }
 
-    fclose(f);
-
     m_pVulkanTexturePrefilteredEnvMap = generatePrefilteredCubeMap(descriptorPool);
     m_pVulkanTextureIrradianceMap = generateIrradianceMap(descriptorPool);
     m_pVulkanTextureBRDFLUT = generateBRDFLUT(descriptorPool);
@@ -195,42 +216,6 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
 	initSHLight();
 
 	m_pSHLight->CreateDescriptorSet(device, descriptorPool);
-
-    //{
-
-    //    std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
-    //    std::vector<vk::DescriptorImageInfo> imageInfos;
-    //    vk::DescriptorSetLayoutBinding textureBinding(0,
-    //        vk::DescriptorType::eCombinedImageSampler,
-    //        1,
-    //        vk::ShaderStageFlagBits::eFragment,
-    //        {});
-    //    textureBindings.push_back(textureBinding);
-
-    //    vk::DescriptorImageInfo imageInfo(m_pVulkanTextureIrradianceMap->imageSampler,
-    //        m_pVulkanTextureIrradianceMap->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-    //    imageInfos.push_back(imageInfo);
-
-    //    vk::DescriptorSetLayout descriptorSetLayout;
-
-    //    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
-    //    descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
-
-    //    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
-
-    //    device.allocateDescriptorSets(&allocInfo, &m_dsSkybox);
-
-    //    vk::WriteDescriptorSet descriptorWrite(m_dsSkybox,
-    //        uint32_t(0),
-    //        uint32_t(0),
-    //        static_cast<uint32_t>(imageInfos.size()),
-    //        vk::DescriptorType::eCombinedImageSampler,
-    //        imageInfos.data(),
-    //        {},
-    //        {});
-    //    device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-    //    device.destroyDescriptorSetLayout(descriptorSetLayout);
-    //}
 
     m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureIrradianceMap, m_pVulkanTextureBRDFLUT });
 }
@@ -257,7 +242,6 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
 
     //std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateCombinedTexture(offscreenTexture);
     std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
-
 
     m_pTexturePrefilteredEnvMap = std::make_shared<MyTexture>();
     m_pTexturePrefilteredEnvMap->m_pImage = std::make_shared<MyImage>("prefiltered-env-map");
@@ -418,8 +402,8 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
                 m_pVulkanTexturePrefilteredEnvMap->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
-                m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
-                    vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
+			m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+				vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
         }
     }
 
@@ -812,8 +796,13 @@ void Skybox::initSHLight()
 
 	commandBuffer.begin(beginInfo);
 
+	vk::Format format = vk::Format::eR16G16B16A16Sfloat;
+	if (m_pTextureEnvMap->m_pImage->m_format == MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT)
+	{
+		format = vk::Format::eR32G32B32A32Sfloat;
+	}
 	vk::ImageSubresourceRange srrEnvMap(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 6);
-	m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTextureEnvMap->image, vk::Format::eR16G16B16A16Sfloat, srrEnvMap,
+	m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTextureEnvMap->image, format, srrEnvMap,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
 	for (int i = 0; i < 6; ++i)
@@ -829,7 +818,7 @@ void Skybox::initSHLight()
 		offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
 		offscreenTexture->m_pImage->m_mipmapCount = 1;
 		offscreenTexture->m_pImage->m_layerCount = 1;
-		offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+		offscreenTexture->m_pImage->m_format = m_pTextureEnvMap->m_pImage->m_format;
 		offscreenTexture->m_pImage->m_bHostVisible = true;
 		offscreenTexture->m_pImage->m_bTransferSrc = true;
 
@@ -840,7 +829,7 @@ void Skybox::initSHLight()
 		std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
 		// transit offscreen image layout
 		vk::ImageSubresourceRange srrOffscreen(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-		m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+		m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, format, srrOffscreen,
 			vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
 		// Copy region for transfer from framebuffer to cube face
@@ -861,7 +850,7 @@ void Skybox::initSHLight()
 		vulkanTextures.push_back(offscreenVulkanTexture);
 	}
 
-	m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTextureEnvMap->image, vk::Format::eR16G16B16A16Sfloat, srrEnvMap,
+	m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTextureEnvMap->image, format, srrEnvMap,
 		vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 	commandBuffer.end();
@@ -885,7 +874,7 @@ void Skybox::initSHLight()
 
         char name[32];
         sprintf(name, "cubemap-%d.hdr", i);
-        textures[i]->m_pImage->DumpImageHDR(name);
+        //textures[i]->m_pImage->DumpImageHDR(name);
 	}
 
     std::vector<std::shared_ptr<MyTexture>> _textures;

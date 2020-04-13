@@ -63,7 +63,6 @@ VulkanRenderer::VulkanRenderer(Window *window)
 
     _resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _descriptorPool, _gpu);
     _skybox = new Skybox(_resourceManager, _context);
-    _skybox->LoadFromDDS("./TestModel/Skybox/environment.dds", _device, _descriptorPool);
 
     _axis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
 }
@@ -202,6 +201,12 @@ void VulkanRenderer::GetExtendSize(uint32_t &width, uint32_t &height)
 {
     width = _swapchainExtent.width;
     height = _swapchainExtent.height;
+}
+
+void VulkanRenderer::LoadSkybox(const char * path)
+{
+	_skybox->LoadFromDDS(path, _device, _descriptorPool);
+	_createCommandBuffers();
 }
 
 void VulkanRenderer::DrawFrame()
@@ -623,6 +628,8 @@ void VulkanRenderer::_createCommandBuffers()
 {
     for (uint32_t i = 0; i < _swapchainImageCount; ++i)
     {
+		_framesData[i].cmdBuffers.clear();
+
         std::shared_ptr<Pipeline> pipelineModel = nullptr;
         
         // skybox

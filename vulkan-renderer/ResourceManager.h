@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory.h>
 #include "MyImage.h"
+#include <unordered_map>
 #pragma once
 /************************************************************************/
 /* Meant to Control the gpu resource allocation.*/
@@ -23,6 +24,8 @@ public:
 
     std::shared_ptr<VulkanTexture> CreateVulkanTexture(std::shared_ptr<MyTexture> texture);
     std::shared_ptr<VulkanTexture> CreateCombinedTexture(std::shared_ptr<MyTexture> texture);
+	std::shared_ptr<VulkanTexture> GetVulkanTexture(std::shared_ptr<MyTexture> texture);
+
     void CreateVertexBuffers(std::shared_ptr<Drawable> drawable);
     void CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory);
     void InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset);
@@ -41,14 +44,14 @@ private:
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage);
     void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 private:
-    vk::PhysicalDevice                            _gpu;
-    vk::Device                                    _device;
-    vk::Queue                                     _graphicsQueue;
-    vk::CommandPool                               _commandPool;
-    uint32_t                                      _graphicsQueueFamilyIndex;
-    VmaAllocator                                  _memoryAllocator;
-    vk::DescriptorPool                            _descriptorPool;
-    std::vector<std::shared_ptr<Drawable>>        _drawables;
-    std::vector<std::shared_ptr<VulkanTexture>>   _textures;
+	vk::PhysicalDevice												 _gpu;
+	vk::Device														 _device;
+	vk::Queue														 _graphicsQueue;
+	vk::CommandPool													 _commandPool;
+	uint32_t														 _graphicsQueueFamilyIndex;
+	VmaAllocator													 _memoryAllocator;
+	vk::DescriptorPool												 _descriptorPool;
+	std::vector<std::shared_ptr<Drawable>>							 _drawables;
+	std::unordered_map<std::string, std::shared_ptr<VulkanTexture>>  _textureMap;
 };
 
