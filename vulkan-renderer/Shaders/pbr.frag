@@ -162,6 +162,6 @@ void main() {
 	outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2f)));	
 	// Gamma correction
 	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
-
+    
     outColor.a = 1.0;
 }

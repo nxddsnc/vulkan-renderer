@@ -40,34 +40,6 @@ SHLight::SHLight(ResourceManager *resourceManager, std::vector<std::shared_ptr<M
     // -Z
     directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, -1)));
 
-
-	//// +X
-	//directions.push_back(FaceAixs(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)));
-	//// -X
-	//directions.push_back(FaceAixs(glm::vec3(0, 0, -1), glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0)));
-	//// +Y
-	//directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)));
-	//// -Y
-	//directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, -1, 0), glm::vec3(0, 0, -1)));
-	//// +Z
-	//directions.push_back(FaceAixs(glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)));
-	//// -Z
-	//directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 0, -1),  glm::vec3(0, 1, 0)));
-
-
-	//// +X
-	//directions.push_back(FaceAixs(glm::vec3(1, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0)));
-	//// -X
-	//directions.push_back(FaceAixs(glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, -1, 0)));
-	//// +Y
-	//directions.push_back(FaceAixs(glm::vec3(0, 1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1)));
-	//// -Y
-	//directions.push_back(FaceAixs(glm::vec3(0, -1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)));
-	//// +Z
-	//directions.push_back(FaceAixs(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)));
-	//// -Z
-	//directions.push_back(FaceAixs(glm::vec3(0, 0, -1), glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)));
-
 	int size = textures[0]->m_pImage->m_width;
 
 	// The (u,v) range is [-1,+1], so the distance between each texel is 2/Size.
