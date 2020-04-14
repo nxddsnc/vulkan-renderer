@@ -7,6 +7,9 @@ enum PipelineType
 	PREFILTERED_CUBE_MAP,
 	IRRADIANCE_MAP,
 	GENERATE_BRDF_LUT,
+	BRIGHTNESS,
+	GAUSSIAN_BLUR_X,
+	GAUSSIAN_BLUR_Y,
 	BLIT
 };
 
@@ -97,7 +100,7 @@ public:
     void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
     void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);
 	void InitBrightPass(vk::Device device, vk::RenderPass renderPass);
-	void InitBlur(vk::Device device, vk::RenderPass renderPass);
+	void InitGaussianBlur(vk::Device device, vk::RenderPass renderPass);
 	void InitBlit(vk::Device device, vk::RenderPass renderPass);
 
 public:

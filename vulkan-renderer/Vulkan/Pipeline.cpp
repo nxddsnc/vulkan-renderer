@@ -980,15 +980,10 @@ void Pipeline::InitBrightPass(vk::Device device, vk::RenderPass renderPass)
 	vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
 	ShaderModule fragmentShader(&device, _id);
-	fragmentShader.BuildFromFile("Shaders/genbrdflut.frag", ShaderStage::FRAGMENT, "main");
+	fragmentShader.BuildFromFile("Shaders/brightness.frag", ShaderStage::FRAGMENT, "main");
 
 	shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
 	shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
-
-	// set vertex input state
-	// vertex
-	//_addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-	//_addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
 
 	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
 		static_cast<uint32_t>(_inputBindings.size()),
@@ -1077,7 +1072,20 @@ void Pipeline::InitBrightPass(vk::Device device, vk::RenderPass renderPass)
 	// descriptor set layout
 	std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 
+	vk::DescriptorSetLayoutBinding samplerBinding({ 0,
+		vk::DescriptorType::eCombinedImageSampler,
+		1,
+		vk::ShaderStageFlagBits::eFragment,
+		{}
+	});
+
+	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ samplerBinding }));
+
 	std::vector<vk::PushConstantRange> pushConstantRanges;
+
+	uint32_t offset = 0;
+	uint32_t size = sizeof(float);
+	pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, offset, size));
 
 	// pipeline layout
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo({},
@@ -1118,7 +1126,7 @@ void Pipeline::InitBrightPass(vk::Device device, vk::RenderPass renderPass)
 	}
 }
 
-void Pipeline::InitBlur(vk::Device device, vk::RenderPass renderPass)
+void Pipeline::InitGaussianBlur(vk::Device device, vk::RenderPass renderPass)
 {
 	m_device = device;
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
@@ -1127,15 +1135,11 @@ void Pipeline::InitBlur(vk::Device device, vk::RenderPass renderPass)
 	vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
 	ShaderModule fragmentShader(&device, _id);
-	fragmentShader.BuildFromFile("Shaders/genbrdflut.frag", ShaderStage::FRAGMENT, "main");
+	fragmentShader.BuildFromFile("Shaders/gaussianBlur.frag", ShaderStage::FRAGMENT, "main");
 
 	shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
 	shaderStages.push_back(fragmentShader.GetShaderStageCreateInfo());
 
-	// set vertex input state
-	// vertex
-	//_addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
-	//_addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
 
 	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
 		static_cast<uint32_t>(_inputBindings.size()),
@@ -1224,7 +1228,17 @@ void Pipeline::InitBlur(vk::Device device, vk::RenderPass renderPass)
 	// descriptor set layout
 	std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 
+	vk::DescriptorSetLayoutBinding samplerBinding(0,
+		vk::DescriptorType::eCombinedImageSampler,
+		1,
+		vk::ShaderStageFlagBits::eFragment,
+		{});
+	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ samplerBinding }));
+
 	std::vector<vk::PushConstantRange> pushConstantRanges;
+	uint32_t offset = 0;
+	uint32_t size = sizeof(float) * 4;
+	pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, offset, size));
 
 	// pipeline layout
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo({},
@@ -1366,14 +1380,23 @@ void Pipeline::InitBlit(vk::Device device, vk::RenderPass renderPass)
 	// descriptor set layout
 	std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 
-	vk::DescriptorSetLayoutBinding samplerBinding({ 0,
+	vk::DescriptorSetLayoutBinding blurredSamplerBinding({ 0,
 		vk::DescriptorType::eCombinedImageSampler,
 		1,
 		vk::ShaderStageFlagBits::eFragment,
 		{}
 	});
 
-	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ samplerBinding }));
+	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ blurredSamplerBinding }));
+
+	vk::DescriptorSetLayoutBinding originSamplerBinding({ 0,
+		vk::DescriptorType::eCombinedImageSampler,
+		1,
+		vk::ShaderStageFlagBits::eFragment,
+		{}
+	});
+
+	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ originSamplerBinding }));
 
 	std::vector<vk::PushConstantRange> pushConstantRanges;
 

@@ -1,11 +1,10 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 outColor;
 
-layout (binding = 0) uniform sampler2D colorTexture;
-
+layout (set = 0, binding = 0) uniform sampler2D blurredTexture;
+layout (set = 1, binding = 0) uniform sampler2D colorTexture;
 // From http://filmicgames.com/archives/75
 vec3 Uncharted2Tonemap(vec3 x)
 {
@@ -20,8 +19,8 @@ vec3 Uncharted2Tonemap(vec3 x)
 
 void main() 
 {
-    outColor = texture(colorTexture, inUV);
-
+    outColor = texture(blurredTexture, inUV);
+    outColor += texture(colorTexture, inUV);
     // Tone mapping
     float exposure = 2.0;
 	outColor.rgb = Uncharted2Tonemap(outColor.rgb * exposure);

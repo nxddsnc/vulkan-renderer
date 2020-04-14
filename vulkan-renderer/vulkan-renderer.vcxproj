@@ -172,6 +172,7 @@
     <ClCompile Include="MyTexture.cpp" />
     <ClCompile Include="PostEffect\Bloom.cpp" />
     <ClCompile Include="PostEffect\PostEffect.cpp" />
+    <ClCompile Include="PostEffect\ToneMapping.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="Platform.h" />
     <ClInclude Include="PostEffect\Bloom.h" />
     <ClInclude Include="PostEffect\PostEffect.h" />
+    <ClInclude Include="PostEffect\ToneMapping.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />

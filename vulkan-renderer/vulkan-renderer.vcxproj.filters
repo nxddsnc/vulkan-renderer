@@ -108,6 +108,9 @@
     <ClCompile Include="PostEffect\PostEffect.cpp">
       <Filter>源文件\PostEffect</Filter>
     </ClCompile>
+    <ClCompile Include="PostEffect\ToneMapping.cpp">
+      <Filter>源文件\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -192,6 +195,9 @@
       <Filter>头文件\PostEffect</Filter>
     </ClInclude>
     <ClInclude Include="PostEffect\PostEffect.h">
+      <Filter>头文件\PostEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="PostEffect\ToneMapping.h">
       <Filter>头文件\PostEffect</Filter>
     </ClInclude>
   </ItemGroup>

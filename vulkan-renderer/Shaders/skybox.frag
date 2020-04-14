@@ -22,6 +22,7 @@ void main()
 	// color = textureLod(samplerPreFilteredCubeMap, inUVW, 20).rgb;
 	// color = Uncharted2Tonemap(color);
 	outColor = vec4(color, 1.0);
+	
 	// outColor = vec4(inUVW, 1.0);
 
 	// outColor = vec4(abs(inPosition.x + 0.5 - inUv.x), abs(inPosition.y + 0.5 - inUv.y), abs(inPosition.z + 0.5 - inUv.z), 1.0);

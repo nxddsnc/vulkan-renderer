@@ -25,6 +25,8 @@
 #include "Framebuffer.h"
 #include "MyTexture.h"
 #include "PostEffect/PostEffect.h"
+#include "PostEffect/Bloom.h"
+#include "PostEffect/ToneMapping.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -95,6 +97,7 @@ VulkanRenderer::~VulkanRenderer()
     delete _camera;
 
     vmaDestroyAllocator(_memoryAllocator);
+
 
     delete _context;
 }
@@ -530,11 +533,17 @@ void VulkanRenderer::_initOffscreenRenderTargets()
 {
 	_offscreenFramebuffer = std::make_shared<Framebuffer>("offscreen-framebuffer", _resourceManager, 
 		MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT, _swapchainExtent.width, _swapchainExtent.height);
+
+	//std::shared_ptr<ToneMapping> toneMapping = std::make_shared<ToneMapping>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+	//m_postEffects.push_back(toneMapping);
+	std::shared_ptr<Bloom> bloom = std::make_shared<Bloom>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+	m_postEffects.push_back(bloom);
 }
 
 void VulkanRenderer::_deInitOffscreenRenderTargets()
 {
 	_offscreenFramebuffer = nullptr;
+	m_postEffects.clear();
 }
 
 void VulkanRenderer::_initDescriptorPool()
@@ -693,14 +702,6 @@ void VulkanRenderer::_createCommandBuffers()
 
        commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
 
-       // skybox command buffer
-       commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
-       commandBuffer.bindVertexBuffers(0, _skybox->m_pDrawable->m_vertexBuffers.size(), _skybox->m_pDrawable->m_vertexBuffers.data(), _skybox->m_pDrawable->m_vertexBufferOffsets.data());
-       commandBuffer.bindIndexBuffer(_skybox->m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
-       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
-       commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_dsSkybox, 0, nullptr);
-       commandBuffer.drawIndexed(_skybox->m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
-
        // drawAxis
        _axis->CreateDrawCommand(commandBuffer, _camera->descriptorSet);
 
@@ -765,19 +766,32 @@ void VulkanRenderer::_createCommandBuffers()
            }
        }
 
+	   // skybox command buffer
+	   commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
+	   commandBuffer.bindVertexBuffers(0, _skybox->m_pDrawable->m_vertexBuffers.size(), _skybox->m_pDrawable->m_vertexBuffers.data(), _skybox->m_pDrawable->m_vertexBufferOffsets.data());
+	   commandBuffer.bindIndexBuffer(_skybox->m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
+	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &_camera->descriptorSet, 0, nullptr);
+	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &_skybox->m_dsSkybox, 0, nullptr);
+	   commandBuffer.drawIndexed(_skybox->m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+
        commandBuffer.endRenderPass();
 	   
-	   // Blit offscreen texture to swapchain framebuffer
-	   vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, vk::Format::eR16G16B16A16Sfloat, ssr,
-		   vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-	   for (auto postEffect : m_postEffects)
+	   std::shared_ptr<Framebuffer> inputFrameubffer = _offscreenFramebuffer;
+	   for (int index = 0; index < m_postEffects.size(); ++index)
 	   {
-		   postEffect->Draw(commandBuffer);
+		   m_postEffects[index]->Draw(commandBuffer, inputFrameubffer);
+		   inputFrameubffer = m_postEffects[index]->GetFramebuffer();
 	   }
 
-	   
+	   // Blit offscreen texture to swapchain framebuffer
+	   // FIXME: Move the following code to tonemapping.cpp.
+	   vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+	   _resourceManager->SetImageLayout(commandBuffer, inputFrameubffer->m_pColorTexture->image, inputFrameubffer->m_pColorTexture->format, ssr,
+		   vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, _offscreenFramebuffer->m_pColorTexture->format, ssr,
+		   vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 	   PipelineId blitPipelineId;
 	   blitPipelineId.type = PipelineType::BLIT;
@@ -810,12 +824,16 @@ void VulkanRenderer::_createCommandBuffers()
 	   commandBuffer.setViewport(0, 1, &viewport);
 	   commandBuffer.setScissor(0, 1, &sissor);
 
-	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 0, 1, &(_offscreenFramebuffer->m_dsTexture), 0, nullptr);
+	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 0, 1, &(inputFrameubffer->m_dsTexture), 0, nullptr);
+	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 1, 1, &(_offscreenFramebuffer->m_dsTexture), 0, nullptr);
 	   commandBuffer.draw(3, 1, 0, 0);
 
 	   commandBuffer.endRenderPass();
 
-	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, vk::Format::eR16G16B16A16Sfloat, ssr,
+	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, _offscreenFramebuffer->m_pColorTexture->format, ssr,
+		   vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
+
+	   _resourceManager->SetImageLayout(commandBuffer, inputFrameubffer->m_pColorTexture->image, inputFrameubffer->m_pColorTexture->format, ssr,
 		   vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 
 	   commandBuffer.end();

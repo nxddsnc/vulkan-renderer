@@ -433,17 +433,17 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 	vulkanTexture->texture = texture;
 
 	bool bDepthTexture = false;;
-	vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+	vulkanTexture->format = vk::Format::eR8G8B8A8Unorm;
 	switch (myImage->m_format)
 	{
 	case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
-		imageFormat = vk::Format::eR8G8B8A8Unorm;
+		vulkanTexture->format = vk::Format::eR8G8B8A8Unorm;
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
-		imageFormat = vk::Format::eR16G16B16A16Sfloat;
+		vulkanTexture->format = vk::Format::eR16G16B16A16Sfloat;
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
-		imageFormat = vk::Format::eD24UnormS8Uint;
+		vulkanTexture->format = vk::Format::eD24UnormS8Uint;
 		bDepthTexture = true;
 		break;
 	}
@@ -475,7 +475,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     }
     vk::ImageCreateInfo imageCreateInfo(flags,
         vk::ImageType::e2D,
-        imageFormat,
+        vulkanTexture->format,
         vk::Extent3D({
         static_cast<uint32_t>(myImage->m_width),
         static_cast<uint32_t>(myImage->m_height),
@@ -514,7 +514,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
         {},
         vulkanTexture->image,
         imageViewType,
-        imageFormat,
+        vulkanTexture->format,
         vk::ComponentMapping({
         vk::ComponentSwizzle::eR,
         vk::ComponentSwizzle::eG,
