@@ -24,6 +24,7 @@
 #include "SHLight.h"
 #include "Framebuffer.h"
 #include "MyTexture.h"
+#include "PostEffect/PostEffect.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -527,31 +528,8 @@ void VulkanRenderer::_deInitFramebuffers()
 
 void VulkanRenderer::_initOffscreenRenderTargets()
 {
-	std::shared_ptr<MyTexture> colorTexture = std::make_shared<MyTexture>();
-	colorTexture->m_pImage = std::make_shared<MyImage>("offscreen-renderTarget-color");
-	// Extract the following lines to constructor of MyImage.
-	colorTexture->m_pImage->m_width = _swapchainExtent.width;
-	colorTexture->m_pImage->m_height = _swapchainExtent.height;
-	colorTexture->m_pImage->m_format = MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT;
-	colorTexture->m_pImage->m_bFramebuffer = true;
-	colorTexture->m_pImage->m_blockSize = 2;
-	colorTexture->m_pImage->m_channels = 4;
-
-	std::shared_ptr<VulkanTexture> colorVulkanTexture = _resourceManager->CreateCombinedTexture(colorTexture);
-
-	std::shared_ptr<MyTexture> depthTexture = std::make_shared<MyTexture>();
-	depthTexture->m_pImage = std::make_shared<MyImage>("offscreen-renderTarget-depth");
-	// Extract the following lines to constructor of MyImage.
-	depthTexture->m_pImage->m_width = _swapchainExtent.width;
-	depthTexture->m_pImage->m_height = _swapchainExtent.height;
-	depthTexture->m_pImage->m_format = MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT;
-	depthTexture->m_pImage->m_bFramebuffer = true;
-	depthTexture->m_pImage->m_blockSize = 4;
-	depthTexture->m_pImage->m_channels = 1;
-
-	std::shared_ptr<VulkanTexture> depthVulkanTexture = _resourceManager->CreateCombinedTexture(depthTexture);
-
-	_offscreenFramebuffer = std::make_shared<Framebuffer>(_resourceManager, _descriptorPool, colorVulkanTexture, depthVulkanTexture);
+	_offscreenFramebuffer = std::make_shared<Framebuffer>("offscreen-framebuffer", _resourceManager, 
+		MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT, _swapchainExtent.width, _swapchainExtent.height);
 }
 
 void VulkanRenderer::_deInitOffscreenRenderTargets()
@@ -793,6 +771,13 @@ void VulkanRenderer::_createCommandBuffers()
 	   vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
 	   _resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTexture->image, vk::Format::eR16G16B16A16Sfloat, ssr,
 		   vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+	   for (auto postEffect : m_postEffects)
+	   {
+		   postEffect->Draw(commandBuffer);
+	   }
+
+	   
 
 	   PipelineId blitPipelineId;
 	   blitPipelineId.type = PipelineType::BLIT;

@@ -22,6 +22,12 @@
     <Filter Include="头文件\Debug">
       <UniqueIdentifier>{2189929d-9c49-4f73-997b-14bcf1db840d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\PostEffect">
+      <UniqueIdentifier>{81bbcad9-e5a0-40b3-9559-aa3f59f8ec06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\PostEffect">
+      <UniqueIdentifier>{eaa80228-35c0-4557-a8ed-f5ad670e9456}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -95,6 +101,12 @@
     </ClCompile>
     <ClCompile Include="Framebuffer.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PostEffect\Bloom.cpp">
+      <Filter>源文件\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="PostEffect\PostEffect.cpp">
+      <Filter>源文件\PostEffect</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +187,12 @@
     </ClInclude>
     <ClInclude Include="Framebuffer.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PostEffect\Bloom.h">
+      <Filter>头文件\PostEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="PostEffect\PostEffect.h">
+      <Filter>头文件\PostEffect</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

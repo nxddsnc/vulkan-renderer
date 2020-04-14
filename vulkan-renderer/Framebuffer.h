@@ -1,4 +1,5 @@
 #include "Platform.h"
+#include "MyImage.h"
 #pragma once
 
 class ResourceManager;
@@ -7,7 +8,8 @@ class RenderPass;
 class Framebuffer
 {
 public:
-	Framebuffer(ResourceManager* resourceManager, vk::DescriptorPool descritptorPool, std::shared_ptr<VulkanTexture> colorTexture, std::shared_ptr<VulkanTexture> depthTexture);
+	Framebuffer();
+	Framebuffer(const char* name, ResourceManager* resourceManager, MyImageFormat colorFormat, MyImageFormat depthFormt, int width, int height);
 	~Framebuffer();
 
 public:
@@ -20,10 +22,11 @@ public:
 	std::shared_ptr<VulkanTexture>     m_pDepthTexture;
 private:
 	ResourceManager			          *m_pResourceManager;
-	vk::DescriptorPool				   m_descriptorPool;
+
+	char							   m_pName[512];
 	
 private:
-	void _init();
+	void _init(MyImageFormat colorFormat, MyImageFormat depthFormt, int width, int height);
 	void _deInit();
 };
 

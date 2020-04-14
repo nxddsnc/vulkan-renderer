@@ -4,6 +4,7 @@
 
 enum MyImageFormat
 {
+	MY_IMAGEFORMAT_UNKONWN,
 	MY_IMAGEFORMAT_RGBA8,
 	MY_IMAGEFORMAT_RGBA16_FLOAT,
 	MY_IMAGEFORMAT_RGBA32_FLOAT,
@@ -17,6 +18,7 @@ class MyImage
 {
 public:
     MyImage(const char *filename);
+	MyImage(const char* name, int width, int height, MyImageFormat format, bool bFramebuffer);
     ~MyImage();
 
 public:
