@@ -8,17 +8,12 @@ RenderPass::RenderPass(vk::Device *device)
 
 RenderPass::~RenderPass()
 {
-
+	_device->destroyRenderPass(_renderPass);
 }
 
 void RenderPass::AddAttachment(vk::AttachmentDescription attachmentDescription)
 {
   _attachments.push_back(attachmentDescription);
-}
-
-void RenderPass::Destory()
-{
-    _device->destroyRenderPass(_renderPass);
 }
 
 vk::RenderPass RenderPass::Get() 

@@ -35,6 +35,7 @@ class VulkanContext;
 class VulkanCamera;
 class Skybox;
 class Framebuffer;
+class RenderPass;
 class VulkanRenderer
 {
 public:
@@ -63,7 +64,6 @@ public:
     vk::SurfaceFormatKHR GetSurfaceFormat();
     vk::Format GetDepthFormat();
     vk::RenderPass GetOffscreenRenderPass();
-	vk::RenderPass GetRenderPass();
 
     void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> nodes);
 private:
@@ -124,8 +124,7 @@ private:
     std::vector<vk::Image>                   _swapchainImages;
     std::vector<vk::ImageView>               _swapchainImageViews;
     std::vector<FrameData>                   _framesData;
-    vk::RenderPass                           _renderPass;
-
+	std::shared_ptr<RenderPass>				 _renderPass;
 
 	std::shared_ptr<Framebuffer>			 _offscreenFramebuffer;
 

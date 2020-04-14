@@ -426,7 +426,6 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
-    device.destroyRenderPass(renderPass.Get());
 
     return m_pVulkanTexturePrefilteredEnvMap;
 }
@@ -637,7 +636,6 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
-    device.destroyRenderPass(renderPass.Get());
 
     return vulkanTexture;
 }
@@ -764,7 +762,6 @@ std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descr
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
-    device.destroyRenderPass(renderPass.Get());
 
     return offscreenVulkanTexture;
 }

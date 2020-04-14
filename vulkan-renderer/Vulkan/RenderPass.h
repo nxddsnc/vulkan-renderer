@@ -8,7 +8,6 @@ public:
 
     vk::RenderPass Get();
     void AddAttachment(vk::AttachmentDescription attachmentDescription);
-    void Destory();
 private:
     std::vector<vk::AttachmentDescription> _attachments;
     std::vector<vk::SubpassDescription> _subpasses;

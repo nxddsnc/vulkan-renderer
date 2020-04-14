@@ -21,10 +21,12 @@ std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id)
   {
   case MODEL:
       pipeline->InitModel();
+	  pipeline->m_bReady = true;
       break;
   case SKYBOX:
       pipeline->InitSkybox();
-      break;
+	  pipeline->m_bReady = true;
+	  break;
   //case PREFILTERED_CUBE_MAP:
   //    pipeline->InitPrefilteredCubeMap();
   }

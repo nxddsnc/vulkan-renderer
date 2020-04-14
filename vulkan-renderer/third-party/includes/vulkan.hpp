@@ -1505,7 +1505,7 @@ namespace VULKAN_HPP_NAMESPACE
     void vkDestroyFramebuffer( VkDevice device, VkFramebuffer framebuffer, const VkAllocationCallbacks* pAllocator ) const VULKAN_HPP_NOEXCEPT
     {
       return ::vkDestroyFramebuffer( device, framebuffer, pAllocator );
-    }
+     }
 
     void vkDestroyImage( VkDevice device, VkImage image, const VkAllocationCallbacks* pAllocator ) const VULKAN_HPP_NOEXCEPT
     {

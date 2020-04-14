@@ -3,7 +3,7 @@
 
 class ResourceManager;
 struct VulkanTexture;
-
+class RenderPass;
 class Framebuffer
 {
 public:
@@ -11,7 +11,8 @@ public:
 	~Framebuffer();
 
 public:
-	vk::RenderPass			           m_vkRenderPass;
+	
+	std::shared_ptr<RenderPass>		   m_pRenderPass;
 	vk::Framebuffer					   m_vkFramebuffer;
 	vk::DescriptorSet				   m_dsTexture;
 
@@ -24,6 +25,5 @@ private:
 private:
 	void _init();
 	void _deInit();
-	
 };
 

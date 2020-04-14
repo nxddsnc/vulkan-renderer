@@ -80,7 +80,8 @@ VulkanRenderer::~VulkanRenderer()
 
     delete _skybox;
     delete _window;
-    delete _resourceManager;
+	delete _pipelineManager;
+	delete _resourceManager;
 
     _deInitSynchronizations();
     _deInitDescriptorSet();
@@ -90,7 +91,6 @@ VulkanRenderer::~VulkanRenderer()
     _deInitSwapchainImages();
     _deInitSwapchain();
 
-    delete _pipelineManager;
     delete _camera;
 
     vmaDestroyAllocator(_memoryAllocator);
@@ -166,7 +166,7 @@ uint32_t VulkanRenderer::GetGraphicFamilyIndex()
 
 vk::RenderPass VulkanRenderer::GetVulkanRenderPass()
 {
-    return _renderPass;
+    return _renderPass->Get();
 }
 
 vk::Framebuffer VulkanRenderer::GetActiveFramebuffer()
@@ -191,12 +191,7 @@ vk::Format VulkanRenderer::GetDepthFormat()
 
 vk::RenderPass VulkanRenderer::GetOffscreenRenderPass()
 {
-    return _offscreenFramebuffer->m_vkRenderPass;
-}
-
-vk::RenderPass VulkanRenderer::GetRenderPass()
-{
-	return _renderPass;
+    return _offscreenFramebuffer->m_pRenderPass->Get();
 }
 
 VulkanCamera * VulkanRenderer::GetCamera()
@@ -475,7 +470,7 @@ void VulkanRenderer::_deInitDepthStencilImage()
 
 void VulkanRenderer::_initFramebuffers() 
 {
-    RenderPass renderPass(&_device);
+    _renderPass = std::make_shared<RenderPass>(&_device);
     vk::AttachmentDescription colorAttachment({
         {},
         _surfaceFormat.format,
@@ -499,11 +494,9 @@ void VulkanRenderer::_initFramebuffers()
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthStencilAttachmentOptimal
     });
-    renderPass.AddAttachment(colorAttachment);
-    renderPass.AddAttachment(depthAttachment);
+    _renderPass->AddAttachment(colorAttachment);
+    _renderPass->AddAttachment(depthAttachment);
 
-    _renderPass = renderPass.Get();
-    
     for (int i = 0; i < _swapchainImageCount; ++i)
     {
 
@@ -512,7 +505,7 @@ void VulkanRenderer::_initFramebuffers()
         attachments[1] = _depthStencilImageView;
 
         vk::FramebufferCreateInfo createInfo({ {},
-                                              _renderPass,
+                                              _renderPass->Get(),
                                               (uint32_t)attachments.size(),
                                               attachments.data(),
                                               _swapchainExtent.width,
@@ -525,7 +518,7 @@ void VulkanRenderer::_initFramebuffers()
 void VulkanRenderer::_deInitFramebuffers()
 {
     // TODO: create and destroy should be in the same class.
-    _device.destroyRenderPass(_renderPass);
+	_renderPass = nullptr;
     for (uint32_t i = 0; i < _swapchainImageCount; ++i)
     {
         vkDestroyFramebuffer(_device, _framesData[i].framebuffer, nullptr);
@@ -563,7 +556,7 @@ void VulkanRenderer::_initOffscreenRenderTargets()
 
 void VulkanRenderer::_deInitOffscreenRenderTargets()
 {
-
+	_offscreenFramebuffer = nullptr;
 }
 
 void VulkanRenderer::_initDescriptorPool()
@@ -714,14 +707,7 @@ void VulkanRenderer::_createCommandBuffers()
        clearValues[1].depthStencil.depth = 1.0f;
        clearValues[1].depthStencil.stencil = 0;
 
-       //vk::RenderPassBeginInfo renderPassInfo({ _renderPass,
-       //    _framesData[i].framebuffer,
-       //    vk::Rect2D({ vk::Offset2D({ 0, 0 }),
-       //        _swapchainExtent }),
-       //        (uint32_t)clearValues.size(),
-       //    clearValues.data() });
-
-	   vk::RenderPassBeginInfo renderPassInfo(_offscreenFramebuffer->m_vkRenderPass, _offscreenFramebuffer->m_vkFramebuffer,
+	   vk::RenderPassBeginInfo renderPassInfo(_offscreenFramebuffer->m_pRenderPass->Get(), _offscreenFramebuffer->m_vkFramebuffer,
 		   vk::Rect2D({ vk::Offset2D({ 0, 0 }),
 			   _swapchainExtent }),
 		   (uint32_t)clearValues.size(),
@@ -817,10 +803,15 @@ void VulkanRenderer::_createCommandBuffers()
 	   blitPipelineId.model.primitivePart.info.bits.countColor = 0;
 
 	   std::shared_ptr<Pipeline> pipelineBlit = _pipelineManager->GetPipeline(blitPipelineId);
-	   pipelineBlit->InitBlit(_device, _renderPass);
+	   if (!pipelineBlit->m_bReady)
+	   {
+		   // TODO: refactor
+		   pipelineBlit->InitBlit(_device, _renderPass->Get());
+		   pipelineBlit->m_bReady = true;
+	   }
 
 	   vk::RenderPassBeginInfo blitRenderPassInfo(
-		   _renderPass,
+		   _renderPass->Get(),
 		   _framesData[i].framebuffer,
 		   vk::Rect2D(vk::Offset2D(0, 0), _swapchainExtent),
 		   (uint32_t)clearValues.size(),
@@ -833,7 +824,6 @@ void VulkanRenderer::_createCommandBuffers()
 	   vk::Rect2D sissor(vk::Offset2D(0, 0), _swapchainExtent);
 	   commandBuffer.setViewport(0, 1, &viewport);
 	   commandBuffer.setScissor(0, 1, &sissor);
-
 
 	   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 0, 1, &(_offscreenFramebuffer->m_dsTexture), 0, nullptr);
 	   commandBuffer.draw(3, 1, 0, 0);
@@ -882,209 +872,5 @@ void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawa
         }
     }
 
-    /*_resourceManager->createDrawableDescriptorSet(drawable);*/
     _createCommandBuffers();
 }
-
-
-// void VulkanRenderer::_initTextureImage()
-// {
-//     int texWidth, texHeight, texChannels;
-//     stbi_uc* pixels = stbi_load("Textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-//     VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-//     if (!pixels) {
-//         throw std::runtime_error("failed to load texture image!");
-//     }
-
-//     VkBuffer stagingBuffer;
-//     VmaAllocation stagingBufferMemory;
-
-//     VkBufferCreateInfo stagingBufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-//     stagingBufferInfo.size = imageSize;
-//     stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-//     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
-//     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-//     vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
-
-//     void* data;
-//     vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
-//     memcpy(data, pixels, static_cast<size_t>(imageSize));
-//     vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
-
-//     stbi_image_free(pixels);
-
-//     uint32_t graphicsQueueFamilyIndex = _context->GetGraphicsQueueFamilyIndex();
-//     vk::ImageCreateInfo createInfo({
-//         {},
-//         vk::ImageType::e2D,
-//         vk::Format::eR8G8B8A8Unorm,
-//         vk::Extent3D({
-//             static_cast<uint32_t>(texWidth),
-//             static_cast<uint32_t>(texHeight),
-//             1
-//         }),
-//         1,
-//         1,
-//         vk::SampleCountFlagBits::e1,
-//         vk::ImageTiling::eOptimal,
-//         vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-//         vk::SharingMode::eExclusive,
-//         1,
-//         &graphicsQueueFamilyIndex,
-//         vk::ImageLayout::eUndefined
-//     });
-//     VmaAllocationCreateInfo allocationCreateInfo = {};
-//     allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-//     VkImage image;
-//     vmaCreateImage(_memoryAllocator, &(VkImageCreateInfo(createInfo)), &allocationCreateInfo, &image, &_textureImageMemory, nullptr);
-//     _textureImage = image;
-
-//     transitionImageLayout(_textureImage, vk::Format::eR8G8B8A8Unorm,
-//         vk::ImageLayout::eUndefined , vk::ImageLayout::eTransferDstOptimal);
-//     copyBufferToImage(stagingBuffer, _textureImage, 
-//         static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-//     transitionImageLayout(_textureImage, vk::Format::eR8G8B8A8Unorm,
-//         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-//     vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
-// }
-
-// void VulkanRenderer::_deInitTextureImage()
-// {
-//     vmaDestroyImage(_memoryAllocator, _textureImage, _textureImageMemory);
-// }
-
-// void VulkanRenderer::_initTextureImageView()
-// {
-//     vk::ImageViewCreateInfo createInfo({
-//         {},
-//         _textureImage,
-//         vk::ImageViewType::e2D,
-//         vk::Format::eR8G8B8A8Unorm,
-//         vk::ComponentMapping({
-//             vk::ComponentSwizzle::eR,
-//             vk::ComponentSwizzle::eG,
-//             vk::ComponentSwizzle::eB,
-//             vk::ComponentSwizzle::eA
-//         }),
-//         vk::ImageSubresourceRange({
-//             vk::ImageAspectFlagBits::eColor,
-//             0,
-//             1,
-//             0,
-//             1
-//         })
-//     });
-//     _textureImageView = _device.createImageView(createInfo);
-// }
-
-// void VulkanRenderer::_deInitTextureImageView()
-// {
-//     _device.destroyImageView(_textureImageView);
-// }
-
-// void VulkanRenderer::_initTextureImageSampler()
-// {
-//     vk::SamplerCreateInfo createInfo({
-//         {},
-//         vk::Filter::eLinear,
-//         vk::Filter::eLinear,
-//         vk::SamplerMipmapMode::eLinear,
-//         vk::SamplerAddressMode::eRepeat,
-//         vk::SamplerAddressMode::eRepeat,
-//         vk::SamplerAddressMode::eRepeat,
-//         0.0,
-//         vk::Bool32(true),
-//         16.0,
-//         vk::Bool32(false),
-//         vk::CompareOp::eAlways,
-//         0.0,
-//         0.0,
-//         vk::BorderColor::eFloatOpaqueWhite,
-//         vk::Bool32(false)
-//     });
-
-//     _textureImageSampler = _device.createSampler(createInfo);
-// }
-
-// void VulkanRenderer::_deInitTextureImageSampler()
-// {
-//     _device.destroySampler(_textureImageSampler);
-// }
-
-// void VulkanRenderer::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
-// {
-//     /*vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
-
-//     vk::ImageMemoryBarrier barrier({
-//         {},
-//         {},
-//         oldLayout,
-//         newLayout,
-//         {},
-//         {},
-//         _textureImage,
-//         vk::ImageSubresourceRange({
-//         vk::ImageAspectFlagBits::eColor,
-//         (uint32_t)0,
-//         (uint32_t)1,
-//         (uint32_t)0,
-//         (uint32_t)1,
-//     })
-//     });
-
-//     std::array<vk::ImageMemoryBarrier, 1> barriers = { barrier };
-
-
-//     vk::PipelineStageFlagBits sourceStage;
-//     vk::PipelineStageFlagBits destinationStage;
-
-//     if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
-//         barrier.srcAccessMask = {};
-//         barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-//         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-//         destinationStage = vk::PipelineStageFlagBits::eTransfer;
-//     }
-//     else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-//         barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-//         barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-//         sourceStage = vk::PipelineStageFlagBits::eTransfer;
-//         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
-//     }
-//     else {
-//         throw std::invalid_argument("unsupported layout transition!");
-//     }
-
-//     commandBuffer.pipelineBarrier(sourceStage, destinationStage,
-//         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, barriers);
-
-//     _endSingleTimeCommand(commandBuffer);*/
-// }
-
-// void VulkanRenderer::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height)
-// {
-//     /*vk::CommandBuffer cmdBuffer = _beginSingleTimeCommand();
-
-
-//     vk::BufferImageCopy region({
-//         0,
-//         0,
-//         0,
-//         vk::ImageSubresourceLayers({
-//             vk::ImageAspectFlagBits::eColor,
-//             (uint32_t)0,
-//             (uint32_t)0,
-//             (uint32_t)1
-//         }),
-//         vk::Offset3D({0, 0, 0}),
-//         vk::Extent3D({ width, height, 1})
-//     });
-
-//     std::array<vk::BufferImageCopy, 1> regions = { region };
-//     cmdBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, regions);
-
-//     _endSingleTimeCommand(cmdBuffer);*/
-// }

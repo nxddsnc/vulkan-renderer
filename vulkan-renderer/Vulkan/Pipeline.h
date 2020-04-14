@@ -99,6 +99,9 @@ public:
 	void InitBrightPass(vk::Device device, vk::RenderPass renderPass);
 	void InitBlur(vk::Device device, vk::RenderPass renderPass);
 	void InitBlit(vk::Device device, vk::RenderPass renderPass);
+
+public:
+	bool m_bReady;
 private:
     PipelineId _id;
     VulkanRenderer    * _renderer;

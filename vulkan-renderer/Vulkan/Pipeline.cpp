@@ -8,6 +8,7 @@ Pipeline::Pipeline(VulkanRenderer *renderer, PipelineId id)
     _id = id;
     _renderer = renderer;
     m_device = renderer->GetVulkanDevice();
+	m_bReady = false;
 }
 
 Pipeline::Pipeline(PipelineId id)

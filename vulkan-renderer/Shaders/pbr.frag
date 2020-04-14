@@ -52,18 +52,6 @@ layout(set = 3, binding = TEXTURE_NORMAL_LOCATION) uniform sampler2D normalTextu
 layout(set = 3, binding = TEXTURE_METALLIC_ROUGHNESS_LOCATION) uniform sampler2D metallicRoughnessTexture;
 #endif
 
-// From http://filmicgames.com/archives/75
-vec3 Uncharted2Tonemap(vec3 x)
-{
-	float A = 0.15;
-	float B = 0.50;
-	float C = 0.10;
-	float D = 0.20;
-	float E = 0.02;
-	float F = 0.30;
-	return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
-}
-
 vec3 F_Schlick(float cosTheta, vec3 F0)
 {
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
@@ -155,13 +143,6 @@ void main() {
     // outColor.rgb = (-normalize(reflect(V, worldNormal))).rbg;
     // outColor.rgb = vec3(0, metallicRoughness);
     // outColor.rgb = worldNormal;
-
-    // Tone mapping
-    float exposure = 2.0;
-	outColor.rgb = Uncharted2Tonemap(outColor.rgb * exposure);
-	outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2f)));	
-	// Gamma correction
-	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
     
     outColor.a = 1.0;
 }

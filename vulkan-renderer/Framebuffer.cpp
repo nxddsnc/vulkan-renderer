@@ -31,7 +31,7 @@ void Framebuffer::_init()
 		format = vk::Format::eR32G32B32A32Sfloat;
 		break;
 	}
-	RenderPass renderPass(&(m_pResourceManager->m_device));
+	m_pRenderPass = std::make_shared<RenderPass>(&(m_pResourceManager->m_device));
 	vk::AttachmentDescription colorAttachment({
 		{},
 		format,
@@ -62,17 +62,15 @@ void Framebuffer::_init()
 		vk::ImageLayout::eUndefined,
 		vk::ImageLayout::eDepthStencilAttachmentOptimal
 	});
-	renderPass.AddAttachment(colorAttachment);
-	renderPass.AddAttachment(depthAttachment);
-
-	m_vkRenderPass = renderPass.Get();
+	m_pRenderPass->AddAttachment(colorAttachment);
+	m_pRenderPass->AddAttachment(depthAttachment);
 
 	std::array<vk::ImageView, 2> attachments{};
 	attachments[0] = m_pColorTexture->imageView;
 	attachments[1] = m_pDepthTexture->imageView;
 
 	vk::FramebufferCreateInfo createInfo({ {},
-		m_vkRenderPass,
+		m_pRenderPass->Get(),
 		(uint32_t)attachments.size(),
 		attachments.data(),
 		m_pColorTexture->texture->m_pImage->m_width,
@@ -120,6 +118,7 @@ void Framebuffer::_init()
 
 void Framebuffer::_deInit()
 {
+	m_pRenderPass = nullptr;
 	m_pResourceManager->m_device.destroyFramebuffer(m_vkFramebuffer);
 	
 }
