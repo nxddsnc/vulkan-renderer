@@ -5,7 +5,7 @@
 
 Pipeline::Pipeline(VulkanRenderer *renderer, PipelineId id)
 {
-    _id = id;
+    m_id = id;
     _renderer = renderer;
     m_device = renderer->GetVulkanDevice();
 	m_bReady = false;
@@ -13,7 +13,7 @@ Pipeline::Pipeline(VulkanRenderer *renderer, PipelineId id)
 
 Pipeline::Pipeline(PipelineId id)
 {
-    _id = id;
+    m_id = id;
 }
 
 Pipeline::~Pipeline()
@@ -71,7 +71,7 @@ void Pipeline::InitModel()
     // set shader state
     char vertexShaderName[32] = "pbr";
     char fragmentShaderName[32] = "pbr";
-    switch (_id.model.primitivePart.info.bits.primitiveMode)
+    switch (m_id.model.primitivePart.info.bits.primitiveMode)
     {
     case PrimitiveMode::Lines:
         strcpy(fragmentShaderName, "plain");
@@ -82,10 +82,10 @@ void Pipeline::InitModel()
     char fragmenentShaderPath[128];
     sprintf(vertexShaderPath, "Shaders/%s.vert", vertexShaderName);
     sprintf(fragmenentShaderPath, "Shaders/%s.frag", fragmentShaderName);
-    ShaderModule vertexShader(&device, _id);
+    ShaderModule vertexShader(&device, m_id);
     vertexShader.BuildFromFile(vertexShaderPath, ShaderStage::VERTEX, "main");
 
-    ShaderModule fragmentShader(&device, _id);
+    ShaderModule fragmentShader(&device, m_id);
     fragmentShader.BuildFromFile(fragmenentShaderPath, ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -96,7 +96,7 @@ void Pipeline::InitModel()
     _addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
 
     uint32_t attributeIndex = 1;
-    if (_id.model.primitivePart.info.bits.normalVertexData)
+    if (m_id.model.primitivePart.info.bits.normalVertexData)
     {
         _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
         _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
@@ -104,21 +104,21 @@ void Pipeline::InitModel()
     }
 
     // Set vertex data attributes for dynamic attributes
-    if (_id.model.primitivePart.info.bits.countTexCoord)
+    if (m_id.model.primitivePart.info.bits.countTexCoord)
     {
         _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
         _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
         attributeIndex++;
     }
 
-    if (_id.model.primitivePart.info.bits.tangentVertexData)
+    if (m_id.model.primitivePart.info.bits.tangentVertexData)
     {
         _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
         _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
         attributeIndex++;
     }
 
-    if (_id.model.primitivePart.info.bits.countColor)
+    if (m_id.model.primitivePart.info.bits.countColor)
     {
         _addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
         _addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32Sfloat, 0);
@@ -134,7 +134,7 @@ void Pipeline::InitModel()
     // Set input assembly state
     vk::PipelineInputAssemblyStateCreateInfo assemblyInfo;
     vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
-    switch (_id.model.primitivePart.info.bits.primitiveMode)
+    switch (m_id.model.primitivePart.info.bits.primitiveMode)
     {
     case PrimitiveMode::Points:
         assemblyInfo.topology = vk::PrimitiveTopology::ePointList;
@@ -265,18 +265,18 @@ void Pipeline::InitModel()
     offset += size;
     
     size = 0;
-    if (_id.model.materialPart.info.bits.baseColorInfo)
+    if (m_id.model.materialPart.info.bits.baseColorInfo)
     {
         size += sizeof(glm::vec4);
     }
-    if (_id.model.materialPart.info.bits.metallicRoughnessInfo)
+    if (m_id.model.materialPart.info.bits.metallicRoughnessInfo)
     {
         size += sizeof(glm::vec2);
     }
     pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, offset, size));
 
     uint32_t bindings = 0;
-    if (_id.model.materialPart.info.bits.baseColorMap)
+    if (m_id.model.materialPart.info.bits.baseColorMap)
     {
         vk::DescriptorSetLayoutBinding materialSamplerBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
@@ -285,7 +285,7 @@ void Pipeline::InitModel()
             {});
         perDrawableBindings.push_back(materialSamplerBinding);
     }
-    if (_id.model.materialPart.info.bits.normalMap)
+    if (m_id.model.materialPart.info.bits.normalMap)
     {
         vk::DescriptorSetLayoutBinding materialSamplerBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
@@ -294,7 +294,7 @@ void Pipeline::InitModel()
             {});
         perDrawableBindings.push_back(materialSamplerBinding);
     }
-    if (_id.model.materialPart.info.bits.metallicRoughnessMap)
+    if (m_id.model.materialPart.info.bits.metallicRoughnessMap)
     {
         vk::DescriptorSetLayoutBinding materialSamplerBinding(bindings++,
             vk::DescriptorType::eCombinedImageSampler,
@@ -344,10 +344,10 @@ void Pipeline::InitSkybox()
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     // set shader state
     vk::Device device = m_device;
-    ShaderModule vertexShader(&device, _id);
+    ShaderModule vertexShader(&device, m_id);
     vertexShader.BuildFromFile("Shaders/skybox.vert", ShaderStage::VERTEX, "main");
 
-    ShaderModule fragmentShader(&device, _id);
+    ShaderModule fragmentShader(&device, m_id);
     fragmentShader.BuildFromFile("Shaders/skybox.frag", ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -501,10 +501,10 @@ void Pipeline::InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPa
     m_device = device;
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     // set shader state
-    ShaderModule vertexShader(&device, _id);
+    ShaderModule vertexShader(&device, m_id);
     vertexShader.BuildFromFile("Shaders/prefilteredCubeMap.vert", ShaderStage::VERTEX, "main");
 
-    ShaderModule fragmentShader(&device, _id);
+    ShaderModule fragmentShader(&device, m_id);
     fragmentShader.BuildFromFile("Shaders/prefilteredCubeMap.frag", ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -665,10 +665,10 @@ void Pipeline::InitIrradianceMap(vk::Device device, vk::RenderPass renderPass)
     m_device = device;
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     // set shader state
-    ShaderModule vertexShader(&device, _id);
+    ShaderModule vertexShader(&device, m_id);
     vertexShader.BuildFromFile("Shaders/prefilteredCubeMap.vert", ShaderStage::VERTEX, "main");
 
-    ShaderModule fragmentShader(&device, _id);
+    ShaderModule fragmentShader(&device, m_id);
     fragmentShader.BuildFromFile("Shaders/irradianceMap.frag", ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -829,10 +829,10 @@ void Pipeline::InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass)
     m_device = device;
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     // set shader state
-    ShaderModule vertexShader(&device, _id);
+    ShaderModule vertexShader(&device, m_id);
     vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
-    ShaderModule fragmentShader(&device, _id);
+    ShaderModule fragmentShader(&device, m_id);
     fragmentShader.BuildFromFile("Shaders/genbrdflut.frag", ShaderStage::FRAGMENT, "main");
 
     shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -976,10 +976,10 @@ void Pipeline::InitBrightPass(vk::Device device, vk::RenderPass renderPass)
 	m_device = device;
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 	// set shader state
-	ShaderModule vertexShader(&device, _id);
+	ShaderModule vertexShader(&device, m_id);
 	vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
-	ShaderModule fragmentShader(&device, _id);
+	ShaderModule fragmentShader(&device, m_id);
 	fragmentShader.BuildFromFile("Shaders/brightness.frag", ShaderStage::FRAGMENT, "main");
 
 	shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -1131,10 +1131,10 @@ void Pipeline::InitGaussianBlur(vk::Device device, vk::RenderPass renderPass)
 	m_device = device;
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 	// set shader state
-	ShaderModule vertexShader(&device, _id);
+	ShaderModule vertexShader(&device, m_id);
 	vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
-	ShaderModule fragmentShader(&device, _id);
+	ShaderModule fragmentShader(&device, m_id);
 	fragmentShader.BuildFromFile("Shaders/gaussianBlur.frag", ShaderStage::FRAGMENT, "main");
 
 	shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());
@@ -1284,10 +1284,10 @@ void Pipeline::InitBlit(vk::Device device, vk::RenderPass renderPass)
 	m_device = device;
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 	// set shader state
-	ShaderModule vertexShader(&device, _id);
+	ShaderModule vertexShader(&device, m_id);
 	vertexShader.BuildFromFile("Shaders/quad.vert", ShaderStage::VERTEX, "main");
 
-	ShaderModule fragmentShader(&device, _id);
+	ShaderModule fragmentShader(&device, m_id);
 	fragmentShader.BuildFromFile("Shaders/blit.frag", ShaderStage::FRAGMENT, "main");
 
 	shaderStages.push_back(vertexShader.GetShaderStageCreateInfo());

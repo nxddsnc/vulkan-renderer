@@ -15,7 +15,7 @@ class ResourceManager
 {
 public:
     ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue,
-        uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool, vk::PhysicalDevice &gpu);
+        uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::PhysicalDevice &gpu);
     ~ResourceManager();
 
     // TODO:: move the following functions to drawable class.

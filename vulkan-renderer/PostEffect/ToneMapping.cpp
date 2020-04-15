@@ -21,7 +21,7 @@ ToneMapping::~ToneMapping()
 void ToneMapping::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, std::shared_ptr<Framebuffer> outputFramebuffer)
 {
 	vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTexture->image, inputFramebuffer->m_pColorTexture->format, ssr,
+	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTextures[0]->image, inputFramebuffer->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 	PipelineId blitPipelineId;
@@ -60,7 +60,7 @@ void ToneMapping::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuf
 
 	commandBuffer.endRenderPass();
 
-	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTexture->image, inputFramebuffer->m_pColorTexture->format, ssr,
+	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTextures[0]->image, inputFramebuffer->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 }
 

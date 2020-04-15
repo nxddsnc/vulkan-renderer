@@ -37,7 +37,7 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 	clearValues[1].depthStencil.stencil = 0;
 
 	// TODO: ImageLayout should become a property of vulkanTexture.
-	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTexture->image, inputFramebuffer->m_pColorTexture->format, ssr,
+	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTextures[0]->image, inputFramebuffer->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	
 	// bright pass filter
@@ -62,14 +62,14 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 
 	commandBuffer.endRenderPass();
 
-	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTexture->image, inputFramebuffer->m_pColorTexture->format, ssr,
+	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTextures[0]->image, inputFramebuffer->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 
 
 	for (int i = 0; i < 2; ++i)
 	{
 		// blur x
-		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer1->m_pColorTexture->image, m_framebuffer1->m_pColorTexture->format, ssr,
+		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer1->m_pColorTextures[0]->image, m_framebuffer1->m_pColorTextures[0]->format, ssr,
 			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		vk::RenderPassBeginInfo blurPassInfoX(
@@ -93,11 +93,11 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 
 		commandBuffer.endRenderPass();
 
-		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer1->m_pColorTexture->image, m_framebuffer1->m_pColorTexture->format, ssr,
+		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer1->m_pColorTextures[0]->image, m_framebuffer1->m_pColorTextures[0]->format, ssr,
 			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 
 		// blur y
-		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer2->m_pColorTexture->image, m_framebuffer2->m_pColorTexture->format, ssr,
+		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer2->m_pColorTextures[0]->image, m_framebuffer2->m_pColorTextures[0]->format, ssr,
 			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		vk::RenderPassBeginInfo blurPassInfoY(
@@ -121,7 +121,7 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 
 		commandBuffer.endRenderPass();
 
-		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer2->m_pColorTexture->image, m_framebuffer2->m_pColorTexture->format, ssr,
+		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer2->m_pColorTextures[0]->image, m_framebuffer2->m_pColorTextures[0]->format, ssr,
 			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 	}
 	
@@ -136,12 +136,13 @@ std::shared_ptr<Framebuffer> Bloom::GetFramebuffer()
 
 void Bloom::_init()
 {
+	std::vector<MyImageFormat> colorFormats = { MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT };
 	m_framebuffer1 = std::make_shared<Framebuffer>("bloom-1", m_pResourceManager,
-		MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT,
+		colorFormats, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT,
 		m_width, m_height);
 
 	m_framebuffer2 = std::make_shared<Framebuffer>("bloom-2", m_pResourceManager,
-		MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT,
+		colorFormats, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT,
 		m_width, m_height);
 
 	PipelineId brightnessPipelineId;

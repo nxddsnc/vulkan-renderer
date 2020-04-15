@@ -211,9 +211,11 @@ class SHLight;
 class Skybox
 {
 public:
-    Skybox(ResourceManager *resourceManager, VulkanContext *context);
+    Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManager, VulkanContext *context);
     ~Skybox();
     bool LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool);
+
+	void Draw(vk::CommandBuffer &commandBuffer, std::shared_ptr<VulkanCamera> camera);
 public:
     ResourceManager               *m_pResourceManager;
 	PipelineManager				  *m_pPipelineManager;

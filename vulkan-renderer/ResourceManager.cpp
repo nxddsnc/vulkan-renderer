@@ -7,14 +7,13 @@
 #include <algorithm>
 
 ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue,
-    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool, vk::PhysicalDevice &gpu)
+    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::PhysicalDevice &gpu)
 {
     m_device         = device;
     m_commandPool    = commandPool;
     m_graphicsQueue = graphicsQueue;
     m_graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
     m_memoryAllocator = memoryAllocator;
-    m_descriptorPool = descriptorPool;
     m_gpu = gpu;
 }
 

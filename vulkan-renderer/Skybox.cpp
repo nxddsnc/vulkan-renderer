@@ -15,10 +15,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include "SHLight.h"
+#include "Camera.hpp"
 
-Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
+Skybox::Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManager, VulkanContext *context)
 {
     m_pResourceManager = resourceManager;
+	m_pPipelineManager = pipelineManager;
     m_pContext = context;
     
     m_pDrawable = std::make_shared<Drawable>();
@@ -218,6 +220,25 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
 	m_pSHLight->CreateDescriptorSet(device, descriptorPool);
 
     m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureIrradianceMap, m_pVulkanTextureBRDFLUT });
+}
+
+void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<VulkanCamera> camera)
+{
+	PipelineId skyBoxPipelineId;
+	skyBoxPipelineId.type = PipelineType::SKYBOX;
+	skyBoxPipelineId.model.primitivePart.info.bits.positionVertexData = 1;
+	skyBoxPipelineId.model.primitivePart.info.bits.normalVertexData = 0;
+	skyBoxPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
+	skyBoxPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
+	skyBoxPipelineId.model.primitivePart.info.bits.countColor = 0;
+	std::shared_ptr<Pipeline> pipelineSkybox = m_pPipelineManager->GetPipeline(skyBoxPipelineId);
+
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
+	commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
+	commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &camera->descriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &m_dsSkybox, 0, nullptr);
+	commandBuffer.drawIndexed(m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
 }
 
 std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)

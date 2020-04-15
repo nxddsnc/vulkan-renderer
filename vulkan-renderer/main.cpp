@@ -84,7 +84,7 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
     mouseX = xpos;
     mouseY = ypos;
     
-    VulkanCamera *camera = renderer->GetCamera();
+    std::shared_ptr<VulkanCamera> camera = renderer->GetCamera();
     if (camera->keys.left) {
         camera->rotate(glm::vec3(-dy * camera->rotationSpeed, 0.0f, -dx * camera->rotationSpeed));
     }

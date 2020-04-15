@@ -8,6 +8,8 @@ x64/
 
 *.spv
 
+.svn/
+
 vulkan-renderer/TestModel/
 
 vulkan-renderer/third-party/libs/shaderc_combined.lib

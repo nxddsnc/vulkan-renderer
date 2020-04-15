@@ -105,8 +105,8 @@ public:
 
 public:
 	bool m_bReady;
+	PipelineId m_id;
 private:
-    PipelineId _id;
     VulkanRenderer    * _renderer;
     vk::Device          m_device;
     vk::RenderPass      _renderPass;

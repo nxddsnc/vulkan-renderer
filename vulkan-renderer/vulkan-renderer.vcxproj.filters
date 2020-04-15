@@ -66,9 +66,6 @@
     <ClCompile Include="MyScene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Vulkan\RenderQueue.cpp">
-      <Filter>源文件\Vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="Vulkan\VulkanRenderer.cpp">
       <Filter>源文件\Vulkan</Filter>
     </ClCompile>
@@ -110,6 +107,15 @@
     </ClCompile>
     <ClCompile Include="PostEffect\ToneMapping.cpp">
       <Filter>源文件\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderQueue.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderQueueManager.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,9 +161,6 @@
     <ClInclude Include="Vulkan\VulkanRenderer.h">
       <Filter>头文件\Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="Vulkan\RenderQueue.h">
-      <Filter>头文件\Vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="Vulkan\GraphicsPipeline.h">
       <Filter>头文件\Vulkan</Filter>
     </ClInclude>
@@ -199,6 +202,15 @@
     </ClInclude>
     <ClInclude Include="PostEffect\ToneMapping.h">
       <Filter>头文件\PostEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderQueue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderQueueManager.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

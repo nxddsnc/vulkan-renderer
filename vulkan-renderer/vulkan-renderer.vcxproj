@@ -173,6 +173,9 @@
     <ClCompile Include="PostEffect\Bloom.cpp" />
     <ClCompile Include="PostEffect\PostEffect.cpp" />
     <ClCompile Include="PostEffect\ToneMapping.cpp" />
+    <ClCompile Include="RenderQueue.cpp" />
+    <ClCompile Include="RenderQueueManager.cpp" />
+    <ClCompile Include="RenderScene.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
@@ -182,7 +185,6 @@
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />
     <ClCompile Include="Vulkan\RenderPass.cpp" />
-    <ClCompile Include="Vulkan\RenderQueue.cpp" />
     <ClCompile Include="Vulkan\ShaderModule.cpp" />
     <ClCompile Include="Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -204,6 +206,9 @@
     <ClInclude Include="PostEffect\Bloom.h" />
     <ClInclude Include="PostEffect\PostEffect.h" />
     <ClInclude Include="PostEffect\ToneMapping.h" />
+    <ClInclude Include="RenderQueue.h" />
+    <ClInclude Include="RenderQueueManager.h" />
+    <ClInclude Include="RenderScene.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />
@@ -214,7 +219,6 @@
     <ClInclude Include="Vulkan\Pipeline.h" />
     <ClInclude Include="Vulkan\PipelineManager.h" />
     <ClInclude Include="Vulkan\RenderPass.h" />
-    <ClInclude Include="Vulkan\RenderQueue.h" />
     <ClInclude Include="Vulkan\ShaderModule.h" />
     <ClInclude Include="Vulkan\VulkanRenderer.h" />
     <ClInclude Include="Window.h" />

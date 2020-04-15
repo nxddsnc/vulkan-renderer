@@ -21,23 +21,23 @@ struct UniformBufferObject {
 };
 
 class ResourceManager;
-
-
-struct FrameData 
-{
-    vk::Semaphore                   renderFinishedSemaphore{};
-    std::vector<vk::Semaphore>      imageReadySemaphores{};
-    std::vector<vk::CommandBuffer>  cmdBuffers;
-    vk::Framebuffer                 framebuffer;
-    //std::vector<DescriptorSet>      descriptorSets;
-};
-
 class PipelineManager;
 class VulkanContext;
 class VulkanCamera;
 class Skybox;
 class Framebuffer;
 class RenderPass;
+struct VulkanTexture;
+class RenderScene;
+
+struct FrameData 
+{
+    vk::Semaphore                   renderFinishedSemaphore{};
+    std::vector<vk::Semaphore>      imageReadySemaphores{};
+    std::vector<vk::CommandBuffer>  cmdBuffers;
+    std::shared_ptr<Framebuffer>    framebuffer;
+};
+
 class VulkanRenderer
 {
 public:
@@ -47,7 +47,7 @@ public:
     bool Run();
     void DrawFrame();
     void Resize(int width, int height);
-    VulkanCamera *GetCamera();
+	std::shared_ptr<VulkanCamera> GetCamera();
     void OnSceneChanged();
     void GetExtendSize(uint32_t &width, uint32_t &height);
 
@@ -94,75 +94,68 @@ private:
     void _initDescriptorPool();
     void _deInitDescriptorPool();
 
-    void _initDescriptorSet();
-    void _deInitDescriptorSet();
-
     void _initSynchronizations();
     void _deInitSynchronizations();
 
     //void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
     void _createCommandBuffers();
-    VulkanContext                        *    _context;
-											  
-    UniformBufferObject                       _ubo = {};
-    float                                     _time = 0.0;
-											  
-    vk::Instance                              _instance;
-    vk::PhysicalDevice                        _gpu;
-    vk::Device                                _device;
-    vk::Queue                                 _queue;
-    vk::CommandPool                           _commandPool;
-    vk::PhysicalDeviceProperties              _gpuProperties;
-    vk::PhysicalDeviceMemoryProperties        _gpuMemoryProperties;
-    uint32_t                                  _graphicsQueueFamilyIndex = 0;
-											  
-    VmaAllocator                              _memoryAllocator;
-											  
-    ResourceManager                     *     _resourceManager;
-											  
-    PipelineManager                     *     _pipelineManager;
-											  
-    vk::SurfaceKHR                            _surface;
-    std::vector<vk::Image>                    _swapchainImages;
-    std::vector<vk::ImageView>                _swapchainImageViews;
-    std::vector<FrameData>                    _framesData;
-	std::shared_ptr<RenderPass>				  _renderPass;
-											  
-	std::shared_ptr<Framebuffer>			  _offscreenFramebuffer;
-											  
-    std::vector<VkDescriptorSet>              _descriptorSets;
-    vk::DescriptorSetLayout                   _frameDescriptorSetLayout;
-    vk::DescriptorPool                        _descriptorPool;
-    std::vector<VkCommandBuffer>              _commandBuffers;
+	VulkanContext                        *        _context;
+
+	UniformBufferObject                           _ubo = {};
+	float                                         _time = 0.0;
+
+	vk::Instance                                  _instance;
+	vk::PhysicalDevice                            _gpu;
+	vk::Device                                    _device;
+	vk::Queue                                     _queue;
+	vk::CommandPool                               _commandPool;
+	vk::PhysicalDeviceProperties                  _gpuProperties;
+	vk::PhysicalDeviceMemoryProperties            _gpuMemoryProperties;
+	uint32_t                                      _graphicsQueueFamilyIndex = 0;
+
+	VmaAllocator                                  _memoryAllocator;
+
+	ResourceManager                     *         _resourceManager;
+
+	PipelineManager                     *         _pipelineManager;
+
+	vk::SurfaceKHR                                _surface;
+	/*std::vector<vk::Image>                        _swapchainImages;
+	std::vector<vk::ImageView>                    _swapchainImageViews;*/
+	std::vector<std::shared_ptr<VulkanTexture>>   _swapchainImages;
+    std::vector<FrameData>                        _framesData;
+	std::shared_ptr<RenderPass>				      _renderPass;
+											      
+	std::shared_ptr<Framebuffer>			      _offscreenFramebuffer;
+											      
+    std::vector<VkDescriptorSet>                  _descriptorSets;
+    vk::DescriptorSetLayout                       _frameDescriptorSetLayout;
+    vk::DescriptorPool                            _descriptorPool;
+    std::vector<VkCommandBuffer>                  _commandBuffers;
 
     std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>>> _drawableMap;
 
-    std::vector<vk::Semaphore>                _imageAvailableSemaphores;
-											  
-    size_t                                    _currentFrame = 0;
-											  
-    vk::Extent2D                              _swapchainExtent;
-											  
-    VkImage                                   _depthStencilImage = VK_NULL_HANDLE;
-    VmaAllocation                             _depthStencilImageMemory = VK_NULL_HANDLE;
-    VkImageView                               _depthStencilImageView = VK_NULL_HANDLE;
-    vk::Format                                _depthStencilFormat;
-    boolean                                   _stencilAvailable = false;
-											  
-    vk::SurfaceFormatKHR                      _surfaceFormat;
-    VkSwapchainKHR                            _swapchain = VK_NULL_HANDLE;
-    uint32_t                                  _swapchainImageCount;
-    uint32_t                                  _activeSwapchainImageId = UINT32_MAX;
-											  
-    VkFence                                   _swapchainImageAvailable;
-											  
-    Window                            *       _window = nullptr;
-											  
-    VulkanCamera                      *       _camera;
-											  
-    Skybox                            *       _skybox;
-    std::shared_ptr<Axis>                     _axis;
+	std::shared_ptr<RenderScene>				  _renderScene;
 
-	std::vector<std::shared_ptr<PostEffect>>  m_postEffects;
+    std::vector<vk::Semaphore>                    _imageAvailableSemaphores;
+											      
+    size_t                                        _currentFrame = 0;
+											      
+    vk::Extent2D                                  _swapchainExtent;
+
+	std::shared_ptr<VulkanTexture>				  _depthStencilImage;
+
+    boolean                                       _stencilAvailable = false;
+											      
+    vk::SurfaceFormatKHR                          _surfaceFormat;
+    VkSwapchainKHR                                _swapchain = VK_NULL_HANDLE;
+    uint32_t                                      _swapchainImageCount;
+    uint32_t                                      _activeSwapchainImageId = UINT32_MAX;
+											      
+    VkFence                                       _swapchainImageAvailable;
+											      
+    Window                            *           _window = nullptr;
+											      
+	std::vector<std::shared_ptr<PostEffect>>      m_postEffects;
 };
 
