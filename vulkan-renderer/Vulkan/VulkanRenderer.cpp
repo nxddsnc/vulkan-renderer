@@ -346,25 +346,23 @@ void VulkanRenderer::_initSwapchainImages()
 	{
 		_swapchainImages[i] = std::make_shared<VulkanTexture>();
 		_swapchainImages[i]->image = images[i];
-		vk::ImageViewCreateInfo createInfo({
-			{},
+		vk::ImageViewCreateInfo createInfo({},
 			_swapchainImages[i]->image,
 			vk::ImageViewType::e2D,
 			_surfaceFormat.format,
 			vk::ComponentMapping({
-			vk::ComponentSwizzle::eR,
-			vk::ComponentSwizzle::eG,
+				vk::ComponentSwizzle::eR,
+				vk::ComponentSwizzle::eG,
 				vk::ComponentSwizzle::eB,
 				vk::ComponentSwizzle::eA
-		}),
+			}),
 			vk::ImageSubresourceRange({
-			vk::ImageAspectFlagBits::eColor,
-			0,
+				vk::ImageAspectFlagBits::eColor,
+				0,
 				1,
 				0,
 				1
-		})
-		});
+			}));
 		_swapchainImages[i]->imageView = _device.createImageView(createInfo);
 	}
 }
@@ -494,8 +492,8 @@ void VulkanRenderer::_initOffscreenRenderTargets()
 	std::shared_ptr<Bloom> bloom = std::make_shared<Bloom>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
 	m_postEffects.push_back(bloom);
 
-	//std::shared_ptr<ToneMapping> toneMapping = std::make_shared<ToneMapping>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
-	//m_postEffects.push_back(toneMapping);
+	std::shared_ptr<ToneMapping> toneMapping = std::make_shared<ToneMapping>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+	m_postEffects.push_back(toneMapping);
 }
 
 void VulkanRenderer::_deInitOffscreenRenderTargets()
@@ -600,63 +598,17 @@ void VulkanRenderer::_createCommandBuffers()
 		commandBuffer.endRenderPass();
 
 		std::shared_ptr<Framebuffer> inputFrameubffer = _offscreenFramebuffer;
-		for (int index = 0; index < m_postEffects.size(); ++index)
+		for (int index = 0; index < m_postEffects.size() - 1; ++index)
 		{
 			m_postEffects[index]->Draw(commandBuffer, { inputFrameubffer });
 			inputFrameubffer = m_postEffects[index]->GetFramebuffer();
 		}
 
-		// Blit offscreen texture to swapchain framebuffer
-		// FIXME: Move the following code to tonemapping.cpp.
-		vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-		_resourceManager->SetImageLayout(commandBuffer, inputFrameubffer->m_pColorTextures[0]->image, inputFrameubffer->m_pColorTextures[0]->format, ssr,
-			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+		// Tonemapping 
+		// FIXME: Not a very solid method of post processing.
+		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, _offscreenFramebuffer };
+		m_postEffects.back()->Draw(commandBuffer, framebuffers, _framesData[i].framebuffer);
 
-		_resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTextures[0]->image, _offscreenFramebuffer->m_pColorTextures[0]->format, ssr,
-			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-		PipelineId blitPipelineId;
-		blitPipelineId.type = PipelineType::BLIT;
-		blitPipelineId.model.primitivePart.info.bits.positionVertexData = 1;
-		blitPipelineId.model.primitivePart.info.bits.normalVertexData = 0;
-		blitPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
-		blitPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
-		blitPipelineId.model.primitivePart.info.bits.countColor = 0;
-
-		std::shared_ptr<Pipeline> pipelineBlit = _pipelineManager->GetPipeline(blitPipelineId);
-		if (!pipelineBlit->m_bReady)
-		{
-			// TODO: refactor
-			pipelineBlit->InitBlit(_device, _renderPass->Get());
-			pipelineBlit->m_bReady = true;
-		}
-
-		vk::RenderPassBeginInfo blitRenderPassInfo(
-			_renderPass->Get(),
-			_framesData[i].framebuffer->m_vkFramebuffer,
-			vk::Rect2D(vk::Offset2D(0, 0), _swapchainExtent),
-			(uint32_t)clearValues.size(),
-			clearValues.data());
-		commandBuffer.beginRenderPass(&blitRenderPassInfo, vk::SubpassContents::eInline);
-
-		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipeline());
-
-		vk::Viewport viewport(0, 0, _swapchainExtent.width, _swapchainExtent.height, 0, 1);
-		vk::Rect2D sissor(vk::Offset2D(0, 0), _swapchainExtent);
-		commandBuffer.setViewport(0, 1, &viewport);
-		commandBuffer.setScissor(0, 1, &sissor);
-
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 0, 1, &(inputFrameubffer->m_dsTexture), 0, nullptr);
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineBlit->GetPipelineLayout(), 1, 1, &(_offscreenFramebuffer->m_dsTexture), 0, nullptr);
-		commandBuffer.draw(3, 1, 0, 0);
-
-		commandBuffer.endRenderPass();
-
-		_resourceManager->SetImageLayout(commandBuffer, _offscreenFramebuffer->m_pColorTextures[0]->image, _offscreenFramebuffer->m_pColorTextures[0]->format, ssr,
-			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
-
-		_resourceManager->SetImageLayout(commandBuffer, inputFrameubffer->m_pColorTextures[0]->image, inputFrameubffer->m_pColorTextures[0]->format, ssr,
-			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 
 		commandBuffer.end();
 

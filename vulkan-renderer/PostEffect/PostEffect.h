@@ -9,7 +9,7 @@ public:
 	PostEffect(ResourceManager *resourecManager, PipelineManager *pipelineManager, int width, int height);
 	virtual ~PostEffect();
 
-	virtual void Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, std::shared_ptr<Framebuffer> outputFramebuffer = nullptr);
+	virtual void Draw(vk::CommandBuffer commandBuffer, std::vector<std::shared_ptr<Framebuffer>> inputFramebuffers, std::shared_ptr<Framebuffer> outputFramebuffer = nullptr);
 
 	virtual std::shared_ptr<Framebuffer> GetFramebuffer();
 

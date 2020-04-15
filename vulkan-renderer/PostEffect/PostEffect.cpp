@@ -20,7 +20,7 @@ PostEffect::~PostEffect()
 	_deInit();
 }
 
-void PostEffect::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, std::shared_ptr<Framebuffer> outputFramebuffer)
+void PostEffect::Draw(vk::CommandBuffer commandBuffer, std::vector<std::shared_ptr<Framebuffer>> inputFramebuffers, std::shared_ptr<Framebuffer> outputFramebuffer)
 {
 	
 }

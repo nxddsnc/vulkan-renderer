@@ -24,7 +24,7 @@ Bloom::~Bloom()
 	_deInit();
 }
 
-void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, std::shared_ptr<Framebuffer> outputFramebuffer)
+void Bloom::Draw(vk::CommandBuffer commandBuffer, std::vector<std::shared_ptr<Framebuffer>> inputFramebuffers, std::shared_ptr<Framebuffer> outputFramebuffer)
 {
 	vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
 	std::array<vk::ClearValue, 2> clearValues{};
@@ -37,7 +37,7 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 	clearValues[1].depthStencil.stencil = 0;
 
 	// TODO: ImageLayout should become a property of vulkanTexture.
-	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTextures[0]->image, inputFramebuffer->m_pColorTextures[0]->format, ssr,
+	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffers[0]->m_pColorTextures[0]->image, inputFramebuffers[0]->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	
 	// bright pass filter
@@ -57,12 +57,12 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 	commandBuffer.setScissor(0, 1, &sissor);
 
 	commandBuffer.pushConstants(m_pPipelineBrightness->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float), reinterpret_cast<void*>(&m_brightnessThreshold));
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipelineBrightness->GetPipelineLayout(), 0, 1, &(inputFramebuffer->m_dsTexture), 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipelineBrightness->GetPipelineLayout(), 0, 1, &(inputFramebuffers[0]->m_dsTexture), 0, nullptr);
 	commandBuffer.draw(3, 1, 0, 0);
 
 	commandBuffer.endRenderPass();
 
-	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffer->m_pColorTextures[0]->image, inputFramebuffer->m_pColorTextures[0]->format, ssr,
+	m_pResourceManager->SetImageLayout(commandBuffer, inputFramebuffers[0]->m_pColorTextures[0]->image, inputFramebuffers[0]->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 
 
@@ -124,9 +124,6 @@ void Bloom::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<Framebuffer> i
 		m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffer2->m_pColorTextures[0]->image, m_framebuffer2->m_pColorTextures[0]->format, ssr,
 			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 	}
-	
-
-	PostEffect::afterRendering(commandBuffer, inputFramebuffer, ssr);
 }
 
 std::shared_ptr<Framebuffer> Bloom::GetFramebuffer()
