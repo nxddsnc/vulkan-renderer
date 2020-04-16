@@ -22,4 +22,7 @@ private:
 	void _end(vk::CommandBuffer &commandBuffer);
 
 	void _doShading(vk::CommandBuffer& commandBuffer);
+
+private:
+	std::shared_ptr<Pipeline> m_pPipeline;
 };

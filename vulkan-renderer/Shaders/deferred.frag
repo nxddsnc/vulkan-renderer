@@ -35,7 +35,6 @@ vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
 
 vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
 {
-    float NoV = clamp(dot(N, V), 0, 1);
     // vec3 R = (2 * dot(V, N) * N - V).xyz;
     vec3 R = -reflect(V, N).xzy;
     
@@ -44,7 +43,8 @@ vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
     
     vec4 prefilteredColor = textureLod(u_prefileteredCubemap, R, lod);
     vec2 brdf = texture(u_brdfLut, vec2(max(dot(N, V), 0.0), Roughness)).xy;
-    return prefilteredColor.xyz * (color * brdf.x + brdf.y);
+    // multiplied by length(N) to prevent background flicking.
+    return length(N) * (prefilteredColor.xyz * (color * brdf.x + brdf.y));
 }
 
 void main() 
@@ -54,7 +54,6 @@ void main()
     vec3 baseColor = texture(u_albedoTexture, inUV).xyz;
 
     vec3 V = normalize(ubo.cameraPos - inPosition.xyz);
-
 
     vec2 metallicRoughness = vec2(inPosition.w, worldNormal.w);
 

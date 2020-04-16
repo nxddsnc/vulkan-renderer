@@ -64,6 +64,15 @@ void RenderSceneDeferred::_init()
 	 m_outputFramebuffer = std::make_shared<Framebuffer>("deferred-output", m_pResourceManager,
 		 outputColorFormats, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT, m_width, m_height);
 
+	 PipelineId id;
+	 id.type = PipelineType::DEFERRED_SHADING;
+	 id.model.primitivePart.info.bits.positionVertexData = 1;
+	 id.model.primitivePart.info.bits.normalVertexData = 0;
+	 id.model.primitivePart.info.bits.countTexCoord = 1;
+	 id.model.primitivePart.info.bits.tangentVertexData = 0;
+	 id.model.primitivePart.info.bits.countColor = 0;
+
+	 m_pPipeline = m_pPipelineManager->GetPipeline(id, m_outputFramebuffer->m_pRenderPass);
 }
 
 void RenderSceneDeferred::_deInit()
@@ -117,16 +126,6 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 	clearValues[1].depthStencil.depth = 1.0f;
 	clearValues[1].depthStencil.stencil = 0;
 
-	PipelineId id;
-	id.type = PipelineType::DEFERRED_SHADING;
-	id.model.primitivePart.info.bits.positionVertexData = 1;
-	id.model.primitivePart.info.bits.normalVertexData = 0;
-	id.model.primitivePart.info.bits.countTexCoord = 1;
-	id.model.primitivePart.info.bits.tangentVertexData = 0;
-	id.model.primitivePart.info.bits.countColor = 0;
-
-	std::shared_ptr<Pipeline> pipeline = m_pPipelineManager->GetPipeline(id, m_outputFramebuffer->m_pRenderPass);
-
 	vk::ImageSubresourceRange ssr(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
 
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[0]->image, m_framebuffers[0]->m_pColorTextures[0]->format, ssr,
@@ -144,7 +143,7 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 		clearValues.data());
 	commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
 
-	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipeline());
 
 	vk::Viewport viewport(0, 0, m_width, m_height, 0, 1);
 	vk::Rect2D sissor(vk::Offset2D(0, 0), vk::Extent2D(m_width, m_height));
@@ -152,11 +151,23 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 	commandBuffer.setScissor(0, 1, &sissor);
 
 	//commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float) * 4, reinterpret_cast<void*>(&m_parameters));
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &m_pCamera->descriptorSet, 0, nullptr);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 1, 1, &m_pSkybox->m_pSHLight->m_descriptorSet, 0, nullptr);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 2, 1, &m_pSkybox->m_preFilteredDescriptorSet, 0, nullptr);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 3, 1, &m_framebuffers[0]->m_dsTexture, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 0, 1, &m_pCamera->descriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 1, 1, &m_pSkybox->m_pSHLight->m_descriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 2, 1, &m_pSkybox->m_preFilteredDescriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 3, 1, &m_framebuffers[0]->m_dsTexture, 0, nullptr);
 	commandBuffer.draw(3, 1, 0, 0);
+
+	/*vk::ImageBlit imageBlit(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, 0, 0, 1),
+														{ vk::Offset3D(0, 0, 0), vk::Offset3D(m_width, m_height, 0) },
+														vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, 0, 0, 1),
+														{ vk::Offset3D(0, 0, 0), vk::Offset3D(m_width, m_height, 0) });
+
+	std::array<vk::ImageBlit, 1> imageBlits = { imageBlit };
+
+	commandBuffer.blitImage(m_framebuffers[0]->m_pDepthTexture->image, vk::ImageLayout::eShaderReadOnlyOptimal,
+		m_outputFramebuffer->m_pDepthTexture->image, vk::ImageLayout::eDepthStencilAttachmentOptimal, imageBlits, vk::Filter::eNearest);
+*/
+	m_pSkybox->Draw(commandBuffer, m_pCamera, m_outputFramebuffer->m_pRenderPass);
 
 	commandBuffer.endRenderPass();
 
