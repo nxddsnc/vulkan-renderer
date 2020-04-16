@@ -29,6 +29,7 @@
 #include "PostEffect/ToneMapping.h"
 #include <assert.h>
 #include "RenderSceneForward.h"
+#include "RenderSceneDeferred.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -58,7 +59,10 @@ VulkanRenderer::VulkanRenderer(Window *window)
 	_initDescriptorPool();
 	_resourceManager->m_descriptorPool = _descriptorPool;
 
-	_renderScene = std::make_shared<RenderSceneForward>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+	//_renderScene = std::make_shared<RenderSceneForward>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+
+	_renderScene = std::make_shared<RenderSceneDeferred>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+
 	_renderScene->m_pSkybox = std::make_shared<Skybox>(_resourceManager, _pipelineManager, _context);
 	_renderScene->m_pAxis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
 

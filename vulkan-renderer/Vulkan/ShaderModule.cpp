@@ -81,6 +81,7 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
     switch (_id.type)
     {
     case PipelineType::MODEL_FORWARD:
+	case PipelineType::MODEL_DEFERRED:
     {
         uint8_t bindings = 1;
         if (_id.model.primitivePart.info.bits.normalVertexData)

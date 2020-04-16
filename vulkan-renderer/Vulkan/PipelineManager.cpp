@@ -20,15 +20,21 @@ std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id, std::s
   switch(id.type)
   {
   case MODEL_FORWARD:
-      pipeline->InitModel(renderPass);
+      pipeline->InitModelForward(renderPass);
 	  pipeline->m_bReady = true;
       break;
+  case MODEL_DEFERRED:
+	  pipeline->InitModelGBuffer(renderPass);
+	  pipeline->m_bReady = true;
+	  break;
   case SKYBOX:
       pipeline->InitSkybox(renderPass);
 	  pipeline->m_bReady = true;
 	  break;
-  //case PREFILTERED_CUBE_MAP:
-  //    pipeline->InitPrefilteredCubeMap();
+  case DEFERRED_SHADING:
+	  pipeline->InitDeferred(renderPass);
+	  pipeline->m_bReady = true;
+	  break;
   }
   
   return pipeline;

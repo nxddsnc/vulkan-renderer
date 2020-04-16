@@ -3,6 +3,8 @@
 enum PipelineType
 {
 	MODEL_FORWARD,
+	MODEL_DEFERRED,
+	DEFERRED_SHADING,
 	SKYBOX,
 	PREFILTERED_CUBE_MAP,
 	IRRADIANCE_MAP,
@@ -95,7 +97,8 @@ public:
     void Destroy();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
-    void InitModel(std::shared_ptr<RenderPass> renderPass);
+    void InitModelForward(std::shared_ptr<RenderPass> renderPass);
+	void InitModelGBuffer(std::shared_ptr<RenderPass> renderPass);
     void InitSkybox(std::shared_ptr<RenderPass> renderPass);
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
     void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
@@ -103,6 +106,7 @@ public:
 	void InitBrightPass(vk::Device device, vk::RenderPass renderPass);
 	void InitGaussianBlur(vk::Device device, vk::RenderPass renderPass);
 	void InitBlit(vk::Device device, vk::RenderPass renderPass);
+	void InitDeferred(std::shared_ptr<RenderPass> renderPass);
 
 public:
 	bool m_bReady;

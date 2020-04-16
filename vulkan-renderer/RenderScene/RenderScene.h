@@ -19,7 +19,7 @@ public:
 	virtual ~RenderScene();
 
 	void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawables);
-	void Draw(vk::CommandBuffer& commandBuffer);
+	virtual void Draw(vk::CommandBuffer& commandBuffer);
 	void UpdateUniforms();
 
 	virtual std::shared_ptr<Framebuffer> GetFramebuffer();
