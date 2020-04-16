@@ -6,13 +6,14 @@ class MyMesh;
 class Drawable;
 class ResourceManager;
 class PipelineManager;
+class RenderPass;
 class Axis
 {
 public:
     Axis(ResourceManager *pResourceManager, PipelineManager *pPipelineManager);
     ~Axis();
 
-    void CreateDrawCommand(vk::CommandBuffer &commandBuffer, vk::DescriptorSet descriptorSet);
+    void CreateDrawCommand(vk::CommandBuffer &commandBuffer, vk::DescriptorSet descriptorSet, std::shared_ptr<RenderPass> renderPass);
 
     std::shared_ptr<Drawable> m_pDrawable;
 

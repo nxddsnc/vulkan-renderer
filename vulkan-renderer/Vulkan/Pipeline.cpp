@@ -63,7 +63,7 @@ vk::DescriptorSetLayout Pipeline::_createDescriptorSetLayout(std::vector<vk::Des
     return m_device.createDescriptorSetLayout(layoutInfo);
 }
 
-void Pipeline::InitModel()
+void Pipeline::InitModel(std::shared_ptr<RenderPass> renderPass)
 {
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     vk::Device device = m_device;
@@ -326,7 +326,7 @@ void Pipeline::InitModel()
                                                  &colorBlending,
                                                  {},
                                                  _pipelineLayout,
-                                                 _renderer->GetOffscreenRenderPass(),
+                                                 renderPass->Get(),
                                                  {},
                                                  {},
                                                  static_cast<int32_t>(-1) });
@@ -339,7 +339,7 @@ void Pipeline::InitModel()
     }
 }
 
-void Pipeline::InitSkybox()
+void Pipeline::InitSkybox(std::shared_ptr<RenderPass> renderPass)
 {
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
     // set shader state
@@ -483,7 +483,7 @@ void Pipeline::InitSkybox()
         &colorBlending,
         {},
         _pipelineLayout,
-        _renderer->GetOffscreenRenderPass(),
+		renderPass->Get(),
         {},
         {},
         static_cast<int32_t>(-1) });

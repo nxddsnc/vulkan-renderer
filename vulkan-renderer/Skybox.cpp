@@ -222,7 +222,7 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureIrradianceMap, m_pVulkanTextureBRDFLUT });
 }
 
-void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<VulkanCamera> camera)
+void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<VulkanCamera> camera, std::shared_ptr<RenderPass> renderPass)
 {
 	PipelineId skyBoxPipelineId;
 	skyBoxPipelineId.type = PipelineType::SKYBOX;
@@ -231,7 +231,7 @@ void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<VulkanCamer
 	skyBoxPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
 	skyBoxPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
 	skyBoxPipelineId.model.primitivePart.info.bits.countColor = 0;
-	std::shared_ptr<Pipeline> pipelineSkybox = m_pPipelineManager->GetPipeline(skyBoxPipelineId);
+	std::shared_ptr<Pipeline> pipelineSkybox = m_pPipelineManager->GetPipeline(skyBoxPipelineId, renderPass);
 
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
 	commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());

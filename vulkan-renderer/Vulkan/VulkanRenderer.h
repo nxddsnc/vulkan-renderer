@@ -65,7 +65,6 @@ public:
     uint32_t GetSwapchainImageCount();
     vk::SurfaceFormatKHR GetSurfaceFormat();
     vk::Format GetDepthFormat();
-    vk::RenderPass GetOffscreenRenderPass();
 
     void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> nodes);
 private:
@@ -125,8 +124,6 @@ private:
 	std::vector<std::shared_ptr<VulkanTexture>>   _swapchainImages;
     std::vector<FrameData>                        _framesData;
 	std::shared_ptr<RenderPass>				      _renderPass;
-											      
-	std::shared_ptr<Framebuffer>			      _offscreenFramebuffer;
 											      
     std::vector<VkDescriptorSet>                  _descriptorSets;
     vk::DescriptorSetLayout                       _frameDescriptorSetLayout;

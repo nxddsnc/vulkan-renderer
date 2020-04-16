@@ -28,6 +28,12 @@
     <Filter Include="源文件\PostEffect">
       <UniqueIdentifier>{eaa80228-35c0-4557-a8ed-f5ad670e9456}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\RenderScene">
+      <UniqueIdentifier>{9732039f-03e2-44fd-9686-de39a6abd223}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RenderScene">
+      <UniqueIdentifier>{03276d6e-1fb0-4fc9-929a-574f14a630d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -108,14 +114,20 @@
     <ClCompile Include="PostEffect\ToneMapping.cpp">
       <Filter>源文件\PostEffect</Filter>
     </ClCompile>
-    <ClCompile Include="RenderScene.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="RenderScene\RenderQueue.cpp">
+      <Filter>源文件\RenderScene</Filter>
     </ClCompile>
-    <ClCompile Include="RenderQueue.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="RenderScene\RenderQueueManager.cpp">
+      <Filter>源文件\RenderScene</Filter>
     </ClCompile>
-    <ClCompile Include="RenderQueueManager.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="RenderScene\RenderScene.cpp">
+      <Filter>源文件\RenderScene</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderScene\RenderSceneDeferred.cpp">
+      <Filter>源文件\RenderScene</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderScene\RenderSceneForward.cpp">
+      <Filter>源文件\RenderScene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,14 +215,20 @@
     <ClInclude Include="PostEffect\ToneMapping.h">
       <Filter>头文件\PostEffect</Filter>
     </ClInclude>
-    <ClInclude Include="RenderScene.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="RenderScene\RenderSceneDeferred.h">
+      <Filter>头文件\RenderScene</Filter>
     </ClInclude>
-    <ClInclude Include="RenderQueue.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="RenderScene\RenderSceneForward.h">
+      <Filter>头文件\RenderScene</Filter>
     </ClInclude>
-    <ClInclude Include="RenderQueueManager.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="RenderScene\RenderQueue.h">
+      <Filter>头文件\RenderScene</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderScene\RenderQueueManager.h">
+      <Filter>头文件\RenderScene</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderScene\RenderScene.h">
+      <Filter>头文件\RenderScene</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

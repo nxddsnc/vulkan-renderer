@@ -28,7 +28,7 @@
 #include "PostEffect/Bloom.h"
 #include "PostEffect/ToneMapping.h"
 #include <assert.h>
-#include "RenderScene.h"
+#include "RenderSceneForward.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -55,12 +55,12 @@ VulkanRenderer::VulkanRenderer(Window *window)
     vmaCreateAllocator(&allocatorInfo, &_memoryAllocator);
 
 	_resourceManager = new ResourceManager(_device, _commandPool, _queue, _graphicsQueueFamilyIndex, _memoryAllocator, _gpu);
-	_renderScene = std::make_shared<RenderScene>(_resourceManager, _pipelineManager);
-	_renderScene->m_pSkybox = std::make_shared<Skybox>(_resourceManager, _pipelineManager, _context);
-	_renderScene->m_pAxis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
-
 	_initDescriptorPool();
 	_resourceManager->m_descriptorPool = _descriptorPool;
+
+	_renderScene = std::make_shared<RenderSceneForward>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+	_renderScene->m_pSkybox = std::make_shared<Skybox>(_resourceManager, _pipelineManager, _context);
+	_renderScene->m_pAxis = std::make_shared<Axis>(_resourceManager, _pipelineManager);
 
 	_initSwapchain();
     _initSwapchainImages();
@@ -186,11 +186,6 @@ vk::SurfaceFormatKHR VulkanRenderer::GetSurfaceFormat()
 vk::Format VulkanRenderer::GetDepthFormat()
 {
     return _depthStencilImage->format;
-}
-
-vk::RenderPass VulkanRenderer::GetOffscreenRenderPass()
-{
-    return _offscreenFramebuffer->m_pRenderPass->Get();
 }
 
 std::shared_ptr<VulkanCamera> VulkanRenderer::GetCamera()
@@ -484,11 +479,6 @@ void VulkanRenderer::_deInitFramebuffers()
 
 void VulkanRenderer::_initOffscreenRenderTargets()
 {
-	std::vector<MyImageFormat> colorFormats = { MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT };
-
-	_offscreenFramebuffer = std::make_shared<Framebuffer>("offscreen-framebuffer", _resourceManager, 
-		colorFormats, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT, _swapchainExtent.width, _swapchainExtent.height);
-
 	std::shared_ptr<Bloom> bloom = std::make_shared<Bloom>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
 	m_postEffects.push_back(bloom);
 
@@ -498,7 +488,6 @@ void VulkanRenderer::_initOffscreenRenderTargets()
 
 void VulkanRenderer::_deInitOffscreenRenderTargets()
 {
-	_offscreenFramebuffer = nullptr;
 	m_postEffects.clear();
 }
 
@@ -516,10 +505,6 @@ void VulkanRenderer::_initDescriptorPool()
                                            static_cast<uint32_t>(poolSizes.size()),
                                            poolSizes.data()});
     _descriptorPool = _device.createDescriptorPool(poolInfo);
-
-    // Init camera uniform buffer descriptor
-    // TODO: put the code below to some more appropriate place.
-    _renderScene->m_pCamera->createDescriptorSet(_device, _descriptorPool);
 }
 
 void VulkanRenderer::_deInitDescriptorPool()
@@ -576,28 +561,10 @@ void VulkanRenderer::_createCommandBuffers()
 
 		commandBuffer.begin(beginInfo);
 
-		std::array<vk::ClearValue, 2> clearValues{};
-		clearValues[0].color.float32[0] = 0.0;
-		clearValues[0].color.float32[1] = 0.0;
-		clearValues[0].color.float32[2] = 0.0;
-		clearValues[0].color.float32[3] = 1.0f;
-
-		clearValues[1].depthStencil.depth = 1.0f;
-		clearValues[1].depthStencil.stencil = 0;
-
-		vk::RenderPassBeginInfo renderPassInfo(_offscreenFramebuffer->m_pRenderPass->Get(), _offscreenFramebuffer->m_vkFramebuffer,
-			vk::Rect2D({ vk::Offset2D({ 0, 0 }),
-				_swapchainExtent }),
-			(uint32_t)clearValues.size(),
-			clearValues.data());
-
-		commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
-
 		_renderScene->Draw(commandBuffer);
 
-		commandBuffer.endRenderPass();
-
-		std::shared_ptr<Framebuffer> inputFrameubffer = _offscreenFramebuffer;
+		std::shared_ptr<Framebuffer> offscreenFramebuffer = _renderScene->GetFramebuffer();
+		std::shared_ptr<Framebuffer> inputFrameubffer = offscreenFramebuffer;
 		for (int index = 0; index < m_postEffects.size() - 1; ++index)
 		{
 			m_postEffects[index]->Draw(commandBuffer, { inputFrameubffer });
@@ -606,9 +573,8 @@ void VulkanRenderer::_createCommandBuffers()
 
 		// Tonemapping 
 		// FIXME: Not a very solid method of post processing.
-		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, _offscreenFramebuffer };
+		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, offscreenFramebuffer };
 		m_postEffects.back()->Draw(commandBuffer, framebuffers, _framesData[i].framebuffer);
-
 
 		commandBuffer.end();
 

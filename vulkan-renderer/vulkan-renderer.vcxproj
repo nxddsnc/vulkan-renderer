@@ -109,7 +109,7 @@
       <PreprocessorDefinitions>_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);NOMINMAX;STB_IMAGE_WRITE_IMPLEMENTATION</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/includes/assimp;Vulkan;./;Debug;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/includes/assimp;Vulkan;./;Debug;RenderScene;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -173,9 +173,11 @@
     <ClCompile Include="PostEffect\Bloom.cpp" />
     <ClCompile Include="PostEffect\PostEffect.cpp" />
     <ClCompile Include="PostEffect\ToneMapping.cpp" />
-    <ClCompile Include="RenderQueue.cpp" />
-    <ClCompile Include="RenderQueueManager.cpp" />
-    <ClCompile Include="RenderScene.cpp" />
+    <ClCompile Include="RenderScene\RenderQueue.cpp" />
+    <ClCompile Include="RenderScene\RenderQueueManager.cpp" />
+    <ClCompile Include="RenderScene\RenderScene.cpp" />
+    <ClCompile Include="RenderScene\RenderSceneDeferred.cpp" />
+    <ClCompile Include="RenderScene\RenderSceneForward.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
     <ClCompile Include="Shared.cpp" />
@@ -206,9 +208,11 @@
     <ClInclude Include="PostEffect\Bloom.h" />
     <ClInclude Include="PostEffect\PostEffect.h" />
     <ClInclude Include="PostEffect\ToneMapping.h" />
-    <ClInclude Include="RenderQueue.h" />
-    <ClInclude Include="RenderQueueManager.h" />
-    <ClInclude Include="RenderScene.h" />
+    <ClInclude Include="RenderScene\RenderQueue.h" />
+    <ClInclude Include="RenderScene\RenderQueueManager.h" />
+    <ClInclude Include="RenderScene\RenderScene.h" />
+    <ClInclude Include="RenderScene\RenderSceneDeferred.h" />
+    <ClInclude Include="RenderScene\RenderSceneForward.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
     <ClInclude Include="Shared.h" />

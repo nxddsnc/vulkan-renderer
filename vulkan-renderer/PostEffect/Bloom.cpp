@@ -150,7 +150,7 @@ void Bloom::_init()
 	brightnessPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
 	brightnessPipelineId.model.primitivePart.info.bits.countColor = 0;
 
-	m_pPipelineBrightness = m_pPipelineManager->GetPipeline(brightnessPipelineId);
+	m_pPipelineBrightness = m_pPipelineManager->GetPipeline(brightnessPipelineId, nullptr);
 	m_pPipelineBrightness->InitBrightPass(m_pResourceManager->m_device, m_framebuffer1->m_pRenderPass->Get());
 	m_pPipelineBrightness->m_bReady = true;
 
@@ -162,13 +162,13 @@ void Bloom::_init()
 	blurPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
 	blurPipelineId.model.primitivePart.info.bits.countColor = 0;
 
-	m_pPipelineBlurX = m_pPipelineManager->GetPipeline(blurPipelineId);
+	m_pPipelineBlurX = m_pPipelineManager->GetPipeline(blurPipelineId, nullptr);
 	m_pPipelineBlurX->InitGaussianBlur(m_pResourceManager->m_device, m_framebuffer2->m_pRenderPass->Get());
 	m_pPipelineBlurX->m_bReady = true;
 
 	blurPipelineId.type = PipelineType::GAUSSIAN_BLUR_Y;
 
-	m_pPipelineBlurY = m_pPipelineManager->GetPipeline(blurPipelineId);
+	m_pPipelineBlurY = m_pPipelineManager->GetPipeline(blurPipelineId, nullptr);
 	m_pPipelineBlurY->InitGaussianBlur(m_pResourceManager->m_device, m_framebuffer1->m_pRenderPass->Get());
 	m_pPipelineBlurY->m_bReady = true;
 }

@@ -2,7 +2,7 @@
 #pragma once
 enum PipelineType
 {
-	MODEL,
+	MODEL_FORWARD,
 	SKYBOX,
 	PREFILTERED_CUBE_MAP,
 	IRRADIANCE_MAP,
@@ -84,6 +84,7 @@ template<> struct std::hash<PipelineId> {
 
 class VulkanRenderer;
 class VulkanCamera;
+class RenderPass;
 class Pipeline
 {
 public:
@@ -94,8 +95,8 @@ public:
     void Destroy();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
-    void InitModel();
-    void InitSkybox();
+    void InitModel(std::shared_ptr<RenderPass> renderPass);
+    void InitSkybox(std::shared_ptr<RenderPass> renderPass);
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
     void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
     void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);

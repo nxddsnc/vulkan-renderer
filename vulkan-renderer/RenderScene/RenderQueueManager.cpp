@@ -13,7 +13,7 @@ RenderQueueManager::~RenderQueueManager()
 {
 }
 
-std::shared_ptr<RenderQueue> RenderQueueManager::GetRenderQueue(PipelineId pipelineId)
+std::shared_ptr<RenderQueue> RenderQueueManager::GetRenderQueue(PipelineId pipelineId, std::shared_ptr<RenderPass> renderPass)
 {
 	if (m_renderQueueMap.count(pipelineId) > 0)
 	{
@@ -21,7 +21,7 @@ std::shared_ptr<RenderQueue> RenderQueueManager::GetRenderQueue(PipelineId pipel
 	}
 	else
 	{
-		std::shared_ptr<Pipeline>  pipeline = m_pPipelineManager->GetPipeline(pipelineId);
+		std::shared_ptr<Pipeline>  pipeline = m_pPipelineManager->GetPipeline(pipelineId, renderPass);
 		std::shared_ptr<RenderQueue> renderQueue = std::make_shared<RenderQueue>(pipeline);
 		m_renderQueueMap.insert(std::make_pair(pipelineId, renderQueue));
 
