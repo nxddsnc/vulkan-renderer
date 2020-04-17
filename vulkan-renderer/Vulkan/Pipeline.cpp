@@ -303,7 +303,10 @@ void Pipeline::InitModelForward(std::shared_ptr<RenderPass> renderPass)
             {});
         perDrawableBindings.push_back(materialSamplerBinding);
     }
-    descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
+	if (perDrawableBindings.size() > 0)
+	{
+		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
+	}
 
     // pipeline layout
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
@@ -566,7 +569,10 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 			{});
 		perDrawableBindings.push_back(materialSamplerBinding);
 	}
-	descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
+	if (perDrawableBindings.size() > 0)
+	{
+		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
+	}
 
 	// pipeline layout
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},

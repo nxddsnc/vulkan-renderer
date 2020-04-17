@@ -75,10 +75,7 @@ void main() {
     baseColor *= texture(baseColorTexture, vec2(inUv.x, inUv.y)).xyz;
 #endif
 
-    vec2 metallicRoughness = vec2(0, 1);
-#if METALLIC_ROUGHNESS
-    metallicRoughness = uniformPerDrawable.metallicRoughness;
-#endif
+    vec2 metallicRoughness = uniformPerDrawable.metallicRoughness;
 
 #if TEXTURE_METALLIC_ROUGHNESS && IN_UV0
     metallicRoughness = texture(metallicRoughnessTexture, vec2(inUv.x, inUv.y)).bg;

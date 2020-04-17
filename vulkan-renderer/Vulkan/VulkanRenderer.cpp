@@ -30,6 +30,7 @@
 #include <assert.h>
 #include "RenderSceneForward.h"
 #include "RenderSceneDeferred.h"
+#include "MyScene.h"
 
 VulkanRenderer::VulkanRenderer(Window *window)
 {
@@ -586,9 +587,9 @@ void VulkanRenderer::_createCommandBuffers()
 	}
 }
 
-void VulkanRenderer::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawables)
+void VulkanRenderer::AddScene(std::shared_ptr<MyScene> scene)
 {
-	_renderScene->AddRenderNodes(drawables);
+	_renderScene->AddScene(scene);
 
     _createCommandBuffers();
 }

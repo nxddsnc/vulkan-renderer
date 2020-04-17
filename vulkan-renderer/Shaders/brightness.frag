@@ -14,6 +14,6 @@ void main()
 {
 	vec4 color = texture(colorTexture, inUV);
 	float luminance = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
-	color = color * step(m_uParams.threshold, luminance);
+	color = color * step(0, luminance - m_uParams.threshold);
 	outColor = color;
 }

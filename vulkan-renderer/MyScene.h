@@ -14,6 +14,8 @@ public:
 
     void AddDrawable(std::shared_ptr<Drawable> node);
     std::vector<std::shared_ptr<Drawable>> GetDrawables();
+
+	BBox	m_bbox;
 private:
     std::vector<std::shared_ptr<Drawable>> _drawables;
 };

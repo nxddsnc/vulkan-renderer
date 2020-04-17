@@ -73,7 +73,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
     float wheelDelta = yoffset;
-    renderer->GetCamera()->translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * 20));
+    renderer->GetCamera()->translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * 200));
 }
 
 void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
@@ -109,18 +109,19 @@ int main()
     uint64_t frameCounter = 0;
     uint64_t fps = 0;
 
-    MyScene myScene;
-    ModelLoader modelLoader(&myScene);
-    if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
+	std::shared_ptr<MyScene> myScene = std::make_shared<MyScene>();
+    ModelLoader modelLoader(myScene);
+    //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
     //if (!modelLoader.load("./TestModel/sphere1.obj"))
+	if (!modelLoader.load("./TestModel/house.fbx"))
     {
         std::cout << "can't read gltf file!" << std::endl;
         return -1;
     } 
     else
     {
-        renderer->AddRenderNodes(myScene.GetDrawables());
+        renderer->AddScene(myScene);
     }
 
     while (renderer->Run())

@@ -41,6 +41,8 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<VulkanCa
 
 		//pipelineBindPoint, PipelineLayout, firstSet, descriptorSetCount, pDescriptorSets, uint32_t dynamicOffsetCount.
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 0, 1, &camera->descriptorSet, 0, nullptr);
+		//commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 1, 1, &skybox->m_pSHLight->m_descriptorSet, 0, nullptr);
+		//commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 2, 1, &skybox->m_preFilteredDescriptorSet, 0, nullptr);
 
 		if (drawable->baseColorTexture || drawable->normalTexture || drawable->metallicRoughnessTexture)
 		{

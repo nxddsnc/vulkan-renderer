@@ -12,6 +12,7 @@ class SHLight;
 class Axis;
 class PostEffect;
 class Bloom;
+class MyScene;
 #pragma once
 
 struct UniformBufferObject {
@@ -66,7 +67,7 @@ public:
     vk::SurfaceFormatKHR GetSurfaceFormat();
     vk::Format GetDepthFormat();
 
-    void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> nodes);
+    void AddScene(std::shared_ptr<MyScene> scene);
 private:
 
     void _beginRender();

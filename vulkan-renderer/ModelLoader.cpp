@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include "Utils.h"
 
-ModelLoader::ModelLoader(MyScene *scene)
+ModelLoader::ModelLoader(std::shared_ptr<MyScene> scene)
 {
     m_pScene = scene;
 }
@@ -47,7 +47,7 @@ bool ModelLoader::load(const char * filepath)
 
     // Seems that assimp's upAxis is +Y.
     // https://github.com/assimp/assimp/issues/165
-    m_flipYZ = true;
+    m_flipYZ = false;
 
     _parseScene(m_pAiScene);
     return true;
@@ -80,7 +80,8 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
         drawable->m_material = material;
         drawable->m_matrix = matrix;
         drawable->m_normalMatrix = glm::transpose(glm::inverse(matrix));
-        m_pScene->AddDrawable(drawable);
+		drawable->ComputeBBox();
+		m_pScene->AddDrawable(drawable);
     }
 
     for (int i = 0; i < node->mNumChildren; ++i)
@@ -92,12 +93,11 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
 
 void ModelLoader::_extractTransform(glm::mat4 & transform, void * aiMatrix)
 {
-    // TODO: Correctness check.
     aiMatrix4x4 *_matrix = (aiMatrix4x4*)aiMatrix;
-    transform[0][0] = _matrix->a1; transform[1][0] = _matrix->b1; transform[2][0] = _matrix->c1; transform[3][0] = _matrix->d1;
-    transform[0][1] = _matrix->a2; transform[1][1] = _matrix->b2; transform[2][1] = _matrix->c2; transform[3][1] = _matrix->d2;
-    transform[0][2] = _matrix->a3; transform[1][2] = _matrix->b3; transform[2][2] = _matrix->c3; transform[3][2] = _matrix->d3;
-    transform[0][3] = _matrix->a4; transform[1][3] = _matrix->b4; transform[2][3] = _matrix->c4; transform[3][3] = _matrix->d4;
+	transform[0][0] = _matrix->a1; transform[0][1] = _matrix->b1; transform[0][2] = _matrix->c1; transform[0][3] = _matrix->d1;
+	transform[1][0] = _matrix->a2; transform[1][1] = _matrix->b2; transform[1][2] = _matrix->c2; transform[1][3] = _matrix->d2;
+	transform[2][0] = _matrix->a3; transform[2][1] = _matrix->b3; transform[2][2] = _matrix->c3; transform[2][3] = _matrix->d3;
+	transform[3][0] = _matrix->a4; transform[3][1] = _matrix->b4; transform[3][2] = _matrix->c4; transform[3][3] = _matrix->d4;
 }
 
 std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
@@ -213,8 +213,8 @@ std::shared_ptr<MyMaterial> ModelLoader::_extractMaterial(unsigned int idx)
         myMaterial->m_baseColor.b = diffuse.b;
 
         // We should get the actual value if we can.
-        myMaterial->m_metallicRoughness.r = 1.0;
-        myMaterial->m_metallicRoughness.g = 0.0;
+        myMaterial->m_metallicRoughness.r = 0.0;
+        myMaterial->m_metallicRoughness.g = 1.0;
 
         aiString texturePath;
         int textureMapMode[3] = { aiTextureMapMode_Wrap };

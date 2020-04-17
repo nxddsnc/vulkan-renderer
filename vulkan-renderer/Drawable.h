@@ -4,6 +4,7 @@
 #include "MyMaterial.h"
 #include <memory.h>
 #include "Platform.h"
+#include <glm/glm.hpp>
 #pragma once
 /************************************************************************/
 /* Minimum renderable node.*/
@@ -21,9 +22,21 @@ struct VulkanTexture
 	int									referenceCount = 0;
 };
 
+
+struct BBox
+{
+	glm::vec3 min;
+	glm::vec3 max;
+};
 class Drawable
 {
 public:
+	Drawable();
+	~Drawable();
+
+	void ComputeBBox();
+public:
+	BBox						  m_bbox;
     glm::mat4                     m_matrix;
     glm::mat4                     m_normalMatrix;
     std::shared_ptr<MyMesh>       m_mesh;

@@ -129,6 +129,9 @@
     <ClCompile Include="RenderScene\RenderSceneForward.cpp">
       <Filter>源文件\RenderScene</Filter>
     </ClCompile>
+    <ClCompile Include="Drawable.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">

@@ -123,7 +123,7 @@ void main() {
 
     vec3 F = F_SchlickR(max(dot(worldNormal, V), 0.0), F0, metallicRoughness.y);
 
-    outColor.rgb = ApproximateSpecularIBL(F, 0, worldNormal, V);
+    outColor.rgb = ApproximateSpecularIBL(F, metallicRoughness.y, worldNormal, V);
     
     vec3 irradiance;
 

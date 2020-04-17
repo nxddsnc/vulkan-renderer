@@ -1,6 +1,7 @@
 #include "Platform.h"
 #include <unordered_map>
 #include "Pipeline.h"
+#include "Drawable.h"
 #pragma once
 
 class Drawable;
@@ -12,13 +13,14 @@ class RenderQueue;
 class RenderQueueManager;
 class VulkanCamera;
 class Framebuffer;
+class MyScene;
 class RenderScene
 {
 public:
 	RenderScene(ResourceManager *resourceManager, PipelineManager *pipelineManager, int width, int height);
 	virtual ~RenderScene();
 
-	void AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawables);
+	void AddScene(std::shared_ptr<MyScene> scene);
 	virtual void Draw(vk::CommandBuffer& commandBuffer);
 	void UpdateUniforms();
 
@@ -28,7 +30,7 @@ public:
 	std::shared_ptr<Skybox>												m_pSkybox;
 	std::shared_ptr<Axis>											    m_pAxis;
 	std::shared_ptr<VulkanCamera>										m_pCamera;
-
+	BBox																m_bbox;
 protected:
 	ResourceManager													  * m_pResourceManager;
 	PipelineManager													  * m_pPipelineManager;
@@ -46,4 +48,6 @@ protected:
 private:
 	virtual void _begin(vk::CommandBuffer &commandBuffer);
 	virtual void _end(vk::CommandBuffer &commandBuffer);
+
+	void _updateBBox();
 };

@@ -45,7 +45,7 @@ template<> struct std::hash<TextureKey> {
 class ModelLoader
 {
 public:
-    ModelLoader(MyScene *scene);
+    ModelLoader(std::shared_ptr<MyScene> scene);
     ~ModelLoader();
 
     bool load(const char* filepath);
@@ -58,9 +58,9 @@ private:
     std::shared_ptr<MyTexture> _extractTexture(char *texturePath, int textureWrapMode[3]);
     std::shared_ptr<MyImage> _extractImage(char *filePath);
 private:
-    const aiScene     *m_pAiScene;
-    MyScene           *m_pScene;
-    bool               m_flipYZ;
+    const aiScene            *m_pAiScene;
+	std::shared_ptr<MyScene>  m_pScene;
+    bool                      m_flipYZ;
 
     std::string        m_baseDirectory;
 

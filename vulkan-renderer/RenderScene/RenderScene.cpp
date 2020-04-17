@@ -11,6 +11,7 @@
 #include "Framebuffer.h"
 #include "RenderPass.h"
 #include "MyTexture.h"
+#include "MyScene.h"
 
 RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipelineManager, int width, int height)
 {
@@ -28,14 +29,18 @@ RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipe
 	m_pCamera->setPerspective(45.0f, (float)width / (float)height, 0.1f, 10.0f);
 
 	m_pCamera->createDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
+
+	m_bbox.min = glm::vec3(INFINITE);
+	m_bbox.max = -glm::vec3(INFINITE);
 }
 
 RenderScene::~RenderScene()
 {
 }
 
-void RenderScene::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawables)
+void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 {
+	auto drawables = scene->GetDrawables();
 	for (int i = 0; i < drawables.size(); ++i)
 	{
 		std::shared_ptr<Drawable> drawable = drawables[i];
@@ -51,11 +56,40 @@ void RenderScene::AddRenderNodes(std::vector<std::shared_ptr<Drawable>> drawable
 		id.model.materialPart.info.bits.baseColorInfo = 1;
 		id.model.materialPart.info.bits.baseColorMap = drawable->m_material->m_pDiffuseMap != nullptr;
 		id.model.materialPart.info.bits.normalMap = drawable->m_material->m_pNormalMap != nullptr;
+		id.model.materialPart.info.bits.metallicRoughnessMap = drawable->m_material->m_pMetallicRoughnessMap != nullptr;
 		id.type = m_pipelineType;
 
 		auto renderQueue = m_pRenderQueueManager->GetRenderQueue(id, m_framebuffers[0]->m_pRenderPass);
 		renderQueue->AddDrawable(drawable);
 	}
+
+	if (m_bbox.min.x > scene->m_bbox.min.x)
+	{
+		m_bbox.min.x = scene->m_bbox.min.x;
+	}
+	if (m_bbox.min.y > scene->m_bbox.min.y)
+	{
+		m_bbox.min.y = scene->m_bbox.min.y;
+	}
+	if (m_bbox.min.z > scene->m_bbox.min.z)
+	{
+		m_bbox.min.z = scene->m_bbox.min.z;
+	}
+
+	if (m_bbox.max.x < scene->m_bbox.max.x)
+	{
+		m_bbox.max.x = scene->m_bbox.max.x;
+	}
+	if (m_bbox.max.y < scene->m_bbox.max.y)
+	{
+		m_bbox.max.y = scene->m_bbox.max.y;
+	}
+	if (m_bbox.max.z < scene->m_bbox.max.z)
+	{
+		m_bbox.max.z = scene->m_bbox.max.z;
+	}
+
+	_updateBBox();
 }
 
 void RenderScene::Draw(vk::CommandBuffer& commandBuffer)
@@ -76,6 +110,7 @@ void RenderScene::Draw(vk::CommandBuffer& commandBuffer)
 
 void RenderScene::UpdateUniforms()
 {
+	_updateBBox();
 	m_pCamera->UpdateUniformBuffer();
 	m_pSkybox->m_pSHLight->UpdateUniformBuffer();
 }
@@ -93,4 +128,11 @@ void RenderScene::_begin(vk::CommandBuffer &commandBuffer)
 void RenderScene::_end(vk::CommandBuffer &commandBuffer)
 {
 
+}
+
+void RenderScene::_updateBBox()
+{
+	float length = glm::length(m_bbox.max - m_bbox.min);
+	float farPlane = glm::length(m_pCamera->position - (float)0.5 * (m_bbox.max + m_bbox.min)) + length / 2;
+	m_pCamera->setPerspective(45.0f, (float)m_width / (float)m_height, 0.1f, farPlane);
 }

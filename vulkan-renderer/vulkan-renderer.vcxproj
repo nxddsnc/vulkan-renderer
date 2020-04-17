@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Debug\Axis.cpp" />
+    <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
