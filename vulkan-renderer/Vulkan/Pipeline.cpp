@@ -1790,7 +1790,7 @@ void Pipeline::InitDeferred(std::shared_ptr<RenderPass> renderPass)
 	// Depth and stencil testing
 	vk::PipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo({ {},
 		static_cast<vk::Bool32>(true),
-		static_cast<vk::Bool32>(true),
+		static_cast<vk::Bool32>(false),
 		vk::CompareOp::eLessOrEqual,
 		static_cast<vk::Bool32>(false),
 		static_cast<vk::Bool32>(false),

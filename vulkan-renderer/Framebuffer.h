@@ -2,6 +2,12 @@
 #include "MyImage.h"
 #pragma once
 
+struct AttachmentInfo
+{
+	std::shared_ptr<MyImageFormat> format;
+	int						       uniqueId;
+
+};
 class ResourceManager;
 struct VulkanTexture;
 class RenderPass;
@@ -10,6 +16,7 @@ class Framebuffer
 public:
 	Framebuffer();
 	Framebuffer(const char* name, ResourceManager* resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height);
+	Framebuffer(const char* colorName, const char* depthStencilName, ResourceManager* resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height);
 	Framebuffer(const char* name, ResourceManager* resourceManager, std::shared_ptr<RenderPass> renderPass, 
 		std::shared_ptr<VulkanTexture> colorTexture, std::shared_ptr<VulkanTexture> depthStencilTexture, int width, int height);
 	~Framebuffer();
@@ -25,7 +32,8 @@ public:
 private:
 	ResourceManager							  * m_pResourceManager;
 
-	char										m_pName[512];
+	char										m_pColorName[512];
+	char										m_pDepthStencilName[512];
 	
 private:
 	void _init(std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height);

@@ -18,6 +18,7 @@ struct VulkanTexture
     vk::Sampler                         imageSampler;
 	std::shared_ptr<MyTexture>			texture;
 	vk::Format							format;
+	int									referenceCount = 0;
 };
 
 class Drawable

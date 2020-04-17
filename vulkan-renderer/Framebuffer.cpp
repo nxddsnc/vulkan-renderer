@@ -13,7 +13,19 @@ Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, s
 
 	m_pResourceManager = resourceManager;
 
-	sprintf(m_pName, "%s", name);
+	sprintf(m_pColorName, "%s", name);
+	sprintf(m_pDepthStencilName, "%s", name);
+
+	m_pDepthTexture = nullptr;
+	_init(colorFormats, depthFormt, width, height);
+}
+
+Framebuffer::Framebuffer(const char * colorName, const char * depthStencilName, ResourceManager * resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height)
+{
+	m_pResourceManager = resourceManager;
+
+	sprintf(m_pColorName, "%s", colorName);
+	sprintf(m_pDepthStencilName, "%s", depthStencilName);
 
 	m_pDepthTexture = nullptr;
 	_init(colorFormats, depthFormt, width, height);
@@ -22,7 +34,7 @@ Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, s
 Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, std::shared_ptr<RenderPass> renderPass, 
 	std::shared_ptr<VulkanTexture> colorTexture, std::shared_ptr<VulkanTexture> depthStencilTexture, int width, int height)
 {
-	sprintf(m_pName, "%s", name);
+	sprintf(m_pColorName, "%s", name);
 
 	m_pColorTextures.push_back(colorTexture);
 	m_pDepthTexture = depthStencilTexture;
@@ -111,7 +123,7 @@ void Framebuffer::_init(std::vector<MyImageFormat> colorFormats, MyImageFormat d
 	{
 		std::shared_ptr<MyTexture> colorTexture = std::make_shared<MyTexture>();
 		char colorBufferName[512];
-		sprintf(colorBufferName, "%s-%s-%d", m_pName, "color", i);
+		sprintf(colorBufferName, "%s-%s-%d", m_pColorName, "color", i);
 		colorTexture->m_pImage = std::make_shared<MyImage>(colorBufferName, width, height, colorFormats[i], true);
 
 		m_pColorTextures.push_back(m_pResourceManager->CreateCombinedTexture(colorTexture));
@@ -144,7 +156,7 @@ void Framebuffer::_init(std::vector<MyImageFormat> colorFormats, MyImageFormat d
 	{
 		std::shared_ptr<MyTexture> depthTexture = std::make_shared<MyTexture>();
 		char depthBufferName[512];
-		sprintf(depthBufferName, "%s-%s", m_pName, "depth");
+		sprintf(depthBufferName, "%s-%s", m_pDepthStencilName, "depth");
 		depthTexture->m_pImage = std::make_shared<MyImage>(depthBufferName, width, height, depthFormt, true);
 		m_pDepthTexture = m_pResourceManager->CreateCombinedTexture(depthTexture);
 
@@ -159,7 +171,7 @@ void Framebuffer::_init(std::vector<MyImageFormat> colorFormats, MyImageFormat d
 			{},
 			dFormat,
 			vk::SampleCountFlagBits::e1,
-			vk::AttachmentLoadOp::eClear,
+			m_pDepthTexture->referenceCount > 1 ? vk::AttachmentLoadOp::eDontCare : vk::AttachmentLoadOp::eClear,
 			vk::AttachmentStoreOp::eDontCare,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eStore,

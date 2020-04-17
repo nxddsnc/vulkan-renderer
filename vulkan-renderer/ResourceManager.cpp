@@ -344,6 +344,38 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
         destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     }
+	else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eTransferSrcOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+		sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+		destinationStage = vk::PipelineStageFlagBits::eTransfer;
+	}
+	else if (oldLayout == vk::ImageLayout::eTransferSrcOptimal && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+		barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eTransfer;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
+	else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eTransferDstOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+		destinationStage = vk::PipelineStageFlagBits::eTransfer;
+	}
+	else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eTransfer;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
     else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
     {
         barrier.srcAccessMask = {};
@@ -421,11 +453,13 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 	if (m_textureMap.count(key) > 0)
 	{
 		vulkanTexture = m_textureMap.at(key);
+		vulkanTexture->referenceCount++;
 		return vulkanTexture;
 	}
 	else
 	{
 		vulkanTexture = std::make_shared<VulkanTexture>();
+		vulkanTexture->referenceCount = 1;
 		m_textureMap.insert(std::make_pair(key, vulkanTexture));
 	}
 
@@ -465,7 +499,8 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     {
 		if (bDepthTexture)
 		{
-			usage = vk::ImageUsageFlagBits::eDepthStencilAttachment| vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled;
+			// FIXME: Too many usage being set may cause performance issue.
+			usage = vk::ImageUsageFlagBits::eDepthStencilAttachment| vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
 		}
 		else
 		{
