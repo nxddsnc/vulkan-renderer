@@ -4,13 +4,14 @@
 #include "PipelineManager.h"
 #include "RenderQueue.h"
 #include "RenderQueueManager.h"
-#include "Camera.hpp"
+#include "MyCamera.h"
 #include "Skybox.h"
 #include "Axis.h"
 #include "SHLight.h"
 #include "Framebuffer.h"
 #include "MyTexture.h"
 #include "RenderPass.h"
+#include "ShadowMap.h"
 
 RenderSceneDeferred::RenderSceneDeferred(ResourceManager *resourceManager, PipelineManager *pipelineManager, int width, int height) :
 	RenderScene(resourceManager, pipelineManager, width, height)
@@ -32,11 +33,13 @@ std::shared_ptr<Framebuffer> RenderSceneDeferred::GetFramebuffer()
 
 void RenderSceneDeferred::Draw(vk::CommandBuffer& commandBuffer)
 {
+	m_pShadowMap->Draw(commandBuffer);
+
 	_begin(commandBuffer);
 	// drawAxis
 	//m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->descriptorSet, m_framebuffers[0]->m_pRenderPass);
 
-	for (auto renderQueue : m_pRenderQueueManager->m_renderQueues)
+	for (auto renderQueue : m_renderQueues)
 	{
 		renderQueue->Draw(commandBuffer, m_pCamera, m_pSkybox);
 	}
@@ -151,13 +154,20 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 	commandBuffer.setScissor(0, 1, &sissor);
 
 	//commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float) * 4, reinterpret_cast<void*>(&m_parameters));
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 0, 1, &m_pCamera->descriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 0, 1, &m_pCamera->m_descriptorSet, 0, nullptr);
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 1, 1, &m_pSkybox->m_pSHLight->m_descriptorSet, 0, nullptr);
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 2, 1, &m_pSkybox->m_preFilteredDescriptorSet, 0, nullptr);
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 3, 1, &m_framebuffers[0]->m_dsTexture, 0, nullptr);
+
+	if (m_pShadowMap)
+	{
+		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 4, 1, &m_pShadowMap->m_pFramebuffer->m_dsTexture, 0, nullptr);
+		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 5, 1, &m_pShadowMap->m_pCamera->m_descriptorSet, 0, nullptr);
+	}
+
 	commandBuffer.draw(3, 1, 0, 0);
 
-	m_pSkybox->Draw(commandBuffer, m_pCamera, m_outputFramebuffer->m_pRenderPass);
+	//m_pSkybox->Draw(commandBuffer, m_pCamera, m_outputFramebuffer->m_pRenderPass);
 
 	commandBuffer.endRenderPass();
 

@@ -18,7 +18,6 @@
 #include "Pipeline.h"
 #include "Drawable.h"
 #include "Context.h"
-#include "Camera.hpp"
 #include "Skybox.h"
 #include "Axis.h"
 #include "SHLight.h"
@@ -31,7 +30,7 @@
 #include "RenderSceneForward.h"
 #include "RenderSceneDeferred.h"
 #include "MyScene.h"
-
+#include "ShadowMap.h"
 VulkanRenderer::VulkanRenderer(Window *window)
 {
     _window = window;
@@ -193,7 +192,7 @@ vk::Format VulkanRenderer::GetDepthFormat()
     return _depthStencilImage->format;
 }
 
-std::shared_ptr<VulkanCamera> VulkanRenderer::GetCamera()
+std::shared_ptr<MyCamera> VulkanRenderer::GetCamera()
 {
     return _renderScene->m_pCamera;
 }
@@ -578,7 +577,7 @@ void VulkanRenderer::_createCommandBuffers()
 
 		// Tonemapping 
 		// FIXME: Not a very solid method of post processing.
-		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, offscreenFramebuffer };
+		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, _renderScene->m_pShadowMap->m_pFramebuffer };
 		m_postEffects.back()->Draw(commandBuffer, framebuffers, _framesData[i].framebuffer);
 
 		commandBuffer.end();

@@ -51,8 +51,13 @@ void ResourceManager::InitVulkanBuffers(std::shared_ptr<Drawable> drawable)
 
 void ResourceManager::InitVulkanResource(std::shared_ptr<Drawable> drawable)
 {
+	if (drawable->m_bReady)
+	{
+		return;
+	}
     InitVulkanBuffers(drawable);
     _createTextures(drawable);
+	drawable->m_bReady = true;
 }
 
 vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()
@@ -474,6 +479,12 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
 		vulkanTexture->format = vk::Format::eR16G16B16A16Sfloat;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_R16_FLOAT:
+		vulkanTexture->format = vk::Format::eR16Sfloat;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_R32_FLOAT:
+		vulkanTexture->format = vk::Format::eR32Sfloat;
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
 		vulkanTexture->format = vk::Format::eD24UnormS8Uint;

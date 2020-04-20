@@ -10,6 +10,12 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 cameraPos;
 } ubo;
 
+layout(set = 5, binding = 0) uniform ShadowCamera {
+    mat4 proj;
+    mat4 view;
+    vec3 cameraPos;
+} shadowCameraUbo;
+
 layout(set = 1, binding = 0) uniform LightUniforms {
     mat4 matrixR;
     mat4 matrixG;
@@ -24,6 +30,8 @@ layout(set = 3, binding = 0) uniform sampler2D   u_positionTexture;
 layout(set = 3, binding = 1) uniform sampler2D   u_normalTexture;
 layout(set = 3, binding = 2) uniform sampler2D   u_albedoTexture;
 
+layout(set = 4, binding = 0) uniform sampler2D   u_shadowMap;
+
 vec3 F_Schlick(float cosTheta, vec3 F0)
 {
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
@@ -33,7 +41,7 @@ vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
 	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V )
+vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V)
 {
     // vec3 R = (2 * dot(V, N) * N - V).xyz;
     vec3 R = -reflect(V, N).xzy;
@@ -79,4 +87,7 @@ void main()
     outColor.rgb += diffuse;
 
     outColor.a = 1.0;
+
+    vec4 pos = shadowCameraUbo.proj * shadowCameraUbo.view * inPosition;
+    outColor = vec4(1.0, 1.0, 0.0, 1.0);
 }

@@ -27,6 +27,10 @@ std::shared_ptr<Pipeline> PipelineManager::_createPipeline(PipelineId id, std::s
 	  pipeline->InitModelGBuffer(renderPass);
 	  pipeline->m_bReady = true;
 	  break;
+  case DEPTH:
+	  pipeline->InitDepth(renderPass);
+	  pipeline->m_bReady = true;
+	  break;
   case SKYBOX:
       pipeline->InitSkybox(renderPass);
 	  pipeline->m_bReady = true;

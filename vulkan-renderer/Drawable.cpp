@@ -4,6 +4,7 @@ Drawable::Drawable()
 {
 	m_bbox.min = glm::vec3(INFINITE);
 	m_bbox.max = -glm::vec3(INFINITE);
+	m_bReady = false;
 }
 
 Drawable::~Drawable()

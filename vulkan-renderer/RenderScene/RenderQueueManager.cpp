@@ -13,6 +13,11 @@ RenderQueueManager::~RenderQueueManager()
 {
 }
 
+bool RenderQueueManager::HasRenderQueue(PipelineId pipelineId)
+{
+	return m_renderQueueMap.count(pipelineId) > 0;
+}
+
 std::shared_ptr<RenderQueue> RenderQueueManager::GetRenderQueue(PipelineId pipelineId, std::shared_ptr<RenderPass> renderPass)
 {
 	if (m_renderQueueMap.count(pipelineId) > 0)

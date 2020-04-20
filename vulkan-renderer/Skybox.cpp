@@ -15,7 +15,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include "SHLight.h"
-#include "Camera.hpp"
+#include "MyCamera.h"
 
 Skybox::Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManager, VulkanContext *context)
 {
@@ -222,7 +222,7 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureIrradianceMap, m_pVulkanTextureBRDFLUT });
 }
 
-void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<VulkanCamera> camera, std::shared_ptr<RenderPass> renderPass)
+void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<RenderPass> renderPass)
 {
 	PipelineId skyBoxPipelineId;
 	skyBoxPipelineId.type = PipelineType::SKYBOX;
@@ -236,7 +236,7 @@ void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<VulkanCamer
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
 	commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
 	commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &camera->descriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &camera->m_descriptorSet, 0, nullptr);
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &m_dsSkybox, 0, nullptr);
 	commandBuffer.drawIndexed(m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
 }

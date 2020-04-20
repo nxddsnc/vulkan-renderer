@@ -1,3 +1,10 @@
+#include "Platform.h"
+
+struct BBox
+{
+	glm::vec3 min;
+	glm::vec3 max;
+};
 #include <string>
 #pragma once
 std::string GetFileDirectory(std::string filename);

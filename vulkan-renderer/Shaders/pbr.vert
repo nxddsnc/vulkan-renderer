@@ -43,8 +43,8 @@ layout(location = IN_NORMAL_LOCATION) out vec3 outNormal;
 layout(location = IN_UV0_LOCATION) out vec3 outUv;
 #endif
 
-
-void main() {
+void main() 
+{
     outPosition = (uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0)).xyz;
     gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
 #if IN_NORMAL

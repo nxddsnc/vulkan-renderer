@@ -11,6 +11,7 @@ public:
 	RenderQueueManager(PipelineManager *pipelineManager);
 	~RenderQueueManager();
 
+	bool HasRenderQueue(PipelineId pipelineId);
 	std::shared_ptr<RenderQueue> GetRenderQueue(PipelineId pipelineId, std::shared_ptr<RenderPass> renderPass);
 
 	std::vector<std::shared_ptr<RenderQueue>>							m_renderQueues;

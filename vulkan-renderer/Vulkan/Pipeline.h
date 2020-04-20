@@ -4,6 +4,7 @@ enum PipelineType
 {
 	MODEL_FORWARD,
 	MODEL_DEFERRED,
+	DEPTH,
 	DEFERRED_SHADING,
 	SKYBOX,
 	PREFILTERED_CUBE_MAP,
@@ -85,7 +86,7 @@ template<> struct std::hash<PipelineId> {
 };
 
 class VulkanRenderer;
-class VulkanCamera;
+class MyCamera;
 class RenderPass;
 class Pipeline
 {
@@ -98,6 +99,7 @@ public:
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
     void InitModelForward(std::shared_ptr<RenderPass> renderPass);
+	void InitDepth(std::shared_ptr<RenderPass> renderPass);
 	void InitModelGBuffer(std::shared_ptr<RenderPass> renderPass);
     void InitSkybox(std::shared_ptr<RenderPass> renderPass);
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
@@ -107,7 +109,6 @@ public:
 	void InitGaussianBlur(vk::Device device, vk::RenderPass renderPass);
 	void InitBlit(vk::Device device, vk::RenderPass renderPass);
 	void InitDeferred(std::shared_ptr<RenderPass> renderPass);
-
 public:
 	bool m_bReady;
 	PipelineId m_id;

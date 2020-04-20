@@ -5,7 +5,7 @@
 #include "Platform.h"
 
 class Window;
-class VulkanCamera;
+class MyCamera;
 class Drawable;
 struct Vertex;
 class SHLight;
@@ -24,7 +24,6 @@ struct UniformBufferObject {
 class ResourceManager;
 class PipelineManager;
 class VulkanContext;
-class VulkanCamera;
 class Skybox;
 class Framebuffer;
 class RenderPass;
@@ -48,7 +47,7 @@ public:
     bool Run();
     void DrawFrame();
     void Resize(int width, int height);
-	std::shared_ptr<VulkanCamera> GetCamera();
+	std::shared_ptr<MyCamera> GetCamera();
     void OnSceneChanged();
     void GetExtendSize(uint32_t &width, uint32_t &height);
 

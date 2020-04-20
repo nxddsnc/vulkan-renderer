@@ -5,6 +5,7 @@
 #include <memory.h>
 #include "Platform.h"
 #include <glm/glm.hpp>
+#include "Utils.h"
 #pragma once
 /************************************************************************/
 /* Minimum renderable node.*/
@@ -22,12 +23,6 @@ struct VulkanTexture
 	int									referenceCount = 0;
 };
 
-
-struct BBox
-{
-	glm::vec3 min;
-	glm::vec3 max;
-};
 class Drawable
 {
 public:
@@ -58,6 +53,8 @@ public:
     std::shared_ptr<VulkanTexture> normalTexture;
     std::shared_ptr<VulkanTexture> metallicRoughnessTexture;
     vk::DescriptorSet              textureDescriptorSet;
+
+	bool						   m_bReady;
 
     //vk::DescriptorSet              textureDescriptorSet;
 };

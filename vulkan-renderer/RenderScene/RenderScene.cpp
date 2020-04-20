@@ -4,7 +4,7 @@
 #include "PipelineManager.h"
 #include "RenderQueue.h"
 #include "RenderQueueManager.h"
-#include "Camera.hpp"
+#include "MyCamera.h"
 #include "Skybox.h"
 #include "Axis.h"
 #include "SHLight.h"
@@ -12,6 +12,7 @@
 #include "RenderPass.h"
 #include "MyTexture.h"
 #include "MyScene.h"
+#include "ShadowMap.h"
 
 RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipelineManager, int width, int height)
 {
@@ -22,16 +23,18 @@ RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipe
 
 	m_pRenderQueueManager = std::make_shared<RenderQueueManager>(pipelineManager);
 
-	m_pCamera = std::make_shared<VulkanCamera>(&(resourceManager->m_memoryAllocator));
-	m_pCamera->type = VulkanCamera::CameraType::lookat;
-	m_pCamera->setPosition(glm::vec3(0, 0, 0));
-	m_pCamera->setRotation(glm::vec3(-45, 0, 45));
-	m_pCamera->setPerspective(45.0f, (float)width / (float)height, 0.1f, 10.0f);
+	m_pCamera = std::make_shared<MyCamera>(&(resourceManager->m_memoryAllocator));
+	m_pCamera->m_type = MyCamera::CameraType::lookat;
+	m_pCamera->SetPosition(glm::vec3(0, 0, 0));
+	m_pCamera->SetRotation(glm::vec3(-45, 0, 45));
+	m_pCamera->SetPerspective(45.0f, (float)width / (float)height, 0.1f, 10.0f);
 
-	m_pCamera->createDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
+	m_pCamera->CreateDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
 
 	m_bbox.min = glm::vec3(INFINITE);
 	m_bbox.max = -glm::vec3(INFINITE);
+
+	m_pShadowMap = std::make_shared<ShadowMap>(m_pResourceManager, m_pPipelineManager, m_pRenderQueueManager);
 }
 
 RenderScene::~RenderScene()
@@ -40,7 +43,10 @@ RenderScene::~RenderScene()
 
 void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 {
+	m_pShadowMap->AddScene(scene);
+
 	auto drawables = scene->GetDrawables();
+
 	for (int i = 0; i < drawables.size(); ++i)
 	{
 		std::shared_ptr<Drawable> drawable = drawables[i];
@@ -59,8 +65,16 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 		id.model.materialPart.info.bits.metallicRoughnessMap = drawable->m_material->m_pMetallicRoughnessMap != nullptr;
 		id.type = m_pipelineType;
 
-		auto renderQueue = m_pRenderQueueManager->GetRenderQueue(id, m_framebuffers[0]->m_pRenderPass);
-		renderQueue->AddDrawable(drawable);
+		if (m_pRenderQueueManager->HasRenderQueue(id))
+		{
+			auto renderQueue = m_pRenderQueueManager->GetRenderQueue(id, m_framebuffers[0]->m_pRenderPass);
+			renderQueue->AddDrawable(drawable);
+		}
+		else
+		{
+			auto renderQueue = m_pRenderQueueManager->GetRenderQueue(id, m_framebuffers[0]->m_pRenderPass);
+			m_renderQueues.push_back(renderQueue);
+		}
 	}
 
 	if (m_bbox.min.x > scene->m_bbox.min.x)
@@ -96,9 +110,9 @@ void RenderScene::Draw(vk::CommandBuffer& commandBuffer)
 {
 	_begin(commandBuffer);
 	// drawAxis
-	m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->descriptorSet, m_framebuffers[0]->m_pRenderPass);
+	m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->m_descriptorSet, m_framebuffers[0]->m_pRenderPass);
 
-	for (auto renderQueue : m_pRenderQueueManager->m_renderQueues)
+	for (auto renderQueue : m_renderQueues)
 	{
 		renderQueue->Draw(commandBuffer, m_pCamera, m_pSkybox);
 	}
@@ -113,6 +127,10 @@ void RenderScene::UpdateUniforms()
 	_updateBBox();
 	m_pCamera->UpdateUniformBuffer();
 	m_pSkybox->m_pSHLight->UpdateUniformBuffer();
+	if (m_pShadowMap)
+	{
+		m_pShadowMap->m_pCamera->UpdateUniformBuffer();
+	}
 }
 
 std::shared_ptr<Framebuffer> RenderScene::GetFramebuffer()
@@ -133,6 +151,6 @@ void RenderScene::_end(vk::CommandBuffer &commandBuffer)
 void RenderScene::_updateBBox()
 {
 	float length = glm::length(m_bbox.max - m_bbox.min);
-	float farPlane = glm::length(m_pCamera->position - (float)0.5 * (m_bbox.max + m_bbox.min)) + length / 2;
-	m_pCamera->setPerspective(45.0f, (float)m_width / (float)m_height, 0.1f, farPlane);
+	float farPlane = glm::length(m_pCamera->m_position - (float)0.5 * (m_bbox.max + m_bbox.min)) + length / 2;
+	m_pCamera->SetPerspective(45.0f, (float)m_width / (float)m_height, 0.1f, farPlane);
 }

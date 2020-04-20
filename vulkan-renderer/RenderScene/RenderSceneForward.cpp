@@ -4,7 +4,7 @@
 #include "PipelineManager.h"
 #include "RenderQueue.h"
 #include "RenderQueueManager.h"
-#include "Camera.hpp"
+#include "MyCamera.h"
 #include "Skybox.h"
 #include "Axis.h"
 #include "SHLight.h"
@@ -29,7 +29,6 @@ std::shared_ptr<Framebuffer> RenderSceneForward::GetFramebuffer()
 {
 	return m_framebuffers[0];
 }
-
 
 void RenderSceneForward::_init()
 {

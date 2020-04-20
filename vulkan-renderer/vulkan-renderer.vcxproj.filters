@@ -34,6 +34,18 @@
     <Filter Include="源文件\RenderScene">
       <UniqueIdentifier>{03276d6e-1fb0-4fc9-929a-574f14a630d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\ShadowMap">
+      <UniqueIdentifier>{b7fbcfd9-efaa-4da6-91ea-7b7c7247cbbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\ShadowMap">
+      <UniqueIdentifier>{14f268d1-28b4-4b91-a19e-51db42f8641d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Camera">
+      <UniqueIdentifier>{c21ae0e5-4ca8-4095-b37c-f1c419c60b32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Camera">
+      <UniqueIdentifier>{73e9755e-aa21-47df-938d-baebb803efb3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -132,6 +144,12 @@
     <ClCompile Include="Drawable.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMap\ShadowMap.cpp">
+      <Filter>源文件\ShadowMap</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\MyCamera.cpp">
+      <Filter>源文件\Camera</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -150,9 +168,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Context.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ModelLoader.h">
@@ -232,6 +247,12 @@
     </ClInclude>
     <ClInclude Include="RenderScene\RenderScene.h">
       <Filter>头文件\RenderScene</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowMap\ShadowMap.h">
+      <Filter>头文件\ShadowMap</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\MyCamera.h">
+      <Filter>头文件\Camera</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

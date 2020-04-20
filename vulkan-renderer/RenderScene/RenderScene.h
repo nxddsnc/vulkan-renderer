@@ -11,9 +11,10 @@ class ResourceManager;
 class PipelineManager;
 class RenderQueue;
 class RenderQueueManager;
-class VulkanCamera;
+class MyCamera;
 class Framebuffer;
 class MyScene;
+class ShadowMap;
 class RenderScene
 {
 public:
@@ -29,8 +30,10 @@ public:
 public:
 	std::shared_ptr<Skybox>												m_pSkybox;
 	std::shared_ptr<Axis>											    m_pAxis;
-	std::shared_ptr<VulkanCamera>										m_pCamera;
+	std::shared_ptr<MyCamera>											m_pCamera;
 	BBox																m_bbox;
+	std::shared_ptr<ShadowMap>											m_pShadowMap;
+
 protected:
 	ResourceManager													  * m_pResourceManager;
 	PipelineManager													  * m_pPipelineManager;
@@ -40,9 +43,10 @@ protected:
 	int																	m_height;
 
 	std::shared_ptr<RenderQueueManager>									m_pRenderQueueManager;
-	std::unordered_map<PipelineId, std::shared_ptr<RenderQueue>>        m_renderQueues;
+	std::vector<std::shared_ptr<RenderQueue>>							m_renderQueues;
 
 	std::vector<std::shared_ptr<Framebuffer>>						    m_framebuffers;
+
 
 	PipelineType														m_pipelineType;
 private:

@@ -131,6 +131,12 @@ void Framebuffer::_init(std::vector<MyImageFormat> colorFormats, MyImageFormat d
 		vk::Format cFormat = vk::Format::eR8G8B8A8Unorm;
 		switch (colorFormats[i])
 		{
+		case MyImageFormat::MY_IMAGEFORMAT_R16_FLOAT:
+			cFormat = vk::Format::eR16Sfloat;
+			break;
+		case MyImageFormat::MY_IMAGEFORMAT_R32_FLOAT:
+			cFormat = vk::Format::eR32Sfloat;
+			break;
 		case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
 			cFormat = vk::Format::eR16G16B16A16Sfloat;
 			break;

@@ -204,7 +204,7 @@ class PipelineManager;
 class Drawable;
 class MyTexture;
 struct VulkanTexture;
-class VulkanCamera;
+class MyCamera;
 class VulkanContext;
 class SHLight;
 class RenderPass;
@@ -216,7 +216,7 @@ public:
     ~Skybox();
     bool LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool);
 
-	void Draw(vk::CommandBuffer &commandBuffer, std::shared_ptr<VulkanCamera> camera, std::shared_ptr<RenderPass> renderPass);
+	void Draw(vk::CommandBuffer &commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<RenderPass> renderPass);
 public:
     ResourceManager               *m_pResourceManager;
 	PipelineManager				  *m_pPipelineManager;
