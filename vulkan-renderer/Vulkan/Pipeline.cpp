@@ -431,10 +431,10 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 		polygonMode,
 		vk::CullModeFlagBits::eBack,
 		vk::FrontFace::eCounterClockwise,
-		static_cast<vk::Bool32>(false),
+		static_cast<vk::Bool32>(true),
+		2.0f,
 		0.0f,
-		0.0f,
-		0.0f,
+		2.0f,
 		1.0f });
 
 	// Multisampling
@@ -502,6 +502,12 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 		pushConstantRanges.data()});
 	_pipelineLayout = m_device.createPipelineLayout(pipelineLayoutInfo);
 
+	std::array<vk::DynamicState, 2> dynamicStates;
+	dynamicStates[0] = vk::DynamicState::eViewport;
+	dynamicStates[1] = vk::DynamicState::eScissor;
+	//dynamicStates[2] = vk::DynamicState::eDepthBias;
+	vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo({}, dynamicStates.size(), dynamicStates.data());
+
 	vk::GraphicsPipelineCreateInfo pipelineInfo({ {},
 		static_cast<uint32_t>(shaderStages.size()),
 		shaderStages.data(),
@@ -513,7 +519,7 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 		&multisampling,
 		&depthStencilStateCreateInfo,
 		&colorBlending,
-		{},
+		&dynamicStateCreateInfo,
 		_pipelineLayout,
 		renderPass->Get(),
 		{},

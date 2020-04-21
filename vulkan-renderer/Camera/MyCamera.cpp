@@ -74,7 +74,7 @@ void MyCamera::SetPosition(glm::vec3 position)
 
 void MyCamera::LookAt(glm::vec3 eye, glm::vec3 center, glm::vec3 up)
 {
-	m_matrices.view = glm::lookAtRH(eye, center, up);
+	m_matrices.view = glm::lookAt(eye, center, up);
 }
 
 void MyCamera::SetRotation(glm::vec3 rotation)
@@ -96,6 +96,7 @@ void MyCamera::Update(BBox &bbox)
 	for (int i = 0; i < 8; ++i)
 	{
 		glm::vec4 vec = m_matrices.view * glm::vec4(boxVerts[i].x, boxVerts[i].y, boxVerts[i].z, 1);
+		vec = vec / vec.w;
 		if (newBox.min.x > vec.x)
 		{
 			newBox.min.x = vec.x;

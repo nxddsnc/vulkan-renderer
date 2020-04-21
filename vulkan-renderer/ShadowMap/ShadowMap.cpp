@@ -20,13 +20,13 @@ ShadowMap::ShadowMap(ResourceManager *resourceManager, PipelineManager *pipeline
 
 	m_pCamera = std::make_shared<MyCamera>(&resourceManager->m_memoryAllocator, true);
 
-	m_width = 1024;
-	m_height = 1024;
+	m_width = 2048;
+	m_height = 2048;
 
 	m_bbox.min = glm::vec3(INFINITE, INFINITE, INFINITE);
 	m_bbox.max = -glm::vec3(INFINITE, INFINITE, INFINITE);
 	
-	m_lightDir = glm::normalize(glm::vec3(-1, 0, 0));
+	m_lightDir = glm::normalize(glm::vec3(-1, -1, -1));
 
 	_init();
 }
@@ -120,19 +120,19 @@ void ShadowMap::AddScene(std::shared_ptr<MyScene> scene)
 	glm::vec3 eye = maxLength * (-m_lightDir) + center;
 
 	m_pCamera->LookAt(eye, center, glm::vec3(0, 0, 1));
-
-	m_pCamera->LookAt(glm::vec3(0, 0, -1), glm::vec3(0), glm::vec3(0, 1, 0));
+	m_pCamera->Update(m_bbox);
 }
 
 std::shared_ptr<Framebuffer> ShadowMap::Draw(vk::CommandBuffer& commandBuffer)
 {
-	m_pCamera->Update(m_bbox);
-
-	std::array<vk::ClearValue, 1> clearValues{};
-	clearValues[0].color.float32[0] = 0.0;
+	std::array<vk::ClearValue, 2> clearValues{};
+	clearValues[0].color.float32[0] = 1.0;
 	clearValues[0].color.float32[1] = 0.0;
 	clearValues[0].color.float32[2] = 0.0;
 	clearValues[0].color.float32[3] = 1.0f;
+
+	clearValues[1].depthStencil.depth = 1.0f;
+	clearValues[1].depthStencil.stencil = 0;
 
 	vk::RenderPassBeginInfo renderPassInfo(m_pFramebuffer->m_pRenderPass->Get(), m_pFramebuffer->m_vkFramebuffer,
 		vk::Rect2D(vk::Offset2D(0, 0),
@@ -144,7 +144,7 @@ std::shared_ptr<Framebuffer> ShadowMap::Draw(vk::CommandBuffer& commandBuffer)
 
 	for (auto renderQueue : m_renderQueues)
 	{
-		renderQueue->Draw(commandBuffer, m_pCamera, nullptr);
+		renderQueue->Draw(commandBuffer, m_pCamera, nullptr, nullptr, m_width, m_height);
 	}
 
 	commandBuffer.endRenderPass();
@@ -160,7 +160,7 @@ void ShadowMap::_init()
 	m_pCamera->SetRotation(glm::vec3(-45, 0, 45));
 
 	m_pCamera->CreateDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
-	m_pFramebuffer = std::make_shared<Framebuffer>("shadow-map", m_pResourceManager, formats, MY_IMAGEFORMAT_UNKONWN, m_width, m_height);
+	m_pFramebuffer = std::make_shared<Framebuffer>("shadow-map", m_pResourceManager, formats, MY_IMAGEFORMAT_D24S8_UINT, m_width, m_height);
 }
 
 void ShadowMap::_deInit()

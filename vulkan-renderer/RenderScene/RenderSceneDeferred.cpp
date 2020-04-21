@@ -137,6 +137,8 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[2]->image, m_framebuffers[0]->m_pColorTextures[2]->format, ssr,
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+	m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->image, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->format, ssr,
+		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 	vk::RenderPassBeginInfo renderPassInfo(
 		m_outputFramebuffer->m_pRenderPass->Get(),
@@ -167,7 +169,7 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 
 	commandBuffer.draw(3, 1, 0, 0);
 
-	//m_pSkybox->Draw(commandBuffer, m_pCamera, m_outputFramebuffer->m_pRenderPass);
+	m_pSkybox->Draw(commandBuffer, m_pCamera, m_outputFramebuffer->m_pRenderPass);
 
 	commandBuffer.endRenderPass();
 
@@ -200,6 +202,8 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 
 	commandBuffer.endRenderPass();*/
 
+	m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->image, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->format, ssr,
+		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[0]->image, m_framebuffers[0]->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[1]->image, m_framebuffers[0]->m_pColorTextures[1]->format, ssr,

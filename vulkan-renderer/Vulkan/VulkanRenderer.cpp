@@ -577,7 +577,8 @@ void VulkanRenderer::_createCommandBuffers()
 
 		// Tonemapping 
 		// FIXME: Not a very solid method of post processing.
-		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, _renderScene->m_pShadowMap->m_pFramebuffer };
+		////std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, _renderScene->m_pShadowMap->m_pFramebuffer };
+		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, offscreenFramebuffer };
 		m_postEffects.back()->Draw(commandBuffer, framebuffers, _framesData[i].framebuffer);
 
 		commandBuffer.end();

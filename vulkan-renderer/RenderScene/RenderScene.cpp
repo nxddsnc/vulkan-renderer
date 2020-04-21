@@ -23,10 +23,11 @@ RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipe
 
 	m_pRenderQueueManager = std::make_shared<RenderQueueManager>(pipelineManager);
 
-	m_pCamera = std::make_shared<MyCamera>(&(resourceManager->m_memoryAllocator));
+	m_pCamera = std::make_shared<MyCamera>(&(resourceManager->m_memoryAllocator), true);
 	m_pCamera->m_type = MyCamera::CameraType::lookat;
-	m_pCamera->SetPosition(glm::vec3(0, 0, 0));
+	m_pCamera->SetPosition(glm::vec3(10, 10, 10));
 	m_pCamera->SetRotation(glm::vec3(-45, 0, 45));
+
 	m_pCamera->SetPerspective(45.0f, (float)width / (float)height, 0.1f, 10.0f);
 
 	m_pCamera->CreateDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
@@ -102,6 +103,26 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 	{
 		m_bbox.max.z = scene->m_bbox.max.z;
 	}
+
+	//glm::vec3 center = (m_bbox.max + m_bbox.min) * 0.5f;
+	//glm::vec3 boxverts[8] = { glm::vec3(m_bbox.max.x, m_bbox.max.y, m_bbox.min.z), glm::vec3(m_bbox.max.x, m_bbox.min.y, m_bbox.min.z),
+	//	glm::vec3(m_bbox.min.x, m_bbox.max.y, m_bbox.min.z), glm::vec3(m_bbox.min.x, m_bbox.min.y, m_bbox.min.z),
+	//	glm::vec3(m_bbox.max.x, m_bbox.max.y, m_bbox.max.z), glm::vec3(m_bbox.max.x, m_bbox.min.y, m_bbox.max.z),
+	//	glm::vec3(m_bbox.min.x, m_bbox.max.y, m_bbox.max.z), glm::vec3(m_bbox.min.x, m_bbox.min.y, m_bbox.max.z) };
+
+	//float maxlength = 0;
+	//glm::vec3 lightdir = glm::normalize(glm::vec3(-1, -1, -1));
+	//for (int i = 0; i < 8; ++i)
+	//{
+	//	float temp = glm::dot(-lightdir, boxverts[i] - center);
+	//	if (maxlength < temp)
+	//	{
+	//		maxlength = temp;
+	//	}
+	//}
+	//glm::vec3 eye = maxlength * (-lightdir) + center;
+
+	//m_pcamera->lookat(eye, center, glm::vec3(0, 0, 1));
 
 	_updateBBox();
 }

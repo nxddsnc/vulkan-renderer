@@ -55,6 +55,12 @@ vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V)
     return length(N) * (prefilteredColor.xyz * (color * brdf.x + brdf.y));
 }
 
+float shadow(vec3 pos)
+{
+    float depth = texture(u_shadowMap, pos.xy).r;
+    return 1.0 - 0.3 * step(depth, pos.z);
+}
+
 void main() 
 {
     vec4 inPosition = texture(u_positionTexture, inUV);
@@ -86,8 +92,12 @@ void main()
 
     outColor.rgb += diffuse;
 
+    vec4 pos = shadowCameraUbo.proj * shadowCameraUbo.view * vec4(inPosition.xyz, 1.0);
+    pos /= pos.w;
+    pos.xy = (1.0 + pos.xy) * 0.5;
+
+    outColor *= shadow(pos.xyz);
+
     outColor.a = 1.0;
 
-    vec4 pos = shadowCameraUbo.proj * shadowCameraUbo.view * inPosition;
-    outColor = vec4(1.0, 1.0, 0.0, 1.0);
 }

@@ -13,5 +13,5 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 
 void main()
 {
-    outColor.r = inPosition.z;
+    outColor.r = gl_FragCoord.z;
 }

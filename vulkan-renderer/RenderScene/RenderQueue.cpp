@@ -23,7 +23,7 @@ void RenderQueue::AddDrawable(std::shared_ptr<Drawable> drawable)
 	m_drawables.push_back(drawable);
 }
 
-void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<Skybox> skybox, std::shared_ptr<ShadowMap> shadowMap)
+void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<Skybox> skybox, std::shared_ptr<ShadowMap> shadowMap, int width, int height)
 {
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipeline());
 
@@ -52,6 +52,14 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 1, 1, &drawable->textureDescriptorSet, 0, nullptr);
 		}
 
+		if (width != 0 && height != 0)
+		{
+			vk::Viewport viewport(0, 0, width, height, 0, 1);
+			vk::Rect2D sissor(vk::Offset2D(0, 0), vk::Extent2D(width, height));
+			commandBuffer.setViewport(0, 1, &viewport);
+			commandBuffer.setScissor(0, 1, &sissor);
+		}
+
 		uint32_t offset = 0;
 		commandBuffer.pushConstants(m_pPipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->m_matrix));
 		offset += sizeof(glm::mat4);
@@ -69,7 +77,7 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 			offset += sizeof(glm::vec2);
 		}
 
-		commandBuffer.drawIndexed(drawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+ 		commandBuffer.drawIndexed(drawable->m_mesh->m_indexNum, 1, 0, 0, 0);
 	}
 
 }
