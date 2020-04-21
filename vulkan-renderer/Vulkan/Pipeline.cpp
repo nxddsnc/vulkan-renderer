@@ -432,9 +432,9 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 		vk::CullModeFlagBits::eBack,
 		vk::FrontFace::eCounterClockwise,
 		static_cast<vk::Bool32>(true),
-		2.0f,
+		8.0f,
 		0.0f,
-		2.0f,
+		8.0f,
 		1.0f });
 
 	// Multisampling
@@ -2071,7 +2071,13 @@ void Pipeline::InitDeferred(std::shared_ptr<RenderPass> renderPass)
 		vk::ShaderStageFlagBits::eFragment,
 		{}
 	);
-	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ shadowMapSamplerBinding }));
+	vk::DescriptorSetLayoutBinding shadowMapSamplerBinding_(1,
+		vk::DescriptorType::eCombinedImageSampler,
+		1,
+		vk::ShaderStageFlagBits::eFragment,
+		{}
+	);
+	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ shadowMapSamplerBinding, shadowMapSamplerBinding_ }));
 
 	vk::DescriptorSetLayoutBinding shadowMapUniformBinding(0,
 		vk::DescriptorType::eUniformBuffer,

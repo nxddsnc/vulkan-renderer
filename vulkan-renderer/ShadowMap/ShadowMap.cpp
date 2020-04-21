@@ -1,6 +1,5 @@
 #include "ShadowMap.h"
 #include "Framebuffer.h"
-#include "ShadowCamera.h"
 #include "MyImage.h"
 #include "Drawable.h"
 #include "ResourceManager.h"
@@ -160,7 +159,7 @@ void ShadowMap::_init()
 	m_pCamera->SetRotation(glm::vec3(-45, 0, 45));
 
 	m_pCamera->CreateDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
-	m_pFramebuffer = std::make_shared<Framebuffer>("shadow-map", m_pResourceManager, formats, MY_IMAGEFORMAT_D24S8_UINT, m_width, m_height);
+	m_pFramebuffer = std::make_shared<Framebuffer>("shadow-map", m_pResourceManager, formats, MY_IMAGEFORMAT_D32_FLOAT, m_width, m_height, true);
 }
 
 void ShadowMap::_deInit()

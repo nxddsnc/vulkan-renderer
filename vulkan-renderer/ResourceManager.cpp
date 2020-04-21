@@ -405,6 +405,22 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
 		sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
 		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 	}
+	else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+		sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+	}
+	else if (oldLayout == vk::ImageLayout::eShaderReadOnlyOptimal && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+		barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
 	else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eTransferSrcOptimal)
 	{
 		barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
@@ -470,7 +486,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 
 	vulkanTexture->texture = texture;
 
-	bool bDepthTexture = false;;
+	bool bDepthTexture = false;
 	vulkanTexture->format = vk::Format::eR8G8B8A8Unorm;
 	switch (myImage->m_format)
 	{
@@ -488,6 +504,10 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
 		vulkanTexture->format = vk::Format::eD24UnormS8Uint;
+		bDepthTexture = true;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+		vulkanTexture->format = vk::Format::eD32Sfloat;
 		bDepthTexture = true;
 		break;
 	}
@@ -587,6 +607,10 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
         break;
 	case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
 		imageFormat = vk::Format::eD24UnormS8Uint;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+		imageFormat = vk::Format::eD32Sfloat;
+		break;
 		break;
     }
 
@@ -714,7 +738,8 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
 		return vulkanTexture;
 	}
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
-    switch (texture->m_pImage->m_format)
+	bool bDepthTexture = false;
+	switch (texture->m_pImage->m_format)
     {
     case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
         imageFormat = vk::Format::eR8G8B8A8Unorm;
@@ -722,8 +747,17 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
         imageFormat = vk::Format::eR16G16B16A16Sfloat;
         break;
+	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+		imageFormat = vk::Format::eD32Sfloat;
+		bDepthTexture = true;
+		break;
     }
 
+	vk::CompareOp compareOp = vk::CompareOp::eAlways;
+	if (bDepthTexture)
+	{
+		compareOp = vk::CompareOp::eGreaterOrEqual;
+	}
     // create image sampler
     vk::SamplerCreateInfo createInfo(
         {},
@@ -736,8 +770,8 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         0.0,
         vk::Bool32(true),
         16.0,
-        vk::Bool32(false),
-        vk::CompareOp::eAlways,
+        vk::Bool32(bDepthTexture),
+        compareOp,
         0.0,
         texture->m_pImage->m_mipmapCount - 1,
         vk::BorderColor::eFloatOpaqueWhite,

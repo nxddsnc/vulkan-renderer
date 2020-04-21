@@ -41,7 +41,8 @@ vk::RenderPass RenderPass::Get()
 	{
 		if (_attachments[i].format == vk::Format::eD24UnormS8Uint || 
 			_attachments[i].format == vk::Format::eD16UnormS8Uint ||
-			_attachments[i].format == vk::Format::eD32SfloatS8Uint )
+			_attachments[i].format == vk::Format::eD32SfloatS8Uint ||
+			_attachments[i].format == vk::Format::eD32Sfloat)
 		{
 			vk::AttachmentReference subpassDepthStencilAttachment(i, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 			subpass.pDepthStencilAttachment = &subpassDepthStencilAttachment;

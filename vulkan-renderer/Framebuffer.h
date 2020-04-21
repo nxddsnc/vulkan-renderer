@@ -15,7 +15,7 @@ class Framebuffer
 {
 public:
 	Framebuffer();
-	Framebuffer(const char* name, ResourceManager* resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height);
+	Framebuffer(const char* name, ResourceManager* resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height, bool depthAsSampler = false);
 	Framebuffer(const char* colorName, const char* depthStencilName, ResourceManager* resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height);
 	Framebuffer(const char* name, ResourceManager* resourceManager, std::shared_ptr<RenderPass> renderPass, 
 		std::shared_ptr<VulkanTexture> colorTexture, std::shared_ptr<VulkanTexture> depthStencilTexture, int width, int height);
@@ -34,7 +34,7 @@ private:
 
 	char										m_pColorName[512];
 	char										m_pDepthStencilName[512];
-	
+	bool										m_bDepthAsSampler;
 private:
 	void _init(std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height);
 	void _createVulkanFramebuffer(int width, int height);

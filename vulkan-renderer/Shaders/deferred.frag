@@ -30,7 +30,8 @@ layout(set = 3, binding = 0) uniform sampler2D   u_positionTexture;
 layout(set = 3, binding = 1) uniform sampler2D   u_normalTexture;
 layout(set = 3, binding = 2) uniform sampler2D   u_albedoTexture;
 
-layout(set = 4, binding = 0) uniform sampler2D   u_shadowMap;
+layout(set = 4, binding = 0) uniform sampler2D   u_shadowMap_;
+layout(set = 4, binding = 1) uniform sampler2DShadow   u_shadowMap;
 
 vec3 F_Schlick(float cosTheta, vec3 F0)
 {
@@ -55,10 +56,25 @@ vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V)
     return length(N) * (prefilteredColor.xyz * (color * brdf.x + brdf.y));
 }
 
-float shadow(vec3 pos)
+float shadow(vec3 pos, vec2 texelScale)
 {
-    float depth = texture(u_shadowMap, pos.xy).r;
-    return 1.0 - 0.3 * step(depth, pos.z);
+    // float depth, sum = 0.0, x, y;
+    // for (y = -1.5; y <= 1.5; y += 1.0)  
+    // {
+	//     for (x = -1.5; x <= 1.5; x += 1.0) 
+	//     {
+    //         depth = texture(u_shadowMap, pos.xyz + vec2(x, y) * texelScale);
+    //         sum += 1.0 - 0.3 * step(depth, pos.z);
+    //     }
+    // }
+    // return sum / 16;
+    // float shadow = texture(u_shadowMap, pos + vec3(-texelScale.x, 0, 0));
+    float shadow = texture(u_shadowMap, pos);
+    shadow += texture(u_shadowMap, pos + vec3(-texelScale.x, 0, 0));
+    shadow += texture(u_shadowMap, pos + vec3(texelScale.x, 0, 0));
+    shadow += texture(u_shadowMap, pos + vec3(0, -texelScale.y, 0));
+    shadow += texture(u_shadowMap, pos + vec3(0, texelScale.y, 0));
+    return 1 - 0.3 * shadow / 5;
 }
 
 void main() 
@@ -96,7 +112,8 @@ void main()
     pos /= pos.w;
     pos.xy = (1.0 + pos.xy) * 0.5;
 
-    outColor *= shadow(pos.xyz);
+    vec2 texelScale = 1.0 / textureSize(u_shadowMap, 0);
+    outColor *= shadow(pos.xyz, texelScale);
 
     outColor.a = 1.0;
 

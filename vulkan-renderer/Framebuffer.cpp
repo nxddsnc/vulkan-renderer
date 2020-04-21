@@ -8,10 +8,11 @@ Framebuffer::Framebuffer()
 {
 }
 
-Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height)
+Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height, bool depthAsSampler)
 {
 
 	m_pResourceManager = resourceManager;
+	m_bDepthAsSampler = depthAsSampler;
 
 	sprintf(m_pColorName, "%s", name);
 	sprintf(m_pDepthStencilName, "%s", name);
@@ -23,7 +24,7 @@ Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, s
 Framebuffer::Framebuffer(const char * colorName, const char * depthStencilName, ResourceManager * resourceManager, std::vector<MyImageFormat> colorFormats, MyImageFormat depthFormt, int width, int height)
 {
 	m_pResourceManager = resourceManager;
-
+	m_bDepthAsSampler = false;
 	sprintf(m_pColorName, "%s", colorName);
 	sprintf(m_pDepthStencilName, "%s", depthStencilName);
 
@@ -35,7 +36,7 @@ Framebuffer::Framebuffer(const char * name, ResourceManager * resourceManager, s
 	std::shared_ptr<VulkanTexture> colorTexture, std::shared_ptr<VulkanTexture> depthStencilTexture, int width, int height)
 {
 	sprintf(m_pColorName, "%s", name);
-
+	m_bDepthAsSampler = false;
 	m_pColorTextures.push_back(colorTexture);
 	m_pDepthTexture = depthStencilTexture;
 
@@ -79,17 +80,32 @@ void Framebuffer::_createVulkanFramebuffer(int width, int height)
 		std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
 		std::vector<vk::DescriptorImageInfo> imageInfos;
 		
-		for (int i = 0; i < m_pColorTextures.size(); ++i)
+		int binding = 0;
+		for (binding = 0; binding < m_pColorTextures.size(); ++binding)
 		{
-			vk::DescriptorSetLayoutBinding textureBinding(i,
+			vk::DescriptorSetLayoutBinding textureBinding(binding,
 				vk::DescriptorType::eCombinedImageSampler,
 				1,
 				vk::ShaderStageFlagBits::eFragment,
 				{});
 			textureBindings.push_back(textureBinding);
 
-			vk::DescriptorImageInfo imageInfo(m_pColorTextures[i]->imageSampler,
-				m_pColorTextures[i]->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+			vk::DescriptorImageInfo imageInfo(m_pColorTextures[binding]->imageSampler,
+				m_pColorTextures[binding]->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+			imageInfos.push_back(imageInfo);
+		}
+
+		if (m_pDepthTexture && m_pDepthTexture->imageSampler && m_bDepthAsSampler)
+		{
+			vk::DescriptorSetLayoutBinding textureBinding(binding,
+				vk::DescriptorType::eCombinedImageSampler,
+				1,
+				vk::ShaderStageFlagBits::eFragment,
+				{});
+			textureBindings.push_back(textureBinding);
+
+			vk::DescriptorImageInfo imageInfo(m_pDepthTexture->imageSampler,
+				m_pDepthTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 			imageInfos.push_back(imageInfo);
 		}
 
@@ -171,6 +187,9 @@ void Framebuffer::_init(std::vector<MyImageFormat> colorFormats, MyImageFormat d
 		{
 		case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
 			dFormat = vk::Format::eD24UnormS8Uint;
+			break;
+		case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+			dFormat = vk::Format::eD32Sfloat;
 			break;
 		}
 		vk::AttachmentDescription depthAttachment({
