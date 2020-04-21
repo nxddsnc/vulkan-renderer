@@ -152,7 +152,7 @@ std::shared_ptr<Framebuffer> ShadowMap::Draw(vk::CommandBuffer& commandBuffer)
 
 void ShadowMap::_init()
 {
-	std::vector<MyImageFormat> formats = { MY_IMAGEFORMAT_R16_FLOAT };
+	std::vector<MyImageFormat> formats = {  };
 	m_pCamera = std::make_shared<MyCamera>(&m_pResourceManager->m_memoryAllocator);
 
 	m_pCamera->SetPosition(glm::vec3(-10, -10, -10));

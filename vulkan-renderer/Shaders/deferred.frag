@@ -30,8 +30,7 @@ layout(set = 3, binding = 0) uniform sampler2D   u_positionTexture;
 layout(set = 3, binding = 1) uniform sampler2D   u_normalTexture;
 layout(set = 3, binding = 2) uniform sampler2D   u_albedoTexture;
 
-layout(set = 4, binding = 0) uniform sampler2D   u_shadowMap_;
-layout(set = 4, binding = 1) uniform sampler2DShadow   u_shadowMap;
+layout(set = 4, binding = 0) uniform sampler2DShadow u_shadowMap;
 
 vec3 F_Schlick(float cosTheta, vec3 F0)
 {

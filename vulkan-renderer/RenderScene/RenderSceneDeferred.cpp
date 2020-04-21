@@ -138,8 +138,8 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[2]->image, m_framebuffers[0]->m_pColorTextures[2]->format, ssr,
 		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-	m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->image, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->format, ssr,
-		vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+	//m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->image, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->format, ssr,
+	//	vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pDepthTexture->image, m_pShadowMap->m_pFramebuffer->m_pDepthTexture->format, ssrDepth,
 		vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -206,8 +206,8 @@ void RenderSceneDeferred::_doShading(vk::CommandBuffer & commandBuffer)
 	commandBuffer.endRenderPass();*/
 	m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pDepthTexture->image, m_pShadowMap->m_pFramebuffer->m_pDepthTexture->format, ssrDepth,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->image, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->format, ssr,
-		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
+	//m_pResourceManager->SetImageLayout(commandBuffer, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->image, m_pShadowMap->m_pFramebuffer->m_pColorTextures[0]->format, ssr,
+	//	vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[0]->image, m_framebuffers[0]->m_pColorTextures[0]->format, ssr,
 		vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 	m_pResourceManager->SetImageLayout(commandBuffer, m_framebuffers[0]->m_pColorTextures[1]->image, m_framebuffers[0]->m_pColorTextures[1]->format, ssr,

@@ -74,13 +74,13 @@ void Framebuffer::_createVulkanFramebuffer(int width, int height)
 
 	m_vkFramebuffer = m_pResourceManager->m_device.createFramebuffer(createInfo);
 
+	std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+	std::vector<vk::DescriptorImageInfo> imageInfos;
+	int binding = 0;
+
 	// Create descriptor set.
-	if (m_pColorTextures[0]->imageSampler)
+	if (m_pColorTextures.size() > 0 && m_pColorTextures[0]->imageSampler)
 	{
-		std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
-		std::vector<vk::DescriptorImageInfo> imageInfos;
-		
-		int binding = 0;
 		for (binding = 0; binding < m_pColorTextures.size(); ++binding)
 		{
 			vk::DescriptorSetLayoutBinding textureBinding(binding,
@@ -94,21 +94,24 @@ void Framebuffer::_createVulkanFramebuffer(int width, int height)
 				m_pColorTextures[binding]->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 			imageInfos.push_back(imageInfo);
 		}
+	}
 
-		if (m_pDepthTexture && m_pDepthTexture->imageSampler && m_bDepthAsSampler)
-		{
-			vk::DescriptorSetLayoutBinding textureBinding(binding,
-				vk::DescriptorType::eCombinedImageSampler,
-				1,
-				vk::ShaderStageFlagBits::eFragment,
-				{});
-			textureBindings.push_back(textureBinding);
+	if (m_pDepthTexture && m_pDepthTexture->imageSampler && m_bDepthAsSampler)
+	{
+		vk::DescriptorSetLayoutBinding textureBinding(binding,
+			vk::DescriptorType::eCombinedImageSampler,
+			1,
+			vk::ShaderStageFlagBits::eFragment,
+			{});
+		textureBindings.push_back(textureBinding);
 
-			vk::DescriptorImageInfo imageInfo(m_pDepthTexture->imageSampler,
-				m_pDepthTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-			imageInfos.push_back(imageInfo);
-		}
+		vk::DescriptorImageInfo imageInfo(m_pDepthTexture->imageSampler,
+			m_pDepthTexture->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+		imageInfos.push_back(imageInfo);
+	}
 
+	if (imageInfos.size() > 0)
+	{
 		vk::DescriptorSetLayout descriptorSetLayout;
 
 		vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());

@@ -2071,13 +2071,7 @@ void Pipeline::InitDeferred(std::shared_ptr<RenderPass> renderPass)
 		vk::ShaderStageFlagBits::eFragment,
 		{}
 	);
-	vk::DescriptorSetLayoutBinding shadowMapSamplerBinding_(1,
-		vk::DescriptorType::eCombinedImageSampler,
-		1,
-		vk::ShaderStageFlagBits::eFragment,
-		{}
-	);
-	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ shadowMapSamplerBinding, shadowMapSamplerBinding_ }));
+	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ shadowMapSamplerBinding }));
 
 	vk::DescriptorSetLayoutBinding shadowMapUniformBinding(0,
 		vk::DescriptorType::eUniformBuffer,
