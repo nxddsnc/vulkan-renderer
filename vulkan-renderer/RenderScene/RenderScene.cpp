@@ -25,8 +25,8 @@ RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipe
 
 	m_pCamera = std::make_shared<MyCamera>(&(resourceManager->m_memoryAllocator), true);
 	m_pCamera->m_type = MyCamera::CameraType::lookat;
-	m_pCamera->SetPosition(glm::vec3(10, 10, 10));
-	m_pCamera->SetRotation(glm::vec3(-45, 0, 45));
+	//m_pCamera->SetPosition(glm::vec3(10, 10, 10));
+	//m_pCamera->SetRotation(glm::vec3(-45, 0, 45));
 
 	m_pCamera->SetPerspective(45.0f, (float)width / (float)height, 0.1f, 10.0f);
 
@@ -122,6 +122,15 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 	//}
 	//glm::vec3 eye = maxlength * (-lightdir) + center;
 
+	//m_pcamera->lookat(eye, center, glm::vec3(0, 0, 1));
+
+	m_pCamera->SetRotation(glm::vec3(0, 0, 0));
+
+	glm::vec3 center = (m_bbox.min + m_bbox.max) * 0.5f;
+	float length = glm::length(m_bbox.max - m_bbox.min) * 0.5;
+	glm::vec3 eye = length * glm::vec3(0, 0, 1) + center;
+
+	m_pCamera->SetPosition(-eye);
 	//m_pcamera->lookat(eye, center, glm::vec3(0, 0, 1));
 
 	_updateBBox();

@@ -53,6 +53,8 @@ private:
     void _parseScene(const aiScene *scene);
     void _extractNode(aiNode *node, glm::mat4 &transform);
     void _extractTransform(glm::mat4 &transform, void *aiMatrix);
+	std::shared_ptr<BoneNode> _traverseBuildSkeleton(aiNode* parent);
+	void _extractSkeletonAnimations();
     std::shared_ptr<MyMesh> _extractMesh(unsigned int idx);
     std::shared_ptr<MyMaterial> _extractMaterial(unsigned int idx);
     std::shared_ptr<MyTexture> _extractTexture(char *texturePath, int textureWrapMode[3]);
@@ -68,5 +70,9 @@ private:
     std::unordered_map<unsigned int, std::shared_ptr<MyMaterial>>   m_materialMap;
     std::unordered_map<TextureKey, std::shared_ptr<MyTexture>>     m_textureMap;
     std::unordered_map<std::string, std::shared_ptr<MyImage>>       m_imageMap;
+
+	std::unordered_map<aiNode*, std::shared_ptr<BoneNode>> m_nodeBoneMap;
+	std::unordered_map<std::string, std::shared_ptr<BoneNode>> m_nameBoneMap;
+
 };
 

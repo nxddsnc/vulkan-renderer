@@ -114,7 +114,8 @@ int main()
     //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
     //if (!modelLoader.load("./TestModel/sphere1.obj"))
-	if (!modelLoader.load("./TestModel/house.fbx"))
+	//if (!modelLoader.load("./TestModel/house.fbx"))
+	if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
     {
         std::cout << "can't read gltf file!" << std::endl;
         return -1;

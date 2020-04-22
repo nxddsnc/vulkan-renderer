@@ -13,6 +13,7 @@
 #include "MyImage.h"
 #include <stdio.h>
 #include "Utils.h"
+#include <unordered_set>
 
 ModelLoader::ModelLoader(std::shared_ptr<MyScene> scene)
 {
@@ -33,6 +34,7 @@ bool ModelLoader::load(const char * filepath)
     // Usually - if speed is not the most important aspect for you - you'll
     // probably to request more postprocessing than we do in this example.
     m_pAiScene = importer.ReadFile(filepath,
+		aiProcess_PopulateArmatureData |
         aiProcess_GenNormals |
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
@@ -100,6 +102,104 @@ void ModelLoader::_extractTransform(glm::mat4 & transform, void * aiMatrix)
 	transform[3][0] = _matrix->a4; transform[3][1] = _matrix->b4; transform[3][2] = _matrix->c4; transform[3][3] = _matrix->d4;
 }
 
+std::shared_ptr<BoneNode> ModelLoader::_traverseBuildSkeleton(aiNode * parent)
+{
+	auto parentBone = m_nodeBoneMap.at(parent);
+	for (int i = 0; i < parent->mNumChildren; ++i)
+	{
+		aiNode* node = parent->mChildren[i];
+		std::shared_ptr<BoneNode> boneNode;
+		if (m_nodeBoneMap.count(node) == 0)
+		{
+			boneNode = std::make_shared<BoneNode>();
+			m_nodeBoneMap.insert(std::make_pair(node, boneNode));
+		}
+		else
+		{
+			boneNode = m_nodeBoneMap.at(node);
+		}
+
+		boneNode->parent = parentBone;
+		parentBone->children.push_back(boneNode);
+	}
+}
+
+void ModelLoader::_extractSkeletonAnimations()
+{
+	std::unordered_set<aiNode*> roots;
+	std::unordered_set<std::shared_ptr<BoneNode>> skeletonRoots;
+	for (auto nodeBonePair : m_nodeBoneMap)
+	{
+		std::shared_ptr<BoneNode> boneNode = nodeBonePair.second;
+
+		if (roots.count(boneNode->root) == 0)
+		{
+			std::shared_ptr<BoneNode> rootBone;
+
+			if (m_nodeBoneMap.count(boneNode->root) == 0)
+			{
+				rootBone = std::make_shared<BoneNode>();
+				rootBone->parent = nullptr;
+				m_nodeBoneMap.insert(std::make_pair(boneNode->root, rootBone));
+			}
+			else
+			{
+				rootBone = m_nodeBoneMap.at(boneNode->root);
+			}
+			_traverseBuildSkeleton(boneNode->root);
+			roots.insert(boneNode->root);
+
+			if (skeletonRoots.count(rootBone) == 0)
+			{
+				skeletonRoots.insert(rootBone);
+			}
+		}
+	}
+
+	for (int i = 0; i < m_pAiScene->mNumAnimations; ++i)
+	{
+		std::shared_ptr<BoneNode> root;
+		aiAnimation* animation_ = m_pAiScene->mAnimations[i];
+		for (int j = 0; j < animation_->mNumChannels; ++j)
+		{
+			aiNodeAnim* nodeAnimation = animation_->mChannels[i];
+			auto boneNode = m_nameBoneMap.at(nodeAnimation->mNodeName.C_Str());
+
+			for (int k = 0; k < nodeAnimation->mNumPositionKeys; ++k)
+			{
+				aiVectorKey keyPosition = nodeAnimation->mPositionKeys[k];
+				BoneNode::KeyVector keyVector;
+				keyVector.value = glm::vec3(keyPosition.mValue.x, keyPosition.mValue.y, keyPosition.mValue.z);
+				keyVector.time = keyPosition.mTime;
+				boneNode->keyPositions.push_back(keyVector);
+			}
+			for (int k = 0; k < nodeAnimation->mNumScalingKeys; ++k)
+			{
+				aiVectorKey keyScaling = nodeAnimation->mScalingKeys[k];
+				BoneNode::KeyVector keyVector;
+				keyVector.value = glm::vec3(keyScaling.mValue.x, keyScaling.mValue.y, keyScaling.mValue.z);
+				keyVector.time = keyScaling.mTime;
+				boneNode->keyScalings.push_back(keyVector);
+			}
+			for (int k = 0; k < nodeAnimation->mNumRotationKeys; ++k)
+			{
+				aiQuatKey keyRotation = nodeAnimation->mRotationKeys[k];
+				BoneNode::KeyQuat keyQuat;
+				keyQuat.value = glm::quat(keyRotation.mValue.x, keyRotation.mValue.y, keyRotation.mValue.z, keyRotation.mValue.w);
+				keyQuat.time = keyRotation.mTime;
+				boneNode->keyRotations.push_back(keyQuat);
+			}
+		}
+
+		std::shared_ptr<MyAnimation> myAnimation = std::make_shared<MyAnimation>();
+		myAnimation->currentTime = 0;
+		myAnimation->duration = animation_->mDuration;
+		myAnimation->root
+
+		m_pScene->AddAnimation(myAnimation);
+	}
+}
+
 std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
 {
     if (m_meshMap.count(idx) > 0)
@@ -114,7 +214,8 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
         vertexBits.hasNormal         = _mesh->HasNormals();
         vertexBits.hasTangent        = _mesh->HasTangentsAndBitangents();
         vertexBits.hasTexCoord0      = _mesh->HasTextureCoords(0);
-        
+        vertexBits.hasBone		     = _mesh->HasBones();
+
         std::shared_ptr<MyMesh> mesh = std::make_shared<MyMesh>(vertexBits, _mesh->mNumVertices, _mesh->mNumFaces * 3);
 
         for (size_t i = 0; i < _mesh->mNumVertices; ++i)
@@ -134,24 +235,46 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
                 mesh->m_normals[i].z = normal.z;
             }
         }
-         if (vertexBits.hasTexCoord0)
-         {
-             for (size_t i = 0; i < _mesh->mNumVertices; ++i)
-             {
-                 aiVector3D uv = _mesh->mTextureCoords[0][i];
-                 mesh->m_texCoords0[i].x = uv.x;
-                 mesh->m_texCoords0[i].y = 1 - uv.y;
-             }
-         }
-         if (vertexBits.hasTangent)
-         {
-             for (size_t i = 0; i < _mesh->mNumVertices; ++i)
-             {
-                 aiVector3D tangent = _mesh->mTangents[i];
-                 mesh->m_tangents[i].x = tangent.x;
-                 mesh->m_tangents[i].y = tangent.y;
-             }
-         }
+		if (vertexBits.hasTexCoord0)
+		{
+			for (size_t i = 0; i < _mesh->mNumVertices; ++i)
+			{
+				aiVector3D uv = _mesh->mTextureCoords[0][i];
+				mesh->m_texCoords0[i].x = uv.x;
+				mesh->m_texCoords0[i].y = 1 - uv.y;
+			}
+		}
+		if (vertexBits.hasTangent)
+		{
+			for (size_t i = 0; i < _mesh->mNumVertices; ++i)
+			{
+				aiVector3D tangent = _mesh->mTangents[i];
+				mesh->m_tangents[i].x = tangent.x;
+				mesh->m_tangents[i].y = tangent.y;
+			}
+		}
+		if (vertexBits.hasBone)
+		{
+			for (size_t i = 0; i < _mesh->mNumBones; ++i)
+			{
+				aiBone *bone = _mesh->mBones[i];
+				if (m_nodeBoneMap.count(bone->mNode) == 0)
+				{
+					auto boneNode = std::make_shared<BoneNode>();
+					boneNode->root = bone->mArmature;
+					for (int idx = 0; idx < bone->mNumWeights; ++idx)
+					{
+						aiVertexWeight vertexWeight_ = bone->mWeights[idx];
+						BoneNode::VertexWeight vertexWeight;
+						vertexWeight.vertexId = vertexWeight_.mVertexId;
+						vertexWeight.weight = vertexWeight_.mWeight;
+						boneNode->vertexWeights.push_back(vertexWeight);
+					}
+					m_nodeBoneMap.insert(std::make_pair(bone->mNode, boneNode));
+					m_nameBoneMap.insert(std::make_pair(bone->mName.C_Str(), boneNode));
+				}
+			}
+		}
         if(mesh->m_indexType == 1)
         {
             uint8_t *indexPtr = reinterpret_cast<uint8_t*>(mesh->m_indices);

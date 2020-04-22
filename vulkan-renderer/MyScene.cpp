@@ -46,3 +46,8 @@ std::vector<std::shared_ptr<Drawable>> MyScene::GetDrawables()
 {
     return _drawables;
 }
+
+void MyScene::AddAnimation(std::shared_ptr<MyAnimation> animation)
+{
+	m_animations.push_back(animation);
+}
