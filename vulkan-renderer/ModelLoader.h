@@ -53,7 +53,7 @@ private:
     void _parseScene(const aiScene *scene);
     void _extractNode(aiNode *node, glm::mat4 &transform);
     void _extractTransform(glm::mat4 &transform, void *aiMatrix);
-	std::shared_ptr<BoneNode> _traverseBuildSkeleton(aiNode* parent);
+	void _traverseBuildSkeleton(aiNode* parent);
 	void _extractSkeletonAnimations();
     std::shared_ptr<MyMesh> _extractMesh(unsigned int idx);
     std::shared_ptr<MyMaterial> _extractMaterial(unsigned int idx);

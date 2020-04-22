@@ -29,6 +29,11 @@ MyMesh::MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize)
     {
         m_colors.resize(vertexSize);
     }
+    if (vertexBits.hasBone)
+    {
+        m_joints.resize(vertexSize);
+        m_weights.reserve(vertexSize);
+    }
 
     //if (vertexSize < 256)
     //{

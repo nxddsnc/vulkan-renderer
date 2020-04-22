@@ -64,6 +64,7 @@ void ModelLoader::_parseScene(const aiScene * scene)
         identity = { 1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1 };
     }
     _extractNode(root, identity);
+    _extractSkeletonAnimations();
 }
 
 void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
@@ -102,7 +103,7 @@ void ModelLoader::_extractTransform(glm::mat4 & transform, void * aiMatrix)
 	transform[3][0] = _matrix->a4; transform[3][1] = _matrix->b4; transform[3][2] = _matrix->c4; transform[3][3] = _matrix->d4;
 }
 
-std::shared_ptr<BoneNode> ModelLoader::_traverseBuildSkeleton(aiNode * parent)
+void ModelLoader::_traverseBuildSkeleton(aiNode * parent)
 {
 	auto parentBone = m_nodeBoneMap.at(parent);
 	for (int i = 0; i < parent->mNumChildren; ++i)
@@ -121,6 +122,7 @@ std::shared_ptr<BoneNode> ModelLoader::_traverseBuildSkeleton(aiNode * parent)
 
 		boneNode->parent = parentBone;
 		parentBone->children.push_back(boneNode);
+        _traverseBuildSkeleton(node);
 	}
 }
 
@@ -128,6 +130,7 @@ void ModelLoader::_extractSkeletonAnimations()
 {
 	std::unordered_set<aiNode*> roots;
 	std::unordered_set<std::shared_ptr<BoneNode>> skeletonRoots;
+    std::vector<std::shared_ptr<BoneNode>> animationRoots;
 	for (auto nodeBonePair : m_nodeBoneMap)
 	{
 		std::shared_ptr<BoneNode> boneNode = nodeBonePair.second;
@@ -139,7 +142,9 @@ void ModelLoader::_extractSkeletonAnimations()
 			if (m_nodeBoneMap.count(boneNode->root) == 0)
 			{
 				rootBone = std::make_shared<BoneNode>();
+                rootBone->name = boneNode->root->mName.C_Str();
 				rootBone->parent = nullptr;
+                rootBone->root = boneNode->root;
 				m_nodeBoneMap.insert(std::make_pair(boneNode->root, rootBone));
 			}
 			else
@@ -152,13 +157,13 @@ void ModelLoader::_extractSkeletonAnimations()
 			if (skeletonRoots.count(rootBone) == 0)
 			{
 				skeletonRoots.insert(rootBone);
+                animationRoots.push_back(rootBone);
 			}
 		}
 	}
 
 	for (int i = 0; i < m_pAiScene->mNumAnimations; ++i)
 	{
-		std::shared_ptr<BoneNode> root;
 		aiAnimation* animation_ = m_pAiScene->mAnimations[i];
 		for (int j = 0; j < animation_->mNumChannels; ++j)
 		{
@@ -194,7 +199,7 @@ void ModelLoader::_extractSkeletonAnimations()
 		std::shared_ptr<MyAnimation> myAnimation = std::make_shared<MyAnimation>();
 		myAnimation->currentTime = 0;
 		myAnimation->duration = animation_->mDuration;
-		myAnimation->root
+        myAnimation->roots = animationRoots;
 
 		m_pScene->AddAnimation(myAnimation);
 	}

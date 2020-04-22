@@ -52,7 +52,7 @@ struct BoneNode
 
 struct MyAnimation
 {
-	std::shared_ptr<BoneNode> root;
+	std::vector<std::shared_ptr<BoneNode>>  roots;
 	double					  duration;
 	double					  currentTime;
 };
@@ -75,6 +75,8 @@ public:
 	std::vector<glm::vec3>  m_texCoords0;
 	std::vector<glm::vec2>  m_texCoords1;
 	std::vector<glm::vec3>  m_colors;
+    std::vector<glm::vec4>  m_joints;
+    std::vector<glm::vec4>  m_weights;
 	void                  * m_indices;
 	uint32_t                m_vertexNum;
 	uint32_t                m_indexNum;
