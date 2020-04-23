@@ -13,6 +13,7 @@
 #include "MyTexture.h"
 #include "MyScene.h"
 #include "ShadowMap.h"
+#include "MyAnimation.h"
 
 RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipelineManager, int width, int height)
 {
@@ -36,6 +37,8 @@ RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipe
 	m_bbox.max = -glm::vec3(INFINITE);
 
 	m_pShadowMap = std::make_shared<ShadowMap>(m_pResourceManager, m_pPipelineManager, m_pRenderQueueManager);
+
+    m_animation = nullptr;
 }
 
 RenderScene::~RenderScene()
@@ -44,6 +47,12 @@ RenderScene::~RenderScene()
 
 void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 {
+    if (scene->m_animations.size() > 0)
+    {
+        m_animation = scene->m_animations[0];
+        scene->m_animations[0]->InitUniformBuffer(&m_pResourceManager->m_memoryAllocator);
+        scene->m_animations[0]->CreateDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
+    }
 	m_pShadowMap->AddScene(scene);
 
 	auto drawables = scene->GetDrawables();
@@ -52,6 +61,8 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 	{
 		std::shared_ptr<Drawable> drawable = drawables[i];
 		m_pResourceManager->InitVulkanResource(drawable);
+
+        drawable->m_pAnimation = m_animation;
 
 		PipelineId id;
 
@@ -164,6 +175,11 @@ void RenderScene::UpdateUniforms()
 	{
 		m_pShadowMap->m_pCamera->UpdateUniformBuffer();
 	}
+    if (m_animation)
+    {
+        m_animation->Update();
+        m_animation->UpdateUniformbuffer();
+    }
 }
 
 std::shared_ptr<Framebuffer> RenderScene::GetFramebuffer()

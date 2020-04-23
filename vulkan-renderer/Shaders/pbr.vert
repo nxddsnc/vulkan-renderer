@@ -7,6 +7,11 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 cameraPos;
 } ubo;
 
+layout(set = 1, binding = 0) uniform UboJointMatrices {
+    mat4 value[64];
+} uboJointMatrices;
+
+
 layout(push_constant) uniform UniformPerDrawable
 {
     mat4 modelMatrix;

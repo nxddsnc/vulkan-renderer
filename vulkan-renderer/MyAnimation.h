@@ -35,16 +35,17 @@ public:
 
 	void SetRoot(std::shared_ptr<MyNode> root);
 	void Update();
-	void CreateUniformBuffer();
+	void InitUniformBuffer(VmaAllocator * memoryAllocator);
 	void UpdateUniformbuffer();
 	void CreateDescriptorSet(vk::Device & device, vk::DescriptorPool & descriptorPool);
-
-	void InitUniformBuffer(VmaAllocator * memoryAllocator);
-
 private:
 	void _traverseNodes(std::shared_ptr<MyNode> parent);
 	void _traverseUpdate(std::shared_ptr<MyNode> parent);
 	glm::mat4 _getCurrentMatrix(std::shared_ptr<MyNode> node);
+
+public:
+        vk::DescriptorSet           m_descriptorSet;
+
 private:
 	std::vector<std::shared_ptr<MyNode>>    m_boneNodes;
 	double									m_duration;
@@ -52,7 +53,6 @@ private:
 
 	vk::Buffer                  m_uniformBuffer;
 	VmaAllocation               m_uniformBufferMemory;
-	vk::DescriptorSet           m_descriptorSet;
 private:
 	std::shared_ptr<MyNode>			        m_pRoot;
 

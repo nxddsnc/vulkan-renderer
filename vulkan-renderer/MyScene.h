@@ -19,8 +19,9 @@ public:
 	void AddAnimation(std::shared_ptr<MyAnimation> animation);
 
 	BBox	m_bbox;
+
+    std::vector<std::shared_ptr<MyAnimation>> m_animations;
 private:
     std::vector<std::shared_ptr<Drawable>> _drawables;
-	std::vector<std::shared_ptr<MyAnimation>> m_animations;
 };
 

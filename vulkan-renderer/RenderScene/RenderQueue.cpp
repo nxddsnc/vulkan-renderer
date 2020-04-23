@@ -6,6 +6,7 @@
 #include "SHLight.h"
 #include "ShadowMap.h"
 #include "MyCamera.h"
+#include "MyAnimation.h"
 
 RenderQueue::RenderQueue(std::shared_ptr<Pipeline> pipeline)
 {
@@ -47,10 +48,16 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 		//commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 1, 1, &skybox->m_pSHLight->m_descriptorSet, 0, nullptr);
 		//commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 2, 1, &skybox->m_preFilteredDescriptorSet, 0, nullptr);
 
+        int bindings = 1;
 		if (drawable->baseColorTexture || drawable->normalTexture || drawable->metallicRoughnessTexture)
 		{
-			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 1, 1, &drawable->textureDescriptorSet, 0, nullptr);
+			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), bindings++, 1, &drawable->textureDescriptorSet, 0, nullptr);
 		}
+
+        if (drawable->m_pAnimation && m_pPipeline->m_id.type == MODEL_DEFERRED)
+        {
+            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), bindings++, 1, &drawable->m_pAnimation->m_descriptorSet, 0, nullptr);
+        }
 
 		if (width != 0 && height != 0)
 		{

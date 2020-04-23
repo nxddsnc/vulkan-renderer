@@ -17,7 +17,8 @@ void MyAnimation::SetRoot(std::shared_ptr<MyNode> root)
 
 	_traverseNodes(root);
 
-	m_JointMatrices.resize(m_boneNodes.size());
+    assert(m_boneNodes.size() <= 64);
+	m_JointMatrices.resize(64);
 }
 
 void MyAnimation::Update()

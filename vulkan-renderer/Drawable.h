@@ -23,6 +23,7 @@ struct VulkanTexture
 	int									referenceCount = 0;
 };
 
+class MyAnimation;
 class Drawable
 {
 public:
@@ -56,6 +57,7 @@ public:
 
 	bool						   m_bReady;
 
+    std::shared_ptr<MyAnimation>   m_pAnimation;
     //vk::DescriptorSet              textureDescriptorSet;
 };
 

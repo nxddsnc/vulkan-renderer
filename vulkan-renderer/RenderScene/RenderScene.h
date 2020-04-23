@@ -33,7 +33,7 @@ public:
 	std::shared_ptr<MyCamera>											m_pCamera;
 	BBox																m_bbox;
 	std::shared_ptr<ShadowMap>											m_pShadowMap;
-
+    std::shared_ptr<MyAnimation>                                        m_animation;
 protected:
 	ResourceManager													  * m_pResourceManager;
 	PipelineManager													  * m_pPipelineManager;

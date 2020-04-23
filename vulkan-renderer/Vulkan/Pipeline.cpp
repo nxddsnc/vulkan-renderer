@@ -780,6 +780,16 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
 	}
 
+    if (m_id.model.primitivePart.info.bits.jointVertexData)
+    {
+        vk::DescriptorSetLayoutBinding animationUbo(bindings++,
+            vk::DescriptorType::eUniformBuffer,
+            1,
+            vk::ShaderStageFlagBits::eVertex,
+            {});
+        descriptorSetLayouts.push_back(_createDescriptorSetLayout({ animationUbo }));
+    }
+
 	// pipeline layout
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
 		static_cast<uint32_t>(descriptorSetLayouts.size()),
