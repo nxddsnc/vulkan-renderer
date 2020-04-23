@@ -332,6 +332,7 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     id.model.primitivePart.info.bits.positionVertexData = 1;
     id.model.primitivePart.info.bits.normalVertexData = 0;
     id.model.primitivePart.info.bits.countTexCoord = 0;
+	id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
     Pipeline pipeline(id);
     pipeline.InitPrefilteredCubeMap(m_pContext->GetLogicalDevice(), vulkanRenderPass);
 

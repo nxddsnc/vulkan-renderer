@@ -150,6 +150,9 @@
     <ClCompile Include="Camera\MyCamera.cpp">
       <Filter>源文件\Camera</Filter>
     </ClCompile>
+    <ClCompile Include="MyAnimation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -253,6 +256,9 @@
     </ClInclude>
     <ClInclude Include="Camera\MyCamera.h">
       <Filter>头文件\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="MyAnimation.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

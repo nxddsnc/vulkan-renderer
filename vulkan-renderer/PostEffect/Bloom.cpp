@@ -149,6 +149,7 @@ void Bloom::_init()
 	brightnessPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
 	brightnessPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
 	brightnessPipelineId.model.primitivePart.info.bits.countColor = 0;
+	brightnessPipelineId.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
 
 	m_pPipelineBrightness = m_pPipelineManager->GetPipeline(brightnessPipelineId, nullptr);
 	m_pPipelineBrightness->InitBrightPass(m_pResourceManager->m_device, m_framebuffer1->m_pRenderPass->Get());
@@ -161,6 +162,7 @@ void Bloom::_init()
 	blurPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
 	blurPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
 	blurPipelineId.model.primitivePart.info.bits.countColor = 0;
+	blurPipelineId.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
 
 	m_pPipelineBlurX = m_pPipelineManager->GetPipeline(blurPipelineId, nullptr);
 	m_pPipelineBlurX->InitGaussianBlur(m_pResourceManager->m_device, m_framebuffer2->m_pRenderPass->Get());

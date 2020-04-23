@@ -1,4 +1,6 @@
 #include "MyMesh.h"
+#include "assimp/mesh.h"
+#include "MyAnimation.h"
 
 MyMesh::MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize)
 {
@@ -32,7 +34,7 @@ MyMesh::MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize)
     if (vertexBits.hasBone)
     {
         m_joints.resize(vertexSize);
-        m_weights.reserve(vertexSize);
+        m_weights.resize(vertexSize);
     }
 
     //if (vertexSize < 256)
@@ -61,6 +63,20 @@ MyMesh::MyMesh()
 MyMesh::~MyMesh()
 {
     delete [] m_indices;
+}
+
+void MyMesh::InitSkinData()
+{
+	//for (int i = 0; i < m_bones.size(); ++i)
+	for (int i = 0; i < std::min(m_bones.size(), (size_t)4); ++i)
+	{
+		for (int j = 0; j < m_bones[i]->mNumWeights; ++j)
+		{
+			aiVertexWeight vertexWeight = m_bones[i]->mWeights[j];
+			m_weights[vertexWeight.mVertexId][i] = vertexWeight.mWeight;
+			m_joints[vertexWeight.mVertexId][i] = m_boneNodes[i]->jointIndex;
+		}
+	}
 }
 
 void MyMesh::CreateCube()

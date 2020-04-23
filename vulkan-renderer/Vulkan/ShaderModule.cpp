@@ -104,6 +104,16 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
             options->AddMacroDefinition("IN_COLOR", "1");
             options->AddMacroDefinition("IN_COLOR_LOCATION", std::to_string(bindings++));
         }
+		if (_id.model.primitivePart.info.bits.jointVertexData)
+		{
+			options->AddMacroDefinition("IN_JOINT", "1");
+			options->AddMacroDefinition("IN_JOINT_LOCATION", std::to_string(bindings++));
+		}
+		if (_id.model.primitivePart.info.bits.weightVertexData)
+		{
+			options->AddMacroDefinition("IN_WEIGHT", "1");
+			options->AddMacroDefinition("IN_WEIGHT_LOCATION", std::to_string(bindings++));
+		}
 
         bindings = 0;
         if (stage == ShaderStage::FRAGMENT)

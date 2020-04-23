@@ -56,6 +56,9 @@ void ShadowMap::AddScene(std::shared_ptr<MyScene> scene)
 		id.model.primitivePart.info.bits.tangentVertexData = drawable->m_mesh->m_vertexBits.hasTangent;
 		id.model.primitivePart.info.bits.countTexCoord = drawable->m_mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
 		id.model.primitivePart.info.bits.countColor = drawable->m_mesh->m_vertexBits.hasColor;
+		id.model.primitivePart.info.bits.jointVertexData = drawable->m_mesh->m_vertexBits.hasBone;
+		id.model.primitivePart.info.bits.weightVertexData = drawable->m_mesh->m_vertexBits.hasBone;
+		id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
 		id.model.materialPart.info.bits.baseColorInfo = 0;
 		id.model.materialPart.info.bits.baseColorMap = 0;
 		id.model.materialPart.info.bits.normalMap = 0;

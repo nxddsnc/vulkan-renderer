@@ -3,6 +3,7 @@
 #pragma once
 
 struct aiNode;
+struct aiBone;
 struct VertexBits
 {
     VertexBits()  : hasNormal(true), hasTangent(false), hasTexCoord0(false),  hasTexCoord1(false), hasColor(false), hasBone(false) {}
@@ -23,40 +24,7 @@ enum class Mode : uint8_t {
     TriangleFan = 6    ///<
 };
 
-struct BoneNode
-{
-	struct VertexWeight
-	{
-		unsigned int vertexId;
-		float weight;
-	};
-	struct KeyVector
-	{
-		glm::vec3 value;
-		double time;
-	};
-	struct KeyQuat
-	{
-		glm::quat value;
-		double time;
-	};
-	std::string			      name;
-	std::shared_ptr<BoneNode> parent;
-	aiNode*					  root;
-	std::vector<std::shared_ptr<BoneNode>> children;
-	std::vector<VertexWeight> vertexWeights;
-	std::vector<KeyVector>    keyPositions;
-	std::vector<KeyVector>    keyScalings;
-	std::vector<KeyQuat>      keyRotations;
-};
-
-struct MyAnimation
-{
-	std::vector<std::shared_ptr<BoneNode>>  roots;
-	double					  duration;
-	double					  currentTime;
-};
-
+struct MyNode;
 class MyMesh
 {
 public:
@@ -64,23 +32,27 @@ public:
 	MyMesh();
 	~MyMesh();
 
+	void InitSkinData();
 	void CreateCube();
 	void CreateAixs();
 	int getIndexSize();
-	int                     m_indexType;
-	VertexBits              m_vertexBits;
-	std::vector<glm::vec3>  m_positions;
-	std::vector<glm::vec3>  m_normals;
-	std::vector<glm::vec3>  m_tangents;
-	std::vector<glm::vec3>  m_texCoords0;
-	std::vector<glm::vec2>  m_texCoords1;
-	std::vector<glm::vec3>  m_colors;
-    std::vector<glm::vec4>  m_joints;
-    std::vector<glm::vec4>  m_weights;
-	void                  * m_indices;
-	uint32_t                m_vertexNum;
-	uint32_t                m_indexNum;
+	int                                    m_indexType;
+	VertexBits                             m_vertexBits;
+	std::vector<glm::vec3>                 m_positions;
+	std::vector<glm::vec3>                 m_normals;
+	std::vector<glm::vec3>                 m_tangents;
+	std::vector<glm::vec3>                 m_texCoords0;
+	std::vector<glm::vec2>                 m_texCoords1;
+	std::vector<glm::vec3>                 m_colors;
+    std::vector<glm::vec4>                 m_joints;
+    std::vector<glm::vec4>                 m_weights;
+	void                                 * m_indices;
+	uint32_t                               m_vertexNum;
+	uint32_t                               m_indexNum;
+						                 
+	Mode                                   m_mode;
 
-	Mode                    m_mode;
+	std::vector<aiBone*>				   m_bones;
+	std::vector<std::shared_ptr<MyNode>>   m_boneNodes;
 };
 

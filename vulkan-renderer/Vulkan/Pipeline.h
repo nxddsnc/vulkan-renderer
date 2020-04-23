@@ -35,9 +35,11 @@ struct PipelineId
       union {
         struct
         {
-          uint8_t positionVertexData : 1;
-          uint8_t normalVertexData : 1;
-          uint8_t tangentVertexData : 1;
+          bool positionVertexData : 1;
+          bool normalVertexData : 1;
+		  bool tangentVertexData : 1;
+		  bool jointVertexData : 1;
+		  bool weightVertexData : 1;
           uint8_t countTexCoord : 2;
           uint8_t countColor : 2;
           PrimitiveMode primitiveMode : 3;

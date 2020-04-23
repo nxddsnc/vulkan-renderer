@@ -1,4 +1,5 @@
 #include "MyScene.h"
+#include "MyAnimation.h"
 
 MyScene::MyScene()
 {

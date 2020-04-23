@@ -27,6 +27,13 @@ layout(location = IN_UV0_LOCATION) in vec3 inUv;
 layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 
+#if IN_JOINT
+layout(location = IN_JOINT_LOCATION) in vec4 inJoint;
+#endif
+
+#if IN_WEIGHT
+layout(location = IN_WEIGHT_LOCATION) in vec4 inWeight;
+#endif
 // varyings
 #if IN_TANGENT && IN_NORMAL
 // mat3 consumes 3 location.
@@ -42,6 +49,7 @@ layout(location = IN_NORMAL_LOCATION) out vec3 outNormal;
 #if IN_UV0
 layout(location = IN_UV0_LOCATION) out vec3 outUv;
 #endif
+
 
 void main() 
 {

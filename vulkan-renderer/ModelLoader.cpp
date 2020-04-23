@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include "Utils.h"
 #include <unordered_set>
+#include "MyAnimation.h"
 
 ModelLoader::ModelLoader(std::shared_ptr<MyScene> scene)
 {
@@ -76,7 +77,7 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
     for (int i = 0; i < node->mNumMeshes; ++i)
     {
         // extract mesh
-        auto mesh = _extractMesh(node->mMeshes[i]);
+        auto mesh = _extractMesh(node, node->mMeshes[i]);
         auto material = _extractMaterial(m_pAiScene->mMeshes[node->mMeshes[i]]->mMaterialIndex);
         std::shared_ptr<Drawable> drawable = std::make_shared<Drawable>();
         drawable->m_mesh = mesh;
@@ -103,109 +104,123 @@ void ModelLoader::_extractTransform(glm::mat4 & transform, void * aiMatrix)
 	transform[3][0] = _matrix->a4; transform[3][1] = _matrix->b4; transform[3][2] = _matrix->c4; transform[3][3] = _matrix->d4;
 }
 
-void ModelLoader::_traverseBuildSkeleton(aiNode * parent)
+void ModelLoader::_traverseBuildSkeleton(std::shared_ptr<MyNode> myNode)
 {
-	auto parentBone = m_nodeBoneMap.at(parent);
-	for (int i = 0; i < parent->mNumChildren; ++i)
+	for (int i = 0; i < myNode->node->mNumChildren; ++i)
 	{
-		aiNode* node = parent->mChildren[i];
-		std::shared_ptr<BoneNode> boneNode;
-		if (m_nodeBoneMap.count(node) == 0)
+		aiNode* childNode = myNode->node->mChildren[i];
+		if (m_nodesInSkeleton.count(childNode) > 0)
 		{
-			boneNode = std::make_shared<BoneNode>();
-			m_nodeBoneMap.insert(std::make_pair(node, boneNode));
-		}
-		else
-		{
-			boneNode = m_nodeBoneMap.at(node);
-		}
+			std::shared_ptr<MyNode> child = std::make_shared<MyNode>();
+			child->parent = myNode;
+			child->node = childNode;
+			myNode->children.push_back(child);
+			m_nodeMap.insert(std::make_pair(child->node->mName.C_Str(), child));
 
-		boneNode->parent = parentBone;
-		parentBone->children.push_back(boneNode);
-        _traverseBuildSkeleton(node);
+			_traverseBuildSkeleton(child);
+		}
 	}
 }
 
 void ModelLoader::_extractSkeletonAnimations()
 {
-	std::unordered_set<aiNode*> roots;
-	std::unordered_set<std::shared_ptr<BoneNode>> skeletonRoots;
-    std::vector<std::shared_ptr<BoneNode>> animationRoots;
-	for (auto nodeBonePair : m_nodeBoneMap)
+	for (auto keyValue : m_skeletonMap)
 	{
-		std::shared_ptr<BoneNode> boneNode = nodeBonePair.second;
-
-		if (roots.count(boneNode->root) == 0)
-		{
-			std::shared_ptr<BoneNode> rootBone;
-
-			if (m_nodeBoneMap.count(boneNode->root) == 0)
-			{
-				rootBone = std::make_shared<BoneNode>();
-                rootBone->name = boneNode->root->mName.C_Str();
-				rootBone->parent = nullptr;
-                rootBone->root = boneNode->root;
-				m_nodeBoneMap.insert(std::make_pair(boneNode->root, rootBone));
-			}
-			else
-			{
-				rootBone = m_nodeBoneMap.at(boneNode->root);
-			}
-			_traverseBuildSkeleton(boneNode->root);
-			roots.insert(boneNode->root);
-
-			if (skeletonRoots.count(rootBone) == 0)
-			{
-				skeletonRoots.insert(rootBone);
-                animationRoots.push_back(rootBone);
-			}
-		}
+		aiNode* root = keyValue.first;
+		std::shared_ptr<MyNode> myRoot = std::make_shared<MyNode>();
+		myRoot->node = root;
+		myRoot->parent = nullptr;
+		m_nodeMap.insert(std::make_pair(myRoot->node->mName.C_Str(), myRoot));
+		_traverseBuildSkeleton(myRoot);
+		m_skeletonRoots.insert(myRoot);
 	}
 
 	for (int i = 0; i < m_pAiScene->mNumAnimations; ++i)
 	{
+		std::shared_ptr<MyNode> root = nullptr;
 		aiAnimation* animation_ = m_pAiScene->mAnimations[i];
 		for (int j = 0; j < animation_->mNumChannels; ++j)
 		{
 			aiNodeAnim* nodeAnimation = animation_->mChannels[i];
-			auto boneNode = m_nameBoneMap.at(nodeAnimation->mNodeName.C_Str());
+			std::shared_ptr<MyNode> myNode = m_nodeMap.at(nodeAnimation->mNodeName.C_Str());
+			std::shared_ptr<MyNode> tempNode = myNode;
+			while (1)
+			{
+				if (m_skeletonRoots.count(tempNode) == 0)
+				{
+					tempNode = tempNode->parent;
+					if (tempNode == nullptr)
+					{
+						break;
+					}
+				}
+				else
+				{
+					root = tempNode;
+					break;
+				}
+			}
 
 			for (int k = 0; k < nodeAnimation->mNumPositionKeys; ++k)
 			{
 				aiVectorKey keyPosition = nodeAnimation->mPositionKeys[k];
-				BoneNode::KeyVector keyVector;
+				MyNode::KeyVector keyVector;
 				keyVector.value = glm::vec3(keyPosition.mValue.x, keyPosition.mValue.y, keyPosition.mValue.z);
 				keyVector.time = keyPosition.mTime;
-				boneNode->keyPositions.push_back(keyVector);
+				myNode->keyPositions.push_back(keyVector);
 			}
 			for (int k = 0; k < nodeAnimation->mNumScalingKeys; ++k)
 			{
 				aiVectorKey keyScaling = nodeAnimation->mScalingKeys[k];
-				BoneNode::KeyVector keyVector;
+				MyNode::KeyVector keyVector;
 				keyVector.value = glm::vec3(keyScaling.mValue.x, keyScaling.mValue.y, keyScaling.mValue.z);
 				keyVector.time = keyScaling.mTime;
-				boneNode->keyScalings.push_back(keyVector);
+				myNode->keyScalings.push_back(keyVector);
 			}
 			for (int k = 0; k < nodeAnimation->mNumRotationKeys; ++k)
 			{
 				aiQuatKey keyRotation = nodeAnimation->mRotationKeys[k];
-				BoneNode::KeyQuat keyQuat;
+				MyNode::KeyQuat keyQuat;
 				keyQuat.value = glm::quat(keyRotation.mValue.x, keyRotation.mValue.y, keyRotation.mValue.z, keyRotation.mValue.w);
 				keyQuat.time = keyRotation.mTime;
-				boneNode->keyRotations.push_back(keyQuat);
+				myNode->keyRotations.push_back(keyQuat);
 			}
 		}
 
-		std::shared_ptr<MyAnimation> myAnimation = std::make_shared<MyAnimation>();
-		myAnimation->currentTime = 0;
-		myAnimation->duration = animation_->mDuration;
-        myAnimation->roots = animationRoots;
+		std::shared_ptr<MyAnimation> myAnimation = std::make_shared<MyAnimation>(animation_->mDuration);
+
+		myAnimation->SetRoot(root);
 
 		m_pScene->AddAnimation(myAnimation);
 	}
+	for (auto keyValue : m_meshMap)
+	{
+		auto mesh = keyValue.second;
+
+		for (int i = 0; i < mesh->m_bones.size(); ++i)
+		{
+			std::shared_ptr<MyNode> myNode = m_nodeMap.at(mesh->m_bones[i]->mName.C_Str());
+			mesh->m_boneNodes.push_back(myNode);
+		}
+		mesh->InitSkinData();
+	}
 }
 
-std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
+void ModelLoader::_traverseMarkNode(aiNode *node, aiNode* meshNode)
+{
+	if (node == meshNode || meshNode->mParent == node)
+	{
+		return;
+	}
+	
+	if (m_nodesInSkeleton.count(node) == 0)
+	{
+		m_nodesInSkeleton.insert(node);
+	}
+	_traverseMarkNode(node->mParent, meshNode);
+}
+
+std::shared_ptr<MyMesh> ModelLoader::_extractMesh(aiNode* node, unsigned int idx)
 {
     if (m_meshMap.count(idx) > 0)
     {
@@ -263,20 +278,16 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
 			for (size_t i = 0; i < _mesh->mNumBones; ++i)
 			{
 				aiBone *bone = _mesh->mBones[i];
-				if (m_nodeBoneMap.count(bone->mNode) == 0)
+				_traverseMarkNode(bone->mNode, node);
+
+				if (bone->mNumWeights > 1 || (bone->mNumWeights == 1 && abs(bone->mWeights[i].mWeight) > 0.001))
 				{
-					auto boneNode = std::make_shared<BoneNode>();
-					boneNode->root = bone->mArmature;
-					for (int idx = 0; idx < bone->mNumWeights; ++idx)
+					mesh->m_bones.push_back(bone);
+
+					if (m_skeletonMap.count(bone->mArmature) == 0) 
 					{
-						aiVertexWeight vertexWeight_ = bone->mWeights[idx];
-						BoneNode::VertexWeight vertexWeight;
-						vertexWeight.vertexId = vertexWeight_.mVertexId;
-						vertexWeight.weight = vertexWeight_.mWeight;
-						boneNode->vertexWeights.push_back(vertexWeight);
+						m_skeletonMap.insert(std::make_pair(bone->mArmature, std::vector<aiNode*>()));
 					}
-					m_nodeBoneMap.insert(std::make_pair(bone->mNode, boneNode));
-					m_nameBoneMap.insert(std::make_pair(bone->mName.C_Str(), boneNode));
 				}
 			}
 		}
@@ -293,7 +304,6 @@ std::shared_ptr<MyMesh> ModelLoader::_extractMesh(unsigned int idx)
         }
         else if (mesh->m_indexType == 2)
         {
-
             uint16_t *indexPtr = reinterpret_cast<uint16_t*>(mesh->m_indices);
             for (size_t i = 0; i < _mesh->mNumFaces; ++i)
             {

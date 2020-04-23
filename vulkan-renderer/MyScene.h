@@ -6,6 +6,7 @@
 #include <memory.h>
 #pragma once
 
+class MyAnimation;
 class MyScene
 {
 public:
@@ -21,6 +22,5 @@ public:
 private:
     std::vector<std::shared_ptr<Drawable>> _drawables;
 	std::vector<std::shared_ptr<MyAnimation>> m_animations;
-
 };
 

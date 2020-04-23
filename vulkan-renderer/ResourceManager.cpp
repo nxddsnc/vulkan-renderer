@@ -249,6 +249,28 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
         drawable->m_vertexBufferMemorys.push_back(std::move(colorBufferMemory));
         drawable->m_vertexBufferOffsets.push_back(std::move(colorBufferOffset));
     }
+	if (drawable->m_mesh->m_joints.size() > 0)
+	{
+		vk::Buffer jointsBuffer;
+		VmaAllocation jointsBufferMemory;
+		vk::DeviceSize jointsBufferOffset;
+		size = sizeof(drawable->m_mesh->m_joints[0]) * drawable->m_mesh->m_joints.size();
+		InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_joints.data()), jointsBuffer, jointsBufferMemory, jointsBufferOffset);
+		drawable->m_vertexBuffers.push_back(std::move(jointsBuffer));
+		drawable->m_vertexBufferMemorys.push_back(std::move(jointsBufferMemory));
+		drawable->m_vertexBufferOffsets.push_back(std::move(jointsBufferOffset));
+	}
+	if (drawable->m_mesh->m_weights.size() > 0)
+	{
+		vk::Buffer weightsBuffer;
+		VmaAllocation weightsBufferMemory;
+		vk::DeviceSize weightsBufferOffset;
+		size = sizeof(drawable->m_mesh->m_weights[0]) * drawable->m_mesh->m_weights.size();
+		InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_weights.data()), weightsBuffer, weightsBufferMemory, weightsBufferOffset);
+		drawable->m_vertexBuffers.push_back(std::move(weightsBuffer));
+		drawable->m_vertexBufferMemorys.push_back(std::move(weightsBufferMemory));
+		drawable->m_vertexBufferOffsets.push_back(std::move(weightsBufferOffset));
+	}
 }
 
 void ResourceManager::CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory)

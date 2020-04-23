@@ -167,6 +167,7 @@
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MyAnimation.cpp" />
     <ClCompile Include="MyImage.cpp" />
     <ClCompile Include="MyMaterial.cpp" />
     <ClCompile Include="MyMesh.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="Context.h" />
     <ClInclude Include="Debug\Axis.h" />
     <ClInclude Include="Framebuffer.h" />
+    <ClInclude Include="MyAnimation.h" />
     <ClInclude Include="MyImage.h" />
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />

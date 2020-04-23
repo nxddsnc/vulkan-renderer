@@ -74,6 +74,7 @@ void RenderSceneDeferred::_init()
 	 id.model.primitivePart.info.bits.countTexCoord = 1;
 	 id.model.primitivePart.info.bits.tangentVertexData = 0;
 	 id.model.primitivePart.info.bits.countColor = 0;
+	 id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
 
 	 m_pPipeline = m_pPipelineManager->GetPipeline(id, m_outputFramebuffer->m_pRenderPass);
 }

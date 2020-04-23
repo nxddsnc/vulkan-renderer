@@ -46,6 +46,7 @@ void ToneMapping::Draw(vk::CommandBuffer commandBuffer, std::vector<std::shared_
 	blitPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
 	blitPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
 	blitPipelineId.model.primitivePart.info.bits.countColor = 0;
+	blitPipelineId.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
 
 	std::shared_ptr<Pipeline> pipelineBlit = m_pPipelineManager->GetPipeline(blitPipelineId, nullptr);
 	if (!pipelineBlit->m_bReady)
