@@ -44,7 +44,7 @@ public:
 	std::vector<glm::vec3>                 m_texCoords0;
 	std::vector<glm::vec2>                 m_texCoords1;
 	std::vector<glm::vec3>                 m_colors;
-    std::vector<glm::vec4>                 m_joints;
+    std::vector<glm::ivec4>                m_joints;
     std::vector<glm::vec4>                 m_weights;
 	void                                 * m_indices;
 	uint32_t                               m_vertexNum;

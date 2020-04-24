@@ -593,7 +593,7 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 	if (m_id.model.primitivePart.info.bits.jointVertexData)
 	{
 		_addInputBinding(sizeof(glm::vec4), vk::VertexInputRate::eVertex);
-		_addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32A32Sfloat, 0);
+		_addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32A32Sint, 0);
 		attributeIndex++;
 	}
 

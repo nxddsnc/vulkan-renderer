@@ -142,10 +142,10 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 
 	glm::vec3 center = (m_bbox.min + m_bbox.max) * 0.5f;
 	float length = glm::length(m_bbox.max - m_bbox.min) * 0.5;
-	glm::vec3 eye = length * glm::vec3(0, 0, 1) + center;
+	glm::vec3 eye = 2 * length * glm::vec3(0, 0, 1) + center;
 
 	m_pCamera->SetPosition(-eye);
-	//m_pcamera->lookat(eye, center, glm::vec3(0, 0, 1));
+	//m_pCamera->LookAt(eye, center, glm::vec3(0, 0, 1));
 
 	_updateBBox();
 }
@@ -201,5 +201,5 @@ void RenderScene::_updateBBox()
 {
 	float length = glm::length(m_bbox.max - m_bbox.min);
 	float farPlane = glm::length(m_pCamera->m_position - (float)0.5 * (m_bbox.max + m_bbox.min)) + length / 2;
-	m_pCamera->SetPerspective(45.0f, (float)m_width / (float)m_height, 0.1f, farPlane);
+	m_pCamera->SetPerspective(45.0f, (float)m_width / (float)m_height, 0.01f, farPlane);
 }

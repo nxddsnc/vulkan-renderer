@@ -11,7 +11,6 @@ layout(set = 1, binding = 0) uniform UboJointMatrices {
     mat4 value[64];
 } uboJointMatrices;
 
-
 layout(push_constant) uniform UniformPerDrawable
 {
     mat4 modelMatrix;
@@ -33,7 +32,7 @@ layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 
 #if IN_JOINT
-layout(location = IN_JOINT_LOCATION) in vec4 inJoint;
+layout(location = IN_JOINT_LOCATION) in ivec4 inJoint;
 #endif
 
 #if IN_WEIGHT
@@ -58,8 +57,23 @@ layout(location = IN_UV0_LOCATION) out vec3 outUv;
 
 void main() 
 {
+#if IN_JOINT
+    vec4 temp = (  uboJointMatrices.value[inJoint.x] * vec4(inPosition, 1.0) * inWeight.x + 
+                   uboJointMatrices.value[inJoint.y] * vec4(inPosition, 1.0) * inWeight.y + 
+                   uboJointMatrices.value[inJoint.z] * vec4(inPosition, 1.0) * inWeight.z +
+                   uboJointMatrices.value[inJoint.w] * vec4(inPosition, 1.0) * inWeight.w);
+
+    // mat4 test = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    // outPosition = (uboJointMatrices.value[0] * vec4(inPosition, 1.0) * 1.0).xyz;
+
+    temp = uniformPerDrawable.modelMatrix * temp;
+    // outPosition = (uniformPerDrawable.modelMatrix * temp).xyz;
+    gl_Position = ubo.proj * ubo.view * temp;
+#else 
     outPosition = (uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0)).xyz;
     gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
+#endif
+
 #if IN_NORMAL
     outNormal = (uniformPerDrawable.normalMatrix * vec4(inNormal, 0.0)).xyz;
 #endif

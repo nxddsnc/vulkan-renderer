@@ -19,12 +19,16 @@ struct MyNode
 	std::vector<KeyVector>				 keyPositions;
 	std::vector<KeyVector>				 keyScalings;
 	std::vector<KeyQuat>				 keyRotations;
-	glm::mat4							 jointMatrix;
+	glm::mat4							 jointMatrix = glm::mat4(1.0);
+	glm::mat4							 inverseTransformMatrix = glm::mat4(1.0);
 };
 
-struct MySkeleton
+struct KeyFrame
 {
-
+	double time;
+	glm::vec3 keyPosition;
+	glm::vec3 keyScaling;
+	glm::quat keyRotation;
 };
 
 class MyAnimation
@@ -59,4 +63,8 @@ private:
 	std::vector<glm::mat4>					m_JointMatrices;
 
 	VmaAllocator						*   m_pMemoryAllocator;
+
+	int										m_speed;
+
+	std::vector<KeyFrame>					m_keyFrames;
 };

@@ -141,7 +141,7 @@ void ModelLoader::_extractSkeletonAnimations()
 		aiAnimation* animation_ = m_pAiScene->mAnimations[i];
 		for (int j = 0; j < animation_->mNumChannels; ++j)
 		{
-			aiNodeAnim* nodeAnimation = animation_->mChannels[i];
+			aiNodeAnim* nodeAnimation = animation_->mChannels[j];
 			std::shared_ptr<MyNode> myNode = m_nodeMap.at(nodeAnimation->mNodeName.C_Str());
 			std::shared_ptr<MyNode> tempNode = myNode;
 			while (1)
@@ -181,7 +181,7 @@ void ModelLoader::_extractSkeletonAnimations()
 			{
 				aiQuatKey keyRotation = nodeAnimation->mRotationKeys[k];
 				MyNode::KeyQuat keyQuat;
-				keyQuat.value = glm::quat(keyRotation.mValue.x, keyRotation.mValue.y, keyRotation.mValue.z, keyRotation.mValue.w);
+				keyQuat.value = glm::quat(keyRotation.mValue.w, keyRotation.mValue.x, keyRotation.mValue.y, keyRotation.mValue.z);
 				keyQuat.time = keyRotation.mTime;
 				myNode->keyRotations.push_back(keyQuat);
 			}
@@ -200,10 +200,13 @@ void ModelLoader::_extractSkeletonAnimations()
 		for (int i = 0; i < mesh->m_bones.size(); ++i)
 		{
 			std::shared_ptr<MyNode> myNode = m_nodeMap.at(mesh->m_bones[i]->mName.C_Str());
+			_extractTransform(myNode->inverseTransformMatrix, reinterpret_cast<void*>(&mesh->m_bones[i]->mOffsetMatrix));
 			mesh->m_boneNodes.push_back(myNode);
 		}
 		mesh->InitSkinData();
 	}
+
+	std::printf("test");
 }
 
 void ModelLoader::_traverseMarkNode(aiNode *node, aiNode* meshNode)
