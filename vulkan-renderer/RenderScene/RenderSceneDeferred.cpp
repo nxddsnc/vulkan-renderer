@@ -47,7 +47,7 @@ void RenderSceneDeferred::Draw(vk::CommandBuffer& commandBuffer)
 	//m_pSkybox->Draw(commandBuffer, m_pCamera, m_framebuffers[0]->m_pRenderPass);
 
 	_end(commandBuffer);
-
+     
 	_doShading(commandBuffer);
 
 }

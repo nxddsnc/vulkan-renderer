@@ -139,6 +139,15 @@ void ModelLoader::_extractSkeletonAnimations()
 	{
 		std::shared_ptr<MyNode> root = nullptr;
 		aiAnimation* animation_ = m_pAiScene->mAnimations[i];
+        std::shared_ptr<MyAnimation> myAnimation = std::make_shared<MyAnimation>(animation_->mDuration);
+        if (animation_->mNumChannels > 0)
+        {
+            myAnimation->m_keyFrames.resize(animation_->mChannels[i]->mNumPositionKeys);
+            for (int j = 0; j < myAnimation->m_keyFrames.size(); ++j)
+            {
+                myAnimation->m_keyFrames[j] = std::make_shared<KeyFrame>();
+            }
+        }
 		for (int j = 0; j < animation_->mNumChannels; ++j)
 		{
 			aiNodeAnim* nodeAnimation = animation_->mChannels[j];
@@ -164,30 +173,55 @@ void ModelLoader::_extractSkeletonAnimations()
 			for (int k = 0; k < nodeAnimation->mNumPositionKeys; ++k)
 			{
 				aiVectorKey keyPosition = nodeAnimation->mPositionKeys[k];
-				MyNode::KeyVector keyVector;
-				keyVector.value = glm::vec3(keyPosition.mValue.x, keyPosition.mValue.y, keyPosition.mValue.z);
-				keyVector.time = keyPosition.mTime;
-				myNode->keyPositions.push_back(keyVector);
-			}
+		
+                myAnimation->m_keyFrames[k]->time = keyPosition.mTime;
+                std::shared_ptr<NodePose> nodePose;
+                if (myAnimation->m_keyFrames[k]->nodePose.count(myNode) == 0)
+                {
+                    nodePose = std::make_shared<NodePose>();
+                    myAnimation->m_keyFrames[k]->nodePose.insert(std::make_pair(myNode, nodePose));
+                }
+                else
+                {
+                    nodePose = myAnimation->m_keyFrames[k]->nodePose.at(myNode);
+                }
+                nodePose->keyPosition = glm::vec3(keyPosition.mValue.x, keyPosition.mValue.y, keyPosition.mValue.z);
+            }
 			for (int k = 0; k < nodeAnimation->mNumScalingKeys; ++k)
 			{
 				aiVectorKey keyScaling = nodeAnimation->mScalingKeys[k];
-				MyNode::KeyVector keyVector;
-				keyVector.value = glm::vec3(keyScaling.mValue.x, keyScaling.mValue.y, keyScaling.mValue.z);
-				keyVector.time = keyScaling.mTime;
-				myNode->keyScalings.push_back(keyVector);
+
+                myAnimation->m_keyFrames[k]->time = keyScaling.mTime;
+                std::shared_ptr<NodePose> nodePose;
+                if (myAnimation->m_keyFrames[k]->nodePose.count(myNode) == 0)
+                {
+                    nodePose = std::make_shared<NodePose>();
+                    myAnimation->m_keyFrames[k]->nodePose.insert(std::make_pair(myNode, nodePose));
+                }
+                else
+                {
+                    nodePose = myAnimation->m_keyFrames[k]->nodePose.at(myNode);
+                }
+                nodePose->keyScaling = glm::vec3(keyScaling.mValue.x, keyScaling.mValue.y, keyScaling.mValue.z);
 			}
 			for (int k = 0; k < nodeAnimation->mNumRotationKeys; ++k)
 			{
 				aiQuatKey keyRotation = nodeAnimation->mRotationKeys[k];
-				MyNode::KeyQuat keyQuat;
-				keyQuat.value = glm::quat(keyRotation.mValue.w, keyRotation.mValue.x, keyRotation.mValue.y, keyRotation.mValue.z);
-				keyQuat.time = keyRotation.mTime;
-				myNode->keyRotations.push_back(keyQuat);
+
+                myAnimation->m_keyFrames[k]->time = keyRotation.mTime;
+                std::shared_ptr<NodePose> nodePose;
+                if (myAnimation->m_keyFrames[k]->nodePose.count(myNode) == 0)
+                {
+                    nodePose = std::make_shared<NodePose>();
+                    myAnimation->m_keyFrames[k]->nodePose.insert(std::make_pair(myNode, nodePose));
+                }
+                else
+                {
+                    nodePose = myAnimation->m_keyFrames[k]->nodePose.at(myNode);
+                }
+                nodePose->keyRotation = glm::quat(keyRotation.mValue.w, keyRotation.mValue.x, keyRotation.mValue.y, keyRotation.mValue.z);
 			}
 		}
-
-		std::shared_ptr<MyAnimation> myAnimation = std::make_shared<MyAnimation>(animation_->mDuration);
 
 		myAnimation->SetRoot(root);
 

@@ -1,34 +1,28 @@
 #include "Platform.h"
+#include <unordered_map>
+
 struct aiNode;
 struct MyNode
 {
-	struct KeyVector
-	{
-		glm::vec3 value;
-		double time;
-	};
-	struct KeyQuat
-	{
-		glm::quat value;
-		double time;
-	};
 	aiNode							   * node;
 	std::shared_ptr<MyNode>				 parent;
 	std::vector<std::shared_ptr<MyNode>> children;
 	int									 jointIndex;
-	std::vector<KeyVector>				 keyPositions;
-	std::vector<KeyVector>				 keyScalings;
-	std::vector<KeyQuat>				 keyRotations;
-	glm::mat4							 jointMatrix = glm::mat4(1.0);
+    glm::mat4                            jointMatrix;
 	glm::mat4							 inverseTransformMatrix = glm::mat4(1.0);
+};
+
+struct NodePose
+{
+    glm::vec3 keyPosition;
+    glm::vec3 keyScaling;
+    glm::quat keyRotation;
 };
 
 struct KeyFrame
 {
 	double time;
-	glm::vec3 keyPosition;
-	glm::vec3 keyScaling;
-	glm::quat keyRotation;
+    std::unordered_map<std::shared_ptr<MyNode>, std::shared_ptr<NodePose>> nodePose;
 };
 
 class MyAnimation
@@ -48,15 +42,19 @@ private:
 	glm::mat4 _getCurrentMatrix(std::shared_ptr<MyNode> node);
 
 public:
-        vk::DescriptorSet           m_descriptorSet;
-
+    vk::DescriptorSet                       m_descriptorSet;
+    std::vector<std::shared_ptr<KeyFrame>>				m_keyFrames;
 private:
 	std::vector<std::shared_ptr<MyNode>>    m_boneNodes;
 	double									m_duration;
 	double									m_currentTime;
+    std::unordered_map<std::shared_ptr<MyNode>, glm::mat4> m_nodePoses;
 
-	vk::Buffer                  m_uniformBuffer;
-	VmaAllocation               m_uniformBufferMemory;
+    std::shared_ptr<KeyFrame>               m_preFrame;
+    std::shared_ptr<KeyFrame>               m_nextFrame;
+
+	vk::Buffer                              m_uniformBuffer;
+	VmaAllocation                           m_uniformBufferMemory;
 private:
 	std::shared_ptr<MyNode>			        m_pRoot;
 
@@ -66,5 +64,4 @@ private:
 
 	int										m_speed;
 
-	std::vector<KeyFrame>					m_keyFrames;
 };

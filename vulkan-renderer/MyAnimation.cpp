@@ -6,7 +6,7 @@ MyAnimation::MyAnimation(double duration)
 {
 	m_currentTime = 0;
 	m_duration = duration;
-	m_speed = 1;
+	m_speed = 20;
 }
 
 MyAnimation::~MyAnimation()
@@ -25,7 +25,19 @@ void MyAnimation::SetRoot(std::shared_ptr<MyNode> root)
 
 void MyAnimation::Update()
 {
-	m_currentTime += 1.0 * m_speed;
+    m_currentTime += 1.0 * m_speed;
+
+    m_preFrame = m_keyFrames[0];
+    m_nextFrame = m_keyFrames[0];
+    for (int i = 1; i < m_keyFrames.size(); ++i)
+    {
+        m_nextFrame = m_keyFrames[i];
+        if (m_nextFrame->time > m_currentTime) {
+            break;
+        }
+        m_preFrame = m_keyFrames[i];
+    }
+
 	_traverseUpdate(m_pRoot);
 	for (int i = 0; i < m_boneNodes.size(); ++i)
 	{
@@ -104,6 +116,12 @@ void MyAnimation::_traverseNodes(std::shared_ptr<MyNode> parent)
 {
 	parent->jointIndex = m_boneNodes.size();
 	m_boneNodes.push_back(parent);
+
+    if (m_nodePoses.count(parent) == 0)
+    {
+        m_nodePoses.insert(std::make_pair(parent, glm::mat4(1.0)));
+    }
+
 	for (auto child : parent->children)
 	{
 		_traverseNodes(child);
@@ -129,51 +147,18 @@ glm::mat4 MyAnimation::_getCurrentMatrix(std::shared_ptr<MyNode> node)
 	glm::vec3 currentPos(0);
 	glm::vec3 currentScaling(1);
 	glm::quat currentRotation(0, 0, 0, 0);
-	float ratio;
-	if (node->keyPositions.size() != 0)
-	{
-		pre = node->keyPositions[0].value;
-		for (int i = 1; i < node->keyPositions.size() - 1; i++)
-		{
-			if (m_currentTime > node->keyPositions[i].time && m_currentTime <= node->keyPositions[i + 1].time)
-			{
-				pre = node->keyPositions[i].value;
-				next = node->keyPositions[i + 1].value;
-				ratio = (m_currentTime - node->keyPositions[i].time) / (node->keyPositions[i + 1].time - node->keyPositions[i].time);
-				currentPos = pre * (1 - ratio) + next * ratio;
-				break;
-			}
-		}
-	}
+	float ratio = (m_currentTime - m_preFrame->time) / (m_nextFrame->time - m_preFrame->time);
 
-	if (node->keyScalings.size() != 0)
-	{
-		for (int i = 1; i < node->keyScalings.size() - 1; i++)
-		{
-			pre = node->keyScalings[0].value;
-			if (m_currentTime > node->keyScalings[i].time && m_currentTime <= node->keyScalings[i + 1].time)
-			{
-				pre = node->keyScalings[i].value;
-				next = node->keyScalings[i + 1].value;
-				ratio = (m_currentTime - node->keyScalings[i].time) / (node->keyScalings[i + 1].time - node->keyScalings[i].time);
-				currentScaling = pre * (1 - ratio) + next * ratio;
-				break;
-			}
-		}
-	}
+    std::shared_ptr<NodePose> nodePosePre = m_preFrame->nodePose.at(node);
+    std::shared_ptr<NodePose> nodePoseNext = m_nextFrame->nodePose.at(node);
 
-	if (node->keyRotations.size() != 0)
-	{
-		for (int i = 1; i < node->keyRotations.size() - 1; i++)
-		{
-			if (m_currentTime > node->keyRotations[i].time && m_currentTime <= node->keyRotations[i + 1].time)
-			{
-				ratio = (m_currentTime - node->keyRotations[i].time) / (node->keyRotations[i + 1].time - node->keyRotations[i].time);
-				currentRotation = glm::slerp(node->keyRotations[i].value, node->keyRotations[i + 1].value, ratio);
-				break;
-			}
-		}
-	}
+    currentPos = nodePosePre->keyPosition * (1 - ratio) + nodePoseNext->keyPosition * ratio;
+    currentScaling = nodePosePre->keyScaling * (1 - ratio) + nodePoseNext->keyScaling * ratio;
+    currentRotation = glm::slerp(nodePosePre->keyRotation, nodePoseNext->keyRotation, ratio);
 
-    return glm::translate(glm::toMat4(currentRotation) * glm::scale(glm::mat4(1.0), currentScaling), currentPos);
+    glm::mat4 res = glm::toMat4(currentRotation) * glm::scale(glm::mat4(1.0), currentScaling);
+    res[3][0] = currentPos.x;
+    res[3][1] = currentPos.y;
+    res[3][2] = currentPos.z;
+    return res;
 }
