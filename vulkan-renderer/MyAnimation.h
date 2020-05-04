@@ -63,5 +63,4 @@ private:
 	VmaAllocator						*   m_pMemoryAllocator;
 
 	int										m_speed;
-
 };

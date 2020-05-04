@@ -11,6 +11,7 @@ MyAnimation::MyAnimation(double duration)
 
 MyAnimation::~MyAnimation()
 {
+    vmaDestroyBuffer(*m_pMemoryAllocator, m_uniformBuffer, m_uniformBufferMemory);
 }
 
 void MyAnimation::SetRoot(std::shared_ptr<MyNode> root)
