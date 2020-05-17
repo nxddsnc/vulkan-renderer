@@ -46,6 +46,12 @@
     <Filter Include="源文件\Camera">
       <UniqueIdentifier>{73e9755e-aa21-47df-938d-baebb803efb3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\ThirdParty">
+      <UniqueIdentifier>{1960447d-8194-4bc1-8722-51ba60fc771a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\ThirdParty\GLFW">
+      <UniqueIdentifier>{566d4332-ff24-4d42-9ca3-ac4f7a257814}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -152,6 +158,9 @@
     </ClCompile>
     <ClCompile Include="MyAnimation.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\glfw\src\window.c">
+      <Filter>源文件\ThirdParty\GLFW</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

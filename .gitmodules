@@ -1,0 +1,6 @@
+[submodule "vulkan-renderer/third-party/glfw"]
+	path = vulkan-renderer/third-party/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "vulkan-renderer/third-party/glm"]
+	path = vulkan-renderer/third-party/glm
+	url = https://github.com/g-truc/glm.git
