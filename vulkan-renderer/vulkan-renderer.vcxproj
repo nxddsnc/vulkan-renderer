@@ -110,13 +110,14 @@
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/glm;third-party/glfw/include;third-party/includes/assimp;Vulkan;./;Debug;RenderScene;ShadowMap;Camera;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalUsingDirectories>D:\Coding\github\vulkan-renderer\vulkan-renderer\third-party\glfw\src;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories);$(VcpkgRoot)debug\lib;$(VcpkgRoot)debug\lib\manual-link;third-party/libs;$(GLFW)\lib-vc2015</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc140-mt.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shaderc_shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc140-mt.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shaderc_shared.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -188,7 +189,6 @@
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="SHLight.cpp" />
     <ClCompile Include="Skybox.cpp" />
-    <ClCompile Include="third-party\glfw\src\window.c" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />

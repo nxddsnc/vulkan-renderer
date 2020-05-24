@@ -42,11 +42,11 @@ void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
     {
         if (action == GLFW_PRESS)
         {
-            renderer->GetCamera()->m_keys.left = true;
+            renderer->GetCamera()->m_keys.right = true;
         }
         else
         {
-            renderer->GetCamera()->m_keys.left = false;
+            renderer->GetCamera()->m_keys.right = false;
         }
     }
 }
@@ -72,8 +72,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
-    float wheelDelta = yoffset;
-    renderer->GetCamera()->Translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * 200));
+    auto camera = renderer->GetCamera();
+    camera->MoveForward(yoffset);
 }
 
 void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
@@ -85,8 +85,13 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
     mouseY = ypos;
     
     std::shared_ptr<MyCamera> camera = renderer->GetCamera();
-    if (camera->m_keys.left) {
-        camera->Rotate(glm::vec3(-dy * camera->m_rotationSpeed, 0.0f, -dx * camera->m_rotationSpeed));
+    if (camera->m_keys.left) 
+    {
+        camera->Rotate(-dx, -dy);
+    }
+    else if (camera->m_keys.right)
+    {
+        camera->Translate(dx, dy);
     }
 }
 
@@ -114,8 +119,8 @@ int main()
     //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
     //if (!modelLoader.load("./TestModel/sphere1.obj"))
-	//if (!modelLoader.load("./TestModel/house.fbx"))
-	if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
+	if (!modelLoader.load("./TestModel/house.fbx"))
+	//if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
 	//if (!modelLoader.load("./TestModel/walking/scene.gltf"))
     {
         std::cout << "can't read gltf file!" << std::endl;

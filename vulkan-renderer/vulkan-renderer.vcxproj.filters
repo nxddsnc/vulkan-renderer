@@ -159,9 +159,6 @@
     <ClCompile Include="MyAnimation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="third-party\glfw\src\window.c">
-      <Filter>源文件\ThirdParty\GLFW</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">

@@ -118,35 +118,6 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 		m_bbox.max.z = scene->m_bbox.max.z;
 	}
 
-	//glm::vec3 center = (m_bbox.max + m_bbox.min) * 0.5f;
-	//glm::vec3 boxverts[8] = { glm::vec3(m_bbox.max.x, m_bbox.max.y, m_bbox.min.z), glm::vec3(m_bbox.max.x, m_bbox.min.y, m_bbox.min.z),
-	//	glm::vec3(m_bbox.min.x, m_bbox.max.y, m_bbox.min.z), glm::vec3(m_bbox.min.x, m_bbox.min.y, m_bbox.min.z),
-	//	glm::vec3(m_bbox.max.x, m_bbox.max.y, m_bbox.max.z), glm::vec3(m_bbox.max.x, m_bbox.min.y, m_bbox.max.z),
-	//	glm::vec3(m_bbox.min.x, m_bbox.max.y, m_bbox.max.z), glm::vec3(m_bbox.min.x, m_bbox.min.y, m_bbox.max.z) };
-
-	//float maxlength = 0;
-	//glm::vec3 lightdir = glm::normalize(glm::vec3(-1, -1, -1));
-	//for (int i = 0; i < 8; ++i)
-	//{
-	//	float temp = glm::dot(-lightdir, boxverts[i] - center);
-	//	if (maxlength < temp)
-	//	{
-	//		maxlength = temp;
-	//	}
-	//}
-	//glm::vec3 eye = maxlength * (-lightdir) + center;
-
-	//m_pcamera->lookat(eye, center, glm::vec3(0, 0, 1));
-
-	m_pCamera->SetRotation(glm::vec3(0, 0, 0));
-
-	glm::vec3 center = (m_bbox.min + m_bbox.max) * 0.5f;
-	float length = glm::length(m_bbox.max - m_bbox.min) * 0.5;
-	glm::vec3 eye = 2 * length * glm::vec3(0, 0, 1) + center;
-
-	m_pCamera->SetPosition(-eye);
-	//m_pCamera->LookAt(eye, center, glm::vec3(0, 0, 1));
-
 	_updateBBox();
 }
 
@@ -168,12 +139,11 @@ void RenderScene::Draw(vk::CommandBuffer& commandBuffer)
 
 void RenderScene::UpdateUniforms()
 {
-	_updateBBox();
-	m_pCamera->UpdateUniformBuffer();
+	m_pCamera->Update(m_width, m_height);
 	m_pSkybox->m_pSHLight->UpdateUniformBuffer();
 	if (m_pShadowMap)
 	{
-		m_pShadowMap->m_pCamera->UpdateUniformBuffer();
+        m_pShadowMap->UpdateUniform();
 	}
     if (m_animation)
     {
@@ -199,7 +169,5 @@ void RenderScene::_end(vk::CommandBuffer &commandBuffer)
 
 void RenderScene::_updateBBox()
 {
-	float length = glm::length(m_bbox.max - m_bbox.min);
-	float farPlane = glm::length(m_pCamera->m_position - (float)0.5 * (m_bbox.max + m_bbox.min)) + length / 2;
-	m_pCamera->SetPerspective(45.0f, (float)m_width / (float)m_height, 0.01f, farPlane);
+    m_pCamera->UpdateBBox(m_bbox);
 }

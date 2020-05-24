@@ -8,29 +8,23 @@ public:
 	MyCamera(VmaAllocator *memoryAllocator, bool orthogonal = false);
 	~MyCamera();
 
-	void UpdateViewMatrix();
+	void UpdateViewMatrix(float width, float height);
 	
 	void SetPerspective(float fov, float aspect, float znear, float zfar);
 
 	void UpdateAspectRatio(float aspect);
 
-	void SetPosition(glm::vec3 position);
+	void UpdateBBox(BBox &bbox);
 
-	void LookAt(glm::vec3 eye, glm::vec3 center, glm::vec3 up);
+	void Translate(float x, float y);
 
-	void SetRotation(glm::vec3 rotation);
+	void Rotate(float x, float y);
 
-	void Update(BBox &bbox);
-
-	void SetTranslation(glm::vec3 translation);
-
-	void Translate(glm::vec3 delta);
-
-	void Rotate(glm::vec3 delta);
+    void MoveForward(float dis);
 
 	void CreateDescriptorSet(vk::Device &device, vk::DescriptorPool &descriptorPool);
 
-	void UpdateUniformBuffer();
+	void Update(float width, float height);
 public:
 	struct
 	{
@@ -40,19 +34,33 @@ public:
 		bool down = false;
 	} m_keys;
 
-    float m_fov;
-    float m_znear, m_zfar;
     VmaAllocator *_memoryAllocator;
 
 	enum CameraType { lookat, firstperson };
 	CameraType m_type = CameraType::lookat;
 
+    float m_fov;
+    float m_znear, m_zfar;
+    float m_aspectRatio;
+
+    BBox  m_bbox;
 
 	glm::vec3 m_rotation;
-	glm::vec3 m_position;
+	glm::vec3 m_eye; // position of camera
+    glm::vec3 m_at; // position that the eye lookat
+    float m_alpha; // horizontal angle
+    float m_beta;  // vertical angle
+    float m_radius;
+   
+    glm::vec3 m_rotationTarget;
+    glm::vec3 m_atTarget; 
+    float m_alphaTarget; 
+    float m_betaTarget;  
+    float m_radiusTarget;
 
 	float m_rotationSpeed;
 	float m_movementSpeed;
+	float m_inertia;
 
 	bool m_updated;
 

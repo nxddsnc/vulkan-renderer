@@ -19,7 +19,8 @@ public:
 	void AddScene(std::shared_ptr<MyScene> scene);
 
 	std::shared_ptr<Framebuffer> Draw(vk::CommandBuffer& commandBuffer);
-	std::shared_ptr<MyCamera>				m_pCamera;
+    void UpdateUniform();
+    std::shared_ptr<MyCamera>				m_pCamera;
 	std::shared_ptr<Framebuffer>			m_pFramebuffer;
 private:
 

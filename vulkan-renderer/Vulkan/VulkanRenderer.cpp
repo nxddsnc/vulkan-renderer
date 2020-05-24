@@ -486,8 +486,8 @@ void VulkanRenderer::_initOffscreenRenderTargets()
 	std::shared_ptr<Bloom> bloom = std::make_shared<Bloom>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
 	m_postEffects.push_back(bloom);
 
-	std::shared_ptr<ToneMapping> toneMapping = std::make_shared<ToneMapping>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
-	m_postEffects.push_back(toneMapping);
+    std::shared_ptr<ToneMapping> toneMapping = std::make_shared<ToneMapping>(_resourceManager, _pipelineManager, _swapchainExtent.width, _swapchainExtent.height);
+    m_postEffects.push_back(toneMapping);
 }
 
 void VulkanRenderer::_deInitOffscreenRenderTargets()
