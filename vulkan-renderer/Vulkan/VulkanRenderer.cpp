@@ -505,7 +505,7 @@ void VulkanRenderer::_initDescriptorPool()
     poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
 
     vk::DescriptorPoolCreateInfo poolInfo({{},
-                                           static_cast<uint32_t>(20),
+                                           static_cast<uint32_t>(1024),
                                            static_cast<uint32_t>(poolSizes.size()),
                                            poolSizes.data()});
     _descriptorPool = _device.createDescriptorPool(poolInfo);

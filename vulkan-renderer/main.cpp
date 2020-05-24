@@ -119,11 +119,12 @@ int main()
     //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
     //if (!modelLoader.load("./TestModel/sphere1.obj"))
-	if (!modelLoader.load("./TestModel/house.fbx"))
+	//if (!modelLoader.load("./TestModel/house.fbx"))
 	//if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
 	//if (!modelLoader.load("./TestModel/walking/scene.gltf"))
+    if (!modelLoader.load("./TestModel/crytek-sponza-huge-vray.fbx"))
     {
-        std::cout << "can't read gltf file!" << std::endl;
+        std::cout << "can't read file!" << std::endl;
         return -1;
     } 
     else

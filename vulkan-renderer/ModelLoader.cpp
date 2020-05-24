@@ -135,6 +135,11 @@ void ModelLoader::_extractSkeletonAnimations()
 		m_skeletonRoots.insert(myRoot);
 	}
 
+    if (m_nodeMap.size() == 0)
+    {
+        return;
+    }
+
 	for (int i = 0; i < m_pAiScene->mNumAnimations; ++i)
 	{
 		std::shared_ptr<MyNode> root = nullptr;

@@ -49,7 +49,7 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 		//commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), 2, 1, &skybox->m_preFilteredDescriptorSet, 0, nullptr);
 
         int bindings = 1;
-		if (drawable->baseColorTexture || drawable->normalTexture || drawable->metallicRoughnessTexture)
+		if (m_pPipeline->m_id.type != DEPTH && (drawable->baseColorTexture || drawable->normalTexture || drawable->metallicRoughnessTexture))
 		{
 			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pPipeline->GetPipelineLayout(), bindings++, 1, &drawable->textureDescriptorSet, 0, nullptr);
 		}
