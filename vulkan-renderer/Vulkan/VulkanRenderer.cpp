@@ -234,7 +234,8 @@ void VulkanRenderer::DrawFrame()
 
 void VulkanRenderer::_beginRender()
 {
-    vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphores[_currentFrame], VK_NULL_HANDLE, &_activeSwapchainImageId);
+	vkQueueWaitIdle(_queue);
+	vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphores[_currentFrame], VK_NULL_HANDLE, &_activeSwapchainImageId);
     _updateUniformBuffer();
     //vkWaitForFences(_device, 1, &_swapchainImageAvailable, VK_TRUE, UINT64_MAX);
     //vkResetFences(_device, 1, &_swapchainImageAvailable);
@@ -253,7 +254,6 @@ void VulkanRenderer::_endRender(std::vector<VkSemaphore> waitSemaphores)
     presentInfo.pImageIndices = &_activeSwapchainImageId;
     presentInfo.pResults = &presentResult;
     vkQueuePresentKHR(_queue, &presentInfo);
-    vkQueueWaitIdle(_queue);
     _currentFrame = (_currentFrame + 1) % _swapchainImageCount;
 }
 

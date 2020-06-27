@@ -50,7 +50,7 @@ vec3 ApproximateSpecularIBL(vec3 color, float Roughness, vec3 N, vec3 V)
 	float lod = Roughness * MAX_REFLECTION_LOD;
     
     vec4 prefilteredColor = textureLod(u_prefileteredCubemap, R, lod);
-    vec2 brdf = texture(u_brdfLut, vec2(max(dot(N, V), 0.0), Roughness)).xy;
+    vec2 brdf = texture(u_brdfLut, vec2(clamp(dot(N, V), 0.0, 0.99), Roughness)).xy;
     // multiplied by length(N) to prevent background flicking.
     return length(N) * (prefilteredColor.xyz * (color * brdf.x + brdf.y));
 }

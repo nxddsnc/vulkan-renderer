@@ -61,7 +61,7 @@ void main() {
     mat3 tbn = mat3(t, b, inNormal);
     vec3 worldNormal = normalize(tbn * normal);
 #elif IN_NORMAL
-    vec3 worldNormal = inNormal;
+    vec3 worldNormal = normalize(inNormal);
 #else
     vec3 worldNormal = vec3(0);
 #endif

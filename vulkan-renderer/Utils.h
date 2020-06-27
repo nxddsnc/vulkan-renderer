@@ -13,3 +13,5 @@ std::string GetFileDirectory(std::string filename);
 void float32(float* __restrict out, const uint16_t in);
 
 void float16(uint16_t* __restrict out, const float in);
+
+void ApplyMatrixToBBox(glm::mat4& mat, BBox& bbox);

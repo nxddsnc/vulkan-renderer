@@ -63,6 +63,7 @@ void ModelLoader::_parseScene(const aiScene * scene)
     if (m_flipYZ)
     {
         identity = { 1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1 };
+		//identity = { 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 };
     }
     _extractNode(root, identity);
     _extractSkeletonAnimations();

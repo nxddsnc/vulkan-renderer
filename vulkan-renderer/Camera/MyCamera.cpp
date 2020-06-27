@@ -6,12 +6,14 @@
 MyCamera::MyCamera(VmaAllocator * memoryAllocator, bool orthogonal)
 {
 	m_rotationSpeed = 0.001f;
-	m_movementSpeed = 2.0f;
+	m_movementSpeed = 20.0f;
     
     m_alpha = 0.0f;
     m_beta  = 0.0f;
     m_alphaTarget = 0.0f;
     m_betaTarget = 0.0f;
+
+	m_znear = 0.01f;
 
     m_eye = glm::vec3(0.0, 0.0, 1.0);
     m_at  = glm::vec3(0.0, 0.0, 0.0);
@@ -72,7 +74,9 @@ void MyCamera::UpdateViewMatrix(float width, float height)
     float length = glm::length(m_bbox.max - m_bbox.min);
     float farPlane = glm::length(m_eye - (m_bbox.max + m_bbox.min) * 0.5f) + glm::length(m_bbox.max - m_bbox.min) / 2;
 
-    SetPerspective(m_fov, width / height, 0.01f, farPlane);
+	m_zfar = farPlane;
+
+    SetPerspective(m_fov, width / height, m_znear, m_zfar);
 
 	m_updated = true;
 }
@@ -83,7 +87,16 @@ void MyCamera::SetPerspective(float fov, float aspect, float znear, float zfar)
 	m_znear = znear;
 	m_zfar  = zfar;
 
-	m_matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+	if (m_bOrtho)
+	{
+		BBox box(m_bbox);
+		ApplyMatrixToBBox(m_matrices.view, box);
+		m_matrices.perspective = glm::ortho(box.min.x, box.max.x, box.min.y, box.max.y, m_znear, m_zfar);
+	}
+	else
+	{
+		m_matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+	}
 }
 
 void MyCamera::UpdateAspectRatio(float aspect)
@@ -177,11 +190,6 @@ void MyCamera::Update(float width, float height)
 	cameraPos.x = mat[3][0];
 	cameraPos.y = mat[3][1];
 	cameraPos.z = mat[3][2];
-
-	//if (m_bOrtho)
-	//{
-	//	//m_matrices.perspective = glm::ortho(-1, 1, -1, 1, znear, zfar);
-	//}
 
 	m_matrices.perspective[1][1] *= -1;
 	void* data;

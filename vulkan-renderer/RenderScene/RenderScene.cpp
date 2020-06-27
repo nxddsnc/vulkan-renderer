@@ -24,7 +24,7 @@ RenderScene::RenderScene(ResourceManager *resourceManager, PipelineManager *pipe
 
 	m_pRenderQueueManager = std::make_shared<RenderQueueManager>(pipelineManager);
 
-	m_pCamera = std::make_shared<MyCamera>(&(resourceManager->m_memoryAllocator), true);
+	m_pCamera = std::make_shared<MyCamera>(&(resourceManager->m_memoryAllocator), false);
 	m_pCamera->m_type = MyCamera::CameraType::lookat;
 	//m_pCamera->SetPosition(glm::vec3(10, 10, 10));
 	//m_pCamera->SetRotation(glm::vec3(-45, 0, 45));

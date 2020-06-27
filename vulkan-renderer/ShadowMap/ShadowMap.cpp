@@ -121,6 +121,7 @@ void ShadowMap::AddScene(std::shared_ptr<MyScene> scene)
 	}
 	glm::vec3 eye = maxLength * (-m_lightDir) + center;
 
+	m_pCamera->m_eye = eye;
 	m_pCamera->UpdateBBox(m_bbox);
 }
 
@@ -160,7 +161,7 @@ void ShadowMap::UpdateUniform()
 void ShadowMap::_init()
 {
 	std::vector<MyImageFormat> formats = {  };
-	m_pCamera = std::make_shared<MyCamera>(&m_pResourceManager->m_memoryAllocator);
+	m_pCamera = std::make_shared<MyCamera>(&m_pResourceManager->m_memoryAllocator, true);
 
 	m_pCamera->CreateDescriptorSet(m_pResourceManager->m_device, m_pResourceManager->m_descriptorPool);
 	m_pFramebuffer = std::make_shared<Framebuffer>("shadow-map", m_pResourceManager, formats, MY_IMAGEFORMAT_D32_FLOAT, m_width, m_height, true);
