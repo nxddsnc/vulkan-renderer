@@ -107,7 +107,7 @@ void MyCamera::UpdateAspectRatio(float aspect)
 void MyCamera::UpdateBBox(BBox &bbox)
 {
     m_atTarget = (bbox.max + bbox.min) * 0.5f;
-    m_radiusTarget   = glm::length(bbox.max - bbox.min) * 0.5 * 1.5;
+    m_radiusTarget   = glm::length(bbox.max - bbox.min);
     m_bbox = bbox;
 }
 

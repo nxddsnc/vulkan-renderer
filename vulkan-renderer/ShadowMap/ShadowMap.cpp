@@ -110,19 +110,9 @@ void ShadowMap::AddScene(std::shared_ptr<MyScene> scene)
 		glm::vec3(m_bbox.max.x, m_bbox.max.y, m_bbox.max.z), glm::vec3(m_bbox.max.x, m_bbox.min.y, m_bbox.max.z),
 		glm::vec3(m_bbox.min.x, m_bbox.max.y, m_bbox.max.z), glm::vec3(m_bbox.min.x, m_bbox.min.y, m_bbox.max.z) };
 
-	float maxLength = 0;
-	for (int i = 0; i < 8; ++i)
-	{
-		float temp = glm::dot(-m_lightDir, boxVerts[i] - center);
-		if (maxLength < temp)
-		{
-			maxLength = temp;
-		}
-	}
-	glm::vec3 eye = maxLength * (-m_lightDir) + center;
-
-	m_pCamera->m_eye = eye;
 	m_pCamera->UpdateBBox(m_bbox);
+	m_pCamera->m_alphaTarget = 45.0 / 180.0 * 3.14;
+	m_pCamera->m_betaTarget = 45.0 / 180.0 * 3.14;
 }
 
 std::shared_ptr<Framebuffer> ShadowMap::Draw(vk::CommandBuffer& commandBuffer)
