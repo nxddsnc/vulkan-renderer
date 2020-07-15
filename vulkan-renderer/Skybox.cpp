@@ -15,10 +15,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include "SHLight.h"
+#include "MyCamera.h"
 
-Skybox::Skybox(ResourceManager *resourceManager, VulkanContext *context)
+Skybox::Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManager, VulkanContext *context)
 {
     m_pResourceManager = resourceManager;
+	m_pPipelineManager = pipelineManager;
     m_pContext = context;
     
     m_pDrawable = std::make_shared<Drawable>();
@@ -220,6 +222,25 @@ bool Skybox::LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool
     m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureIrradianceMap, m_pVulkanTextureBRDFLUT });
 }
 
+void Skybox::Draw(vk::CommandBuffer & commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<RenderPass> renderPass)
+{
+	PipelineId skyBoxPipelineId;
+	skyBoxPipelineId.type = PipelineType::SKYBOX;
+	skyBoxPipelineId.model.primitivePart.info.bits.positionVertexData = 1;
+	skyBoxPipelineId.model.primitivePart.info.bits.normalVertexData = 0;
+	skyBoxPipelineId.model.primitivePart.info.bits.countTexCoord = 1;
+	skyBoxPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
+	skyBoxPipelineId.model.primitivePart.info.bits.countColor = 0;
+	std::shared_ptr<Pipeline> pipelineSkybox = m_pPipelineManager->GetPipeline(skyBoxPipelineId, renderPass);
+
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipeline());
+	commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
+	commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 0, 1, &camera->m_descriptorSet, 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineSkybox->GetPipelineLayout(), 1, 1, &m_dsSkybox, 0, nullptr);
+	commandBuffer.drawIndexed(m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+}
+
 std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::DescriptorPool &descriptorPool)
 {
     uint32_t width = m_pTextureEnvMap->m_pImage->m_width;
@@ -311,6 +332,7 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     id.model.primitivePart.info.bits.positionVertexData = 1;
     id.model.primitivePart.info.bits.normalVertexData = 0;
     id.model.primitivePart.info.bits.countTexCoord = 0;
+	id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
     Pipeline pipeline(id);
     pipeline.InitPrefilteredCubeMap(m_pContext->GetLogicalDevice(), vulkanRenderPass);
 
@@ -426,7 +448,6 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
-    device.destroyRenderPass(renderPass.Get());
 
     return m_pVulkanTexturePrefilteredEnvMap;
 }
@@ -637,7 +658,6 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
-    device.destroyRenderPass(renderPass.Get());
 
     return vulkanTexture;
 }
@@ -749,7 +769,6 @@ std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descr
     m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
         vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo({
@@ -765,7 +784,6 @@ std::shared_ptr<VulkanTexture> Skybox::generateBRDFLUT(vk::DescriptorPool &descr
     m_pContext->GetDeviceQueue().waitIdle();
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
-    device.destroyRenderPass(renderPass.Get());
 
     return offscreenVulkanTexture;
 }

@@ -200,21 +200,26 @@ typedef struct {
 } DDS_HEADER_DXT10;
 
 class ResourceManager;
+class PipelineManager;
 class Drawable;
 class MyTexture;
 struct VulkanTexture;
-class VulkanCamera;
+class MyCamera;
 class VulkanContext;
 class SHLight;
+class RenderPass;
 #pragma once
 class Skybox
 {
 public:
-    Skybox(ResourceManager *resourceManager, VulkanContext *context);
+    Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManager, VulkanContext *context);
     ~Skybox();
     bool LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool);
+
+	void Draw(vk::CommandBuffer &commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<RenderPass> renderPass);
 public:
     ResourceManager               *m_pResourceManager;
+	PipelineManager				  *m_pPipelineManager;
     VulkanContext                 *m_pContext;
     //std::vector<vk::Buffer>        m_vertexBuffers;
     //std::vector<vk::DeviceSize>    m_vertexBufferOffsets;

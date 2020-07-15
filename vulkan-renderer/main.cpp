@@ -6,7 +6,7 @@
 #include <GLFW\glfw3.h>
 #include "MyScene.h"
 #include "ModelLoader.h"
-#include "camera.hpp"
+#include "MyCamera.h"
 
 VulkanRenderer *renderer;
 Window *window;
@@ -31,22 +31,22 @@ void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
     {
         if (action == GLFW_PRESS)
         {
-            renderer->GetCamera()->keys.left = true;
+            renderer->GetCamera()->m_keys.left = true;
         }
         else
         {
-            renderer->GetCamera()->keys.left = false;
+            renderer->GetCamera()->m_keys.left = false;
         }
     }
     else if (button == GLFW_MOUSE_BUTTON_2)
     {
         if (action == GLFW_PRESS)
         {
-            renderer->GetCamera()->keys.left = true;
+            renderer->GetCamera()->m_keys.right = true;
         }
         else
         {
-            renderer->GetCamera()->keys.left = false;
+            renderer->GetCamera()->m_keys.right = false;
         }
     }
 }
@@ -72,8 +72,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
-    float wheelDelta = yoffset;
-    renderer->GetCamera()->translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * 20));
+    auto camera = renderer->GetCamera();
+    camera->MoveForward(yoffset);
 }
 
 void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
@@ -84,9 +84,14 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
     mouseX = xpos;
     mouseY = ypos;
     
-    VulkanCamera *camera = renderer->GetCamera();
-    if (camera->keys.left) {
-        camera->rotate(glm::vec3(-dy * camera->rotationSpeed, 0.0f, -dx * camera->rotationSpeed));
+    std::shared_ptr<MyCamera> camera = renderer->GetCamera();
+    if (camera->m_keys.left) 
+    {
+        camera->Rotate(-dx, -dy);
+    }
+    else if (camera->m_keys.right)
+    {
+        camera->Translate(dx, dy);
     }
 }
 
@@ -109,18 +114,22 @@ int main()
     uint64_t frameCounter = 0;
     uint64_t fps = 0;
 
-    MyScene myScene;
-    ModelLoader modelLoader(&myScene);
-    if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
+	std::shared_ptr<MyScene> myScene = std::make_shared<MyScene>();
+    ModelLoader modelLoader(myScene);
+    //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
     //if (!modelLoader.load("./TestModel/sphere1.obj"))
+	if (!modelLoader.load("./TestModel/house.fbx"))
+	//if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
+	//if (!modelLoader.load("./TestModel/walking/scene.gltf"))
+    //if (!modelLoader.load("./TestModel/crytek-sponza-huge-vray.fbx"))
     {
-        std::cout << "can't read gltf file!" << std::endl;
+        std::cout << "can't read file!" << std::endl;
         return -1;
     } 
     else
     {
-        renderer->AddRenderNodes(myScene.GetDrawables());
+        renderer->AddScene(myScene);
     }
 
     while (renderer->Run())

@@ -7,38 +7,37 @@
 #include <algorithm>
 
 ResourceManager::ResourceManager(vk::Device &device, vk::CommandPool &commandPool, vk::Queue &graphicsQueue,
-    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::DescriptorPool &descriptorPool, vk::PhysicalDevice &gpu)
+    uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::PhysicalDevice &gpu)
 {
-    _device         = device;
-    _commandPool    = commandPool;
-    _graphicsQueue = graphicsQueue;
-    _graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
-    _memoryAllocator = memoryAllocator;
-    _descriptorPool = descriptorPool;
-    _gpu = gpu;
+    m_device         = device;
+    m_commandPool    = commandPool;
+    m_graphicsQueue = graphicsQueue;
+    m_graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
+    m_memoryAllocator = memoryAllocator;
+    m_gpu = gpu;
 }
 
 ResourceManager::~ResourceManager()
 {
-    for (auto drawable : _drawables)
+    for (auto drawable : m_drawables)
     {
         for (int i = 0; i < drawable->m_vertexBuffers.size(); ++i)
         {
-            vmaDestroyBuffer(_memoryAllocator, drawable->m_vertexBuffers[i], drawable->m_vertexBufferMemorys[i]);
+            vmaDestroyBuffer(m_memoryAllocator, drawable->m_vertexBuffers[i], drawable->m_vertexBufferMemorys[i]);
         }
-        vmaDestroyBuffer(_memoryAllocator, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
+        vmaDestroyBuffer(m_memoryAllocator, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
     }
 
-    for (auto pair : _textureMap)
+    for (auto pair : m_textureMap)
     {
-        vmaDestroyImage(_memoryAllocator, pair.second->image, pair.second->imageMemory);
+        vmaDestroyImage(m_memoryAllocator, pair.second->image, pair.second->imageMemory);
         if (pair.second->imageView)
         {
-            _device.destroyImageView(pair.second->imageView);
+            m_device.destroyImageView(pair.second->imageView);
         }
         if (pair.second->imageSampler)
         {
-            _device.destroySampler(pair.second->imageSampler);
+            m_device.destroySampler(pair.second->imageSampler);
         }
     }
 }
@@ -47,23 +46,28 @@ void ResourceManager::InitVulkanBuffers(std::shared_ptr<Drawable> drawable)
 {
     CreateVertexBuffers(drawable);
     CreateIndexBuffer(drawable->m_mesh, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
-    _drawables.push_back(drawable);
+    m_drawables.push_back(drawable);
 }
 
 void ResourceManager::InitVulkanResource(std::shared_ptr<Drawable> drawable)
 {
+	if (drawable->m_bReady)
+	{
+		return;
+	}
     InitVulkanBuffers(drawable);
     _createTextures(drawable);
+	drawable->m_bReady = true;
 }
 
 vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()
 {
     vk::CommandBufferAllocateInfo allocInfo({
-        _commandPool,
+        m_commandPool,
         vk::CommandBufferLevel::ePrimary,
         1
     });
-    auto commandBuffers = _device.allocateCommandBuffers(allocInfo);
+    auto commandBuffers = m_device.allocateCommandBuffers(allocInfo);
 
     vk::CommandBufferBeginInfo beginInfo({
         vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
@@ -86,9 +90,9 @@ void ResourceManager::_endSingleTimeCommand(vk::CommandBuffer &commandBuffer)
         {},
         {}
     });
-    _graphicsQueue.submit((uint32_t)1, &submitInfo, nullptr);
-    _graphicsQueue.waitIdle();
-    _device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
+    m_graphicsQueue.submit((uint32_t)1, &submitInfo, nullptr);
+    m_graphicsQueue.waitIdle();
+    m_device.freeCommandBuffers(m_commandPool, 1, &commandBuffer);
 }
 
 void ResourceManager::_copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage)
@@ -155,12 +159,12 @@ void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buf
         vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
         vk::SharingMode::eExclusive,
         1,
-        &_graphicsQueueFamilyIndex
+        &m_graphicsQueueFamilyIndex
     });
 
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&buffer), &bufferMemory, nullptr);
+    vmaCreateBuffer(m_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&buffer), &bufferMemory, nullptr);
 
     vk::Buffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
@@ -171,20 +175,20 @@ void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buf
         vk::BufferUsageFlagBits::eTransferSrc,
         vk::SharingMode::eExclusive,
         1,
-        &_graphicsQueueFamilyIndex
+        &m_graphicsQueueFamilyIndex
     });
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&stagingBufferInfo), &stagingBufferAllocInfo, reinterpret_cast<VkBuffer*>(&stagingBuffer), &stagingBufferMemory, nullptr);
+    vmaCreateBuffer(m_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&stagingBufferInfo), &stagingBufferAllocInfo, reinterpret_cast<VkBuffer*>(&stagingBuffer), &stagingBufferMemory, nullptr);
 
     void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
+    vmaMapMemory(m_memoryAllocator, stagingBufferMemory, &data);
     memcpy(data, data_, (size_t)size);
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
+    vmaUnmapMemory(m_memoryAllocator, stagingBufferMemory);
 
     _copyBuffer(stagingBuffer, buffer, size);
 
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+    vmaDestroyBuffer(m_memoryAllocator, stagingBuffer, stagingBufferMemory);
 
     bufferOffset = 0;
 }
@@ -245,6 +249,28 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
         drawable->m_vertexBufferMemorys.push_back(std::move(colorBufferMemory));
         drawable->m_vertexBufferOffsets.push_back(std::move(colorBufferOffset));
     }
+	if (drawable->m_mesh->m_joints.size() > 0)
+	{
+		vk::Buffer jointsBuffer;
+		VmaAllocation jointsBufferMemory;
+		vk::DeviceSize jointsBufferOffset;
+		size = sizeof(drawable->m_mesh->m_joints[0]) * drawable->m_mesh->m_joints.size();
+		InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_joints.data()), jointsBuffer, jointsBufferMemory, jointsBufferOffset);
+		drawable->m_vertexBuffers.push_back(std::move(jointsBuffer));
+		drawable->m_vertexBufferMemorys.push_back(std::move(jointsBufferMemory));
+		drawable->m_vertexBufferOffsets.push_back(std::move(jointsBufferOffset));
+	}
+	if (drawable->m_mesh->m_weights.size() > 0)
+	{
+		vk::Buffer weightsBuffer;
+		VmaAllocation weightsBufferMemory;
+		vk::DeviceSize weightsBufferOffset;
+		size = sizeof(drawable->m_mesh->m_weights[0]) * drawable->m_mesh->m_weights.size();
+		InitVertexBuffer(size, reinterpret_cast<void*>(drawable->m_mesh->m_weights.data()), weightsBuffer, weightsBufferMemory, weightsBufferOffset);
+		drawable->m_vertexBuffers.push_back(std::move(weightsBuffer));
+		drawable->m_vertexBufferMemorys.push_back(std::move(weightsBufferMemory));
+		drawable->m_vertexBufferOffsets.push_back(std::move(weightsBufferOffset));
+	}
 }
 
 void ResourceManager::CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory)
@@ -257,11 +283,11 @@ void ResourceManager::CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer
         vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
         vk::SharingMode::eExclusive,
         1,
-        &_graphicsQueueFamilyIndex
+        &m_graphicsQueueFamilyIndex
     });
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&buffer), &bufferMemory, nullptr);
+    vmaCreateBuffer(m_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo), &allocInfo, reinterpret_cast<VkBuffer*>(&buffer), &bufferMemory, nullptr);
 
     vk::Buffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
@@ -272,20 +298,20 @@ void ResourceManager::CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer
         vk::BufferUsageFlagBits::eTransferSrc,
         vk::SharingMode::eExclusive,
         1,
-        &_graphicsQueueFamilyIndex
+        &m_graphicsQueueFamilyIndex
     });
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&stagingBufferInfo), &stagingBufferAllocInfo, reinterpret_cast<VkBuffer*>(&stagingBuffer), &stagingBufferMemory, nullptr);
+    vmaCreateBuffer(m_memoryAllocator, reinterpret_cast<VkBufferCreateInfo*>(&stagingBufferInfo), &stagingBufferAllocInfo, reinterpret_cast<VkBuffer*>(&stagingBuffer), &stagingBufferMemory, nullptr);
 
     void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
+    vmaMapMemory(m_memoryAllocator, stagingBufferMemory, &data);
     memcpy(data, mesh->m_indices, (size_t)size);
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
+    vmaUnmapMemory(m_memoryAllocator, stagingBufferMemory);
 
     _copyBuffer(stagingBuffer, buffer, size);
 
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+    vmaDestroyBuffer(m_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
 
 void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
@@ -345,6 +371,38 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
         destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     }
+	else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eTransferSrcOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+		sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+		destinationStage = vk::PipelineStageFlagBits::eTransfer;
+	}
+	else if (oldLayout == vk::ImageLayout::eTransferSrcOptimal && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+		barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eTransfer;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
+	else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eTransferDstOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+		destinationStage = vk::PipelineStageFlagBits::eTransfer;
+	}
+	else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eTransfer;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
     else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
     {
         barrier.srcAccessMask = {};
@@ -361,6 +419,30 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
         sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     }
+	else if (oldLayout == vk::ImageLayout::eShaderReadOnlyOptimal && newLayout == vk::ImageLayout::eColorAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+		barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
+	else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+		sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+	}
+	else if (oldLayout == vk::ImageLayout::eShaderReadOnlyOptimal && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+		barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+		sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+		destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	}
 	else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eTransferSrcOptimal)
 	{
 		barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
@@ -411,26 +493,44 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 
 	sprintf(key, "%s-%d-%d", texture->m_pImage->m_fileName, texture->m_pImage->m_width, texture->m_pImage->m_height);
 
-	if (_textureMap.count(key) > 0)
+	if (m_textureMap.count(key) > 0)
 	{
-		vulkanTexture = _textureMap.at(key);
+		vulkanTexture = m_textureMap.at(key);
+		vulkanTexture->referenceCount++;
 		return vulkanTexture;
 	}
 	else
 	{
 		vulkanTexture = std::make_shared<VulkanTexture>();
-		_textureMap.insert(std::make_pair(key, vulkanTexture));
+		vulkanTexture->referenceCount = 1;
+		m_textureMap.insert(std::make_pair(key, vulkanTexture));
 	}
 
+	vulkanTexture->texture = texture;
 
-	vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+	bool bDepthTexture = false;
+	vulkanTexture->format = vk::Format::eR8G8B8A8Unorm;
 	switch (myImage->m_format)
 	{
 	case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
-		imageFormat = vk::Format::eR8G8B8A8Unorm;
+		vulkanTexture->format = vk::Format::eR8G8B8A8Unorm;
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
-		imageFormat = vk::Format::eR16G16B16A16Sfloat;
+		vulkanTexture->format = vk::Format::eR16G16B16A16Sfloat;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_R16_FLOAT:
+		vulkanTexture->format = vk::Format::eR16Sfloat;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_R32_FLOAT:
+		vulkanTexture->format = vk::Format::eR32Sfloat;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
+		vulkanTexture->format = vk::Format::eD24UnormS8Uint;
+		bDepthTexture = true;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+		vulkanTexture->format = vk::Format::eD32Sfloat;
+		bDepthTexture = true;
 		break;
 	}
 
@@ -450,11 +550,19 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 	}
 	if (texture->m_pImage->m_bFramebuffer)
     {
-        usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled;
+		if (bDepthTexture)
+		{
+			// FIXME: Too many usage being set may cause performance issue.
+			usage = vk::ImageUsageFlagBits::eDepthStencilAttachment| vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+		}
+		else
+		{
+			usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled;
+		}
     }
     vk::ImageCreateInfo imageCreateInfo(flags,
         vk::ImageType::e2D,
-        imageFormat,
+        vulkanTexture->format,
         vk::Extent3D({
         static_cast<uint32_t>(myImage->m_width),
         static_cast<uint32_t>(myImage->m_height),
@@ -467,7 +575,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
         usage,
         vk::SharingMode::eExclusive,
         1,
-        &_graphicsQueueFamilyIndex,
+        &m_graphicsQueueFamilyIndex,
         vk::ImageLayout::eUndefined);
     VmaAllocationCreateInfo allocationCreateInfo = {};
 
@@ -477,11 +585,11 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 		allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 		imageCreateInfo.tiling = vk::ImageTiling::eLinear;
 	}
-    vmaCreateImage(_memoryAllocator, reinterpret_cast<VkImageCreateInfo*>(&imageCreateInfo), &allocationCreateInfo,
+    vmaCreateImage(m_memoryAllocator, reinterpret_cast<VkImageCreateInfo*>(&imageCreateInfo), &allocationCreateInfo,
         reinterpret_cast<VkImage*>(&(vulkanTexture->image)), &(vulkanTexture->imageMemory), nullptr);
 
     vk::ImageSubresourceRange subResourceRange(
-        vk::ImageAspectFlagBits::eColor,
+		bDepthTexture? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor,
         0,
         myImage->m_mipmapCount,
         0,
@@ -493,7 +601,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
         {},
         vulkanTexture->image,
         imageViewType,
-        imageFormat,
+        vulkanTexture->format,
         vk::ComponentMapping({
         vk::ComponentSwizzle::eR,
         vk::ComponentSwizzle::eG,
@@ -502,7 +610,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     }),
         subResourceRange
     });
-    vulkanTexture->imageView = _device.createImageView(imageViewCreateInfo);
+    vulkanTexture->imageView = m_device.createImageView(imageViewCreateInfo);
 
     return vulkanTexture;
 }
@@ -519,6 +627,13 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
     case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
         imageFormat = vk::Format::eR16G16B16A16Sfloat;
         break;
+	case MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT:
+		imageFormat = vk::Format::eD24UnormS8Uint;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+		imageFormat = vk::Format::eD32Sfloat;
+		break;
+		break;
     }
 
     // transfer data from RAM to GPU memory
@@ -530,12 +645,12 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
     stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     VmaAllocationCreateInfo stagingBufferAllocInfo = {};
     stagingBufferAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    vmaCreateBuffer(_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
+    vmaCreateBuffer(m_memoryAllocator, &stagingBufferInfo, &stagingBufferAllocInfo, &stagingBuffer, &stagingBufferMemory, nullptr);
 
     void* data;
-    vmaMapMemory(_memoryAllocator, stagingBufferMemory, &data);
+    vmaMapMemory(m_memoryAllocator, stagingBufferMemory, &data);
     memcpy(data, texture->m_pImage->m_data, static_cast<size_t>(stagingBufferInfo.size));
-    vmaUnmapMemory(_memoryAllocator, stagingBufferMemory);
+    vmaUnmapMemory(m_memoryAllocator, stagingBufferMemory);
 
     vk::ImageSubresourceRange subResourceRange(
         vk::ImageAspectFlagBits::eColor,
@@ -550,7 +665,7 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
     _copyBufferToImage(stagingBuffer, vulkanTexture->image, texture->m_pImage);
     SetImageLayoutInSingleCmd(vulkanTexture->image, imageFormat, subResourceRange,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-    vmaDestroyBuffer(_memoryAllocator, stagingBuffer, stagingBufferMemory);
+    vmaDestroyBuffer(m_memoryAllocator, stagingBuffer, stagingBufferMemory);
 }
 
 vk::DescriptorSet ResourceManager::CreateTextureDescriptorSet(std::vector<std::shared_ptr<VulkanTexture>> textures)
@@ -576,11 +691,11 @@ vk::DescriptorSet ResourceManager::CreateTextureDescriptorSet(std::vector<std::s
     vk::DescriptorSetLayout descriptorSetLayout;
 
     vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
-    descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
+    descriptorSetLayout = m_device.createDescriptorSetLayout(layoutInfo);
 
-    vk::DescriptorSetAllocateInfo allocInfo(_descriptorPool, 1, &descriptorSetLayout);
+    vk::DescriptorSetAllocateInfo allocInfo(m_descriptorPool, 1, &descriptorSetLayout);
 
-    _device.allocateDescriptorSets(&allocInfo, &descriptorSet);
+    m_device.allocateDescriptorSets(&allocInfo, &descriptorSet);
 
     vk::WriteDescriptorSet descriptorWrite(descriptorSet,
         uint32_t(0),
@@ -590,8 +705,8 @@ vk::DescriptorSet ResourceManager::CreateTextureDescriptorSet(std::vector<std::s
         imageInfos.data(),
         {},
         {});
-    _device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-    _device.destroyDescriptorSetLayout(descriptorSetLayout);
+    m_device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    m_device.destroyDescriptorSetLayout(descriptorSetLayout);
 
     return descriptorSet;
 }
@@ -607,33 +722,33 @@ void ResourceManager::CreateUniformBuffer(size_t size, VkBuffer* buffer, VmaAllo
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 	VkBufferCreateInfo &vkCreateInfo = createInfo;
-	vmaCreateBuffer(_memoryAllocator, &vkCreateInfo, &allocInfo, buffer, bufferMemory, nullptr);
+	vmaCreateBuffer(m_memoryAllocator, &vkCreateInfo, &allocInfo, buffer, bufferMemory, nullptr);
 }
 
 void ResourceManager::DestroyUniformBuffer(vk::Buffer &buffer, VmaAllocation &bufferMemory)
 {
-	vmaDestroyBuffer(_memoryAllocator, buffer, bufferMemory);
+	vmaDestroyBuffer(m_memoryAllocator, buffer, bufferMemory);
 }
 
 void ResourceManager::UpdateBuffer(VmaAllocation bufferMemory, char* src, int size)
 {
 	char* data = nullptr;
-	vmaMapMemory(_memoryAllocator, bufferMemory, reinterpret_cast<void**>(&data));
+	vmaMapMemory(m_memoryAllocator, bufferMemory, reinterpret_cast<void**>(&data));
 	memcpy(data, src, size);
-	vmaUnmapMemory(_memoryAllocator, bufferMemory);
+	vmaUnmapMemory(m_memoryAllocator, bufferMemory);
 }
 
 void ResourceManager::TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, std::shared_ptr<MyTexture> dst)
 {
 	void *data;
-	vmaMapMemory(_memoryAllocator, src->imageMemory, &data);
+	vmaMapMemory(m_memoryAllocator, src->imageMemory, &data);
 	
 	if (dst->m_pImage->m_data == nullptr)
 	{
 		dst->m_pImage->m_data = new char[dst->m_pImage->m_bufferSize];
 	}
 	memcpy(dst->m_pImage->m_data, data, static_cast<size_t>(dst->m_pImage->m_bufferSize));
-	vmaUnmapMemory(_memoryAllocator, src->imageMemory);
+	vmaUnmapMemory(m_memoryAllocator, src->imageMemory);
 }
 
 std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::shared_ptr<MyTexture> texture)
@@ -645,7 +760,8 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
 		return vulkanTexture;
 	}
     vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
-    switch (texture->m_pImage->m_format)
+	bool bDepthTexture = false;
+	switch (texture->m_pImage->m_format)
     {
     case MyImageFormat::MY_IMAGEFORMAT_RGBA8:
         imageFormat = vk::Format::eR8G8B8A8Unorm;
@@ -653,8 +769,17 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
     case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
         imageFormat = vk::Format::eR16G16B16A16Sfloat;
         break;
+	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
+		imageFormat = vk::Format::eD32Sfloat;
+		bDepthTexture = true;
+		break;
     }
 
+	vk::CompareOp compareOp = vk::CompareOp::eAlways;
+	if (bDepthTexture)
+	{
+		compareOp = vk::CompareOp::eGreaterOrEqual;
+	}
     // create image sampler
     vk::SamplerCreateInfo createInfo(
         {},
@@ -667,15 +792,15 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
         0.0,
         vk::Bool32(true),
         16.0,
-        vk::Bool32(false),
-        vk::CompareOp::eAlways,
+        vk::Bool32(bDepthTexture),
+        compareOp,
         0.0,
         texture->m_pImage->m_mipmapCount - 1,
         vk::BorderColor::eFloatOpaqueWhite,
         vk::Bool32(false)
     );
 
-    vulkanTexture->imageSampler = _device.createSampler(createInfo);
+    vulkanTexture->imageSampler = m_device.createSampler(createInfo);
 
     return vulkanTexture;
 }
@@ -685,9 +810,9 @@ std::shared_ptr<VulkanTexture> ResourceManager::GetVulkanTexture(std::shared_ptr
 	char key[512];
 	sprintf(key, "%s-%d-%d", texture->m_pImage->m_fileName, texture->m_pImage->m_width, texture->m_pImage->m_height);
 
-	if (_textureMap.count(key) > 0)
+	if (m_textureMap.count(key) > 0)
 	{
-		return _textureMap.at(key);
+		return m_textureMap.at(key);
 	}
 	else
 	{
@@ -757,11 +882,11 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
     vk::DescriptorSetLayout descriptorSetLayout;
 
     vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
-    descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
+    descriptorSetLayout = m_device.createDescriptorSetLayout(layoutInfo);
 
-    vk::DescriptorSetAllocateInfo allocInfo(_descriptorPool, 1, &descriptorSetLayout);
+    vk::DescriptorSetAllocateInfo allocInfo(m_descriptorPool, 1, &descriptorSetLayout);
     
-    _device.allocateDescriptorSets(&allocInfo, &drawable->textureDescriptorSet);
+    m_device.allocateDescriptorSets(&allocInfo, &drawable->textureDescriptorSet);
 
     vk::WriteDescriptorSet descriptorWrite( drawable->textureDescriptorSet,
                                             uint32_t(0),
@@ -771,7 +896,7 @@ void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
                                             imageInfos.data(),
                                             {},
                                             {} );
-    _device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    m_device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
 
-    _device.destroyDescriptorSetLayout(descriptorSetLayout);
+    m_device.destroyDescriptorSetLayout(descriptorSetLayout);
 }

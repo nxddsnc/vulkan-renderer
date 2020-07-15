@@ -76,7 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(GLM);$(VK_SDK_PATH)\Include;$(GLFW)\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(VK_SDK_PATH)\Include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -106,16 +106,18 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);NOMINMAX;STB_IMAGE_WRITE_IMPLEMENTATION</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);NOMINMAX;STB_IMAGE_WRITE_IMPLEMENTATION;_GLFW_WIN32</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/includes/assimp;Vulkan;./;Debug;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/glm;third-party/glfw/include;third-party/includes/assimp;Vulkan;./;Debug;RenderScene;ShadowMap;Camera;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories);$(VcpkgRoot)debug\lib;$(VcpkgRoot)debug\lib\manual-link;third-party/libs;$(GLFW)\lib-vc2015</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc140-mt.lib;vulkan-1.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shaderc_shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc140-mt.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shaderc_shared.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -160,17 +162,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera\MyCamera.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Debug\Axis.cpp" />
+    <ClCompile Include="Drawable.cpp" />
+    <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MyAnimation.cpp" />
     <ClCompile Include="MyImage.cpp" />
     <ClCompile Include="MyMaterial.cpp" />
     <ClCompile Include="MyMesh.cpp" />
     <ClCompile Include="ModelLoader.cpp" />
     <ClCompile Include="MyTexture.cpp" />
+    <ClCompile Include="PostEffect\Bloom.cpp" />
+    <ClCompile Include="PostEffect\PostEffect.cpp" />
+    <ClCompile Include="PostEffect\ToneMapping.cpp" />
+    <ClCompile Include="RenderScene\RenderQueue.cpp" />
+    <ClCompile Include="RenderScene\RenderQueueManager.cpp" />
+    <ClCompile Include="RenderScene\RenderScene.cpp" />
+    <ClCompile Include="RenderScene\RenderSceneDeferred.cpp" />
+    <ClCompile Include="RenderScene\RenderSceneForward.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="MyScene.cpp" />
+    <ClCompile Include="ShadowMap\ShadowMap.cpp" />
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="SHLight.cpp" />
     <ClCompile Include="Skybox.cpp" />
@@ -178,7 +193,6 @@
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />
     <ClCompile Include="Vulkan\RenderPass.cpp" />
-    <ClCompile Include="Vulkan\RenderQueue.cpp" />
     <ClCompile Include="Vulkan\ShaderModule.cpp" />
     <ClCompile Include="Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -186,9 +200,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h" />
-    <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="Camera\MyCamera.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="Debug\Axis.h" />
+    <ClInclude Include="Framebuffer.h" />
+    <ClInclude Include="MyAnimation.h" />
     <ClInclude Include="MyImage.h" />
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />
@@ -196,8 +212,17 @@
     <ClInclude Include="Drawable.h" />
     <ClInclude Include="MyTexture.h" />
     <ClInclude Include="Platform.h" />
+    <ClInclude Include="PostEffect\Bloom.h" />
+    <ClInclude Include="PostEffect\PostEffect.h" />
+    <ClInclude Include="PostEffect\ToneMapping.h" />
+    <ClInclude Include="RenderScene\RenderQueue.h" />
+    <ClInclude Include="RenderScene\RenderQueueManager.h" />
+    <ClInclude Include="RenderScene\RenderScene.h" />
+    <ClInclude Include="RenderScene\RenderSceneDeferred.h" />
+    <ClInclude Include="RenderScene\RenderSceneForward.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="MyScene.h" />
+    <ClInclude Include="ShadowMap\ShadowMap.h" />
     <ClInclude Include="Shared.h" />
     <ClInclude Include="SHLight.h" />
     <ClInclude Include="Skybox.h" />
@@ -206,7 +231,6 @@
     <ClInclude Include="Vulkan\Pipeline.h" />
     <ClInclude Include="Vulkan\PipelineManager.h" />
     <ClInclude Include="Vulkan\RenderPass.h" />
-    <ClInclude Include="Vulkan\RenderQueue.h" />
     <ClInclude Include="Vulkan\ShaderModule.h" />
     <ClInclude Include="Vulkan\VulkanRenderer.h" />
     <ClInclude Include="Window.h" />

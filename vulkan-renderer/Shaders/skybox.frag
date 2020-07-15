@@ -15,19 +15,6 @@ layout (location = 0) out vec4 outColor;
 // 	float gamma;
 // } uboParams;
 
-// From http://filmicworlds.com/blog/filmic-tonemapping-operators/
-vec3 Uncharted2Tonemap(vec3 color)
-{
-	float A = 0.15;
-	float B = 0.50;
-	float C = 0.10;
-	float D = 0.20;
-	float E = 0.02;
-	float F = 0.30;
-	float W = 11.2;
-	return ((color*(A*color+C*B)+D*E)/(color*(A*color+B)+D*F))-E/F;
-}
-
 void main() 
 {
 	vec3 color = texture(samplerEnv, inUVW).rgb;
@@ -35,17 +22,10 @@ void main()
 	// color = textureLod(samplerPreFilteredCubeMap, inUVW, 20).rgb;
 	// color = Uncharted2Tonemap(color);
 	outColor = vec4(color, 1.0);
+	
 	// outColor = vec4(inUVW, 1.0);
 
 	// outColor = vec4(abs(inPosition.x + 0.5 - inUv.x), abs(inPosition.y + 0.5 - inUv.y), abs(inPosition.z + 0.5 - inUv.z), 1.0);
 
-	// outColor = vec4(inUv.x, inUv.y, inUv.z, 1.0);
-	// // Tone mapping
-    float exposure = 2.0;
-	outColor.rgb = Uncharted2Tonemap(outColor.rgb * exposure);
-	outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2f)));	
-	// Gamma correction
-	outColor.rgb = pow(outColor.rgb, vec3(1.0f / 2.2));
-	
 	// outColor = vec4(color, 1.0);
 }

@@ -1,4 +1,6 @@
 #include "MyMesh.h"
+#include "assimp/mesh.h"
+#include "MyAnimation.h"
 
 MyMesh::MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize)
 {
@@ -29,6 +31,11 @@ MyMesh::MyMesh(VertexBits vertexBits, uint32_t vertexSize, uint32_t indexSize)
     {
         m_colors.resize(vertexSize);
     }
+    if (vertexBits.hasBone)
+    {
+        m_joints.resize(vertexSize);
+        m_weights.resize(vertexSize);
+    }
 
     //if (vertexSize < 256)
     //{
@@ -56,6 +63,37 @@ MyMesh::MyMesh()
 MyMesh::~MyMesh()
 {
     delete [] m_indices;
+}
+
+void MyMesh::InitSkinData()
+{
+	for (int i = 0; i < m_bones.size(); ++i)
+	{
+		for (int j = 0; j < m_bones[i]->mNumWeights; ++j)
+		{
+			aiVertexWeight vertexWeight = m_bones[i]->mWeights[j];
+			if (m_joints[vertexWeight.mVertexId].x == 0)
+			{
+				m_weights[vertexWeight.mVertexId].x = vertexWeight.mWeight;
+				m_joints[vertexWeight.mVertexId].x = m_boneNodes[i]->jointIndex;
+			}
+			else if (m_joints[vertexWeight.mVertexId].y == 0)
+			{
+				m_weights[vertexWeight.mVertexId].y = vertexWeight.mWeight;
+				m_joints[vertexWeight.mVertexId].y = m_boneNodes[i]->jointIndex;
+			}
+			else if (m_joints[vertexWeight.mVertexId].z == 0)
+			{
+				m_weights[vertexWeight.mVertexId].z = vertexWeight.mWeight;
+				m_joints[vertexWeight.mVertexId].z = m_boneNodes[i]->jointIndex;
+			}
+			else if (m_joints[vertexWeight.mVertexId].w == 0)
+			{
+				m_weights[vertexWeight.mVertexId].w = vertexWeight.mWeight;
+				m_joints[vertexWeight.mVertexId].w = m_boneNodes[i]->jointIndex;
+			}
+		}
+	}
 }
 
 void MyMesh::CreateCube()

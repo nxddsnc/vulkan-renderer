@@ -19,6 +19,47 @@ MyImage::MyImage(const char *filename)
 	m_bTransferSrc = false;
 }
 
+MyImage::MyImage(const char * name, int width, int height, MyImageFormat format, bool bFramebuffer)
+{
+	std::memcpy(m_fileName, name, 1024);
+	m_data = nullptr;
+	m_width = width;
+	m_height = height;
+	m_format = format;
+	m_mipmapCount = 1;
+	m_layerCount = 1;
+
+	switch (format)
+	{
+	case MY_IMAGEFORMAT_RGBA8:
+		m_blockSize = 1;
+		m_channels = 4;
+		break;
+	case MY_IMAGEFORMAT_RGBA16_FLOAT:
+		m_blockSize = 2;
+		m_channels = 4;
+		break;
+	case MY_IMAGEFORMAT_RGBA32_FLOAT:
+		m_blockSize = 4;
+		m_channels = 4;
+		break;
+	case MY_IMAGEFORMAT_DXT1:
+	case MY_IMAGEFORMAT_DXT2:
+	case MY_IMAGEFORMAT_DXT3:
+	case MY_IMAGEFORMAT_DXT5:
+		break;
+	case MY_IMAGEFORMAT_D24S8_UINT:
+		m_blockSize = 4;
+		m_channels = 1;
+		break;
+	}
+
+	m_bFramebuffer = bFramebuffer;
+	m_bCompressed = false;
+	m_bHostVisible = false;
+	m_bTransferSrc = false;
+}
+
 MyImage::~MyImage() 
 {
     if (m_data) 

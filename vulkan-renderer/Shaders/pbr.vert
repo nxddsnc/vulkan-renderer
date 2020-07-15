@@ -7,6 +7,10 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 cameraPos;
 } ubo;
 
+layout(set = 1, binding = 0) uniform UboJointMatrices {
+    mat4 value[64];
+} uboJointMatrices;
+
 layout(push_constant) uniform UniformPerDrawable
 {
     mat4 modelMatrix;
@@ -27,6 +31,13 @@ layout(location = IN_UV0_LOCATION) in vec3 inUv;
 layout(location = IN_TANGENT_LOCATION) in vec3 inTangent;
 #endif
 
+#if IN_JOINT
+layout(location = IN_JOINT_LOCATION) in ivec4 inJoint;
+#endif
+
+#if IN_WEIGHT
+layout(location = IN_WEIGHT_LOCATION) in vec4 inWeight;
+#endif
 // varyings
 #if IN_TANGENT && IN_NORMAL
 // mat3 consumes 3 location.
@@ -44,11 +55,35 @@ layout(location = IN_UV0_LOCATION) out vec3 outUv;
 #endif
 
 
-void main() {
+void main() 
+{
+#if IN_JOINT
+    mat4 jointMatrix = (  uboJointMatrices.value[inJoint.x] * inWeight.x + 
+                   uboJointMatrices.value[inJoint.y] * inWeight.y + 
+                   uboJointMatrices.value[inJoint.z] * inWeight.z +
+                   uboJointMatrices.value[inJoint.w] * inWeight.w);
+
+    // mat4 test = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    // outPosition = (uboJointMatrices.value[0] * vec4(inPosition, 1.0) * 1.0).xyz;
+
+    vec4 temp = uniformPerDrawable.modelMatrix * jointMatrix * vec4(inPosition, 1.0);
+    // outPosition = (uniformPerDrawable.modelMatrix * temp).xyz;
+    gl_Position = ubo.proj * ubo.view * temp;
+
+
+#if IN_NORMAL
+    mat4 normalMatrix = inverse(jointMatrix);
+    outNormal = (uniformPerDrawable.normalMatrix * normalMatrix * vec4(inNormal, 0.0)).xyz;
+#endif
+
+#else 
     outPosition = (uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0)).xyz;
     gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
+
 #if IN_NORMAL
     outNormal = (uniformPerDrawable.normalMatrix * vec4(inNormal, 0.0)).xyz;
+#endif
+
 #endif
 
 #if IN_UV0

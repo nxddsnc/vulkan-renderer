@@ -4,6 +4,8 @@
 #include "MyMaterial.h"
 #include <memory.h>
 #include "Platform.h"
+#include <glm/glm.hpp>
+#include "Utils.h"
 #pragma once
 /************************************************************************/
 /* Minimum renderable node.*/
@@ -16,11 +18,21 @@ struct VulkanTexture
     VmaAllocation						imageMemory;
     vk::ImageView                       imageView;
     vk::Sampler                         imageSampler;
+	std::shared_ptr<MyTexture>			texture;
+	vk::Format							format;
+	int									referenceCount = 0;
 };
 
+class MyAnimation;
 class Drawable
 {
 public:
+	Drawable();
+	~Drawable();
+
+	void ComputeBBox();
+public:
+	BBox						  m_bbox;
     glm::mat4                     m_matrix;
     glm::mat4                     m_normalMatrix;
     std::shared_ptr<MyMesh>       m_mesh;
@@ -43,6 +55,9 @@ public:
     std::shared_ptr<VulkanTexture> metallicRoughnessTexture;
     vk::DescriptorSet              textureDescriptorSet;
 
+	bool						   m_bReady;
+
+    std::shared_ptr<MyAnimation>   m_pAnimation;
     //vk::DescriptorSet              textureDescriptorSet;
 };
 

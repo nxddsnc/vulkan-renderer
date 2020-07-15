@@ -22,18 +22,18 @@ Axis::~Axis()
     
 }
 
-void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer, vk::DescriptorSet descriptorSet)
+void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer, vk::DescriptorSet descriptorSet, std::shared_ptr<RenderPass> renderPass)
 {
     PipelineId pipelineId;
     PipelineId linesPipelineId;
-    linesPipelineId.type = PipelineType::MODEL;
+    linesPipelineId.type = PipelineType::MODEL_FORWARD;
     linesPipelineId.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Lines;
     linesPipelineId.model.primitivePart.info.bits.positionVertexData = 1;
     linesPipelineId.model.primitivePart.info.bits.normalVertexData = 0;
     linesPipelineId.model.primitivePart.info.bits.countTexCoord = 0;
     linesPipelineId.model.primitivePart.info.bits.tangentVertexData = 0;
     linesPipelineId.model.primitivePart.info.bits.countColor = 1;
-    std::shared_ptr<Pipeline> pipelineLines = m_pPipelineMananger->GetPipeline(linesPipelineId);
+    std::shared_ptr<Pipeline> pipelineLines = m_pPipelineMananger->GetPipeline(linesPipelineId, renderPass);
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipeline());
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);

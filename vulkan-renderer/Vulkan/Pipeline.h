@@ -2,11 +2,18 @@
 #pragma once
 enum PipelineType
 {
-    MODEL,
-    SKYBOX,
-    PREFILTERED_CUBE_MAP,
-    IRRADIANCE_MAP,
-    GENERATE_BRDF_LUT
+	MODEL_FORWARD,
+	MODEL_DEFERRED,
+	DEPTH,
+	DEFERRED_SHADING,
+	SKYBOX,
+	PREFILTERED_CUBE_MAP,
+	IRRADIANCE_MAP,
+	GENERATE_BRDF_LUT,
+	BRIGHTNESS,
+	GAUSSIAN_BLUR_X,
+	GAUSSIAN_BLUR_Y,
+	BLIT
 };
 
 enum class PrimitiveMode : uint8_t {
@@ -28,9 +35,11 @@ struct PipelineId
       union {
         struct
         {
-          uint8_t positionVertexData : 1;
-          uint8_t normalVertexData : 1;
-          uint8_t tangentVertexData : 1;
+          bool positionVertexData : 1;
+          bool normalVertexData : 1;
+		  bool tangentVertexData : 1;
+		  bool jointVertexData : 1;
+		  bool weightVertexData : 1;
           uint8_t countTexCoord : 2;
           uint8_t countColor : 2;
           PrimitiveMode primitiveMode : 3;
@@ -60,13 +69,13 @@ struct PipelineId
 
   bool operator==(PipelineId const & rhs) const
   {
-      return model.materialPart.info.value == rhs.model.materialPart.info.value &&
+      return type == rhs.type && model.materialPart.info.value == rhs.model.materialPart.info.value &&
           model.primitivePart.info.value == rhs.model.primitivePart.info.value;
   }
 
   bool operator!=(PipelineId const & rhs) const
   {
-      return model.materialPart.info.value != rhs.model.materialPart.info.value ||
+      return type != rhs.type || model.materialPart.info.value != rhs.model.materialPart.info.value ||
           model.primitivePart.info.value != rhs.model.primitivePart.info.value;
   }
 };
@@ -79,7 +88,8 @@ template<> struct std::hash<PipelineId> {
 };
 
 class VulkanRenderer;
-class VulkanCamera;
+class MyCamera;
+class RenderPass;
 class Pipeline
 {
 public:
@@ -90,13 +100,21 @@ public:
     void Destroy();
     vk::Pipeline GetPipeline();
     vk::PipelineLayout GetPipelineLayout();
-    void InitModel();
-    void InitSkybox();
+    void InitModelForward(std::shared_ptr<RenderPass> renderPass);
+	void InitDepth(std::shared_ptr<RenderPass> renderPass);
+	void InitModelGBuffer(std::shared_ptr<RenderPass> renderPass);
+    void InitSkybox(std::shared_ptr<RenderPass> renderPass);
     void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
     void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
     void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);
+	void InitBrightPass(vk::Device device, vk::RenderPass renderPass);
+	void InitGaussianBlur(vk::Device device, vk::RenderPass renderPass);
+	void InitBlit(vk::Device device, vk::RenderPass renderPass);
+	void InitDeferred(std::shared_ptr<RenderPass> renderPass);
+public:
+	bool m_bReady;
+	PipelineId m_id;
 private:
-    PipelineId _id;
     VulkanRenderer    * _renderer;
     vk::Device          m_device;
     vk::RenderPass      _renderPass;
