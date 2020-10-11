@@ -1,9 +1,40 @@
 #include "Platform.h"
 
-struct BBox
+class BBox
 {
+public:
 	glm::vec3 min;
 	glm::vec3 max;
+
+	void Merge(BBox& bbox)
+	{
+
+		if (min.x > bbox.min.x)
+		{
+			min.x = bbox.min.x;
+		}
+		if (min.y > bbox.min.y)
+		{
+			min.y = bbox.min.y;
+		}
+		if (min.z > bbox.min.z)
+		{
+			min.z = bbox.min.z;
+		}
+
+		if (max.x < bbox.max.x)
+		{
+			max.x = bbox.max.x;
+		}
+		if (max.y < bbox.max.y)
+		{
+			max.y = bbox.max.y;
+		}
+		if (max.z < bbox.max.z)
+		{
+			max.z = bbox.max.z;
+		}
+	}
 };
 #include <string>
 #pragma once

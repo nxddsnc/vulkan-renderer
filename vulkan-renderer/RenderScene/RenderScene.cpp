@@ -59,7 +59,7 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 
 	for (int i = 0; i < drawables.size(); ++i)
 	{
-		std::shared_ptr<Drawable> drawable = drawables[i];
+		std::shared_ptr<SingleDrawable> drawable = drawables[i];
 		m_pResourceManager->InitVulkanResource(drawable);
 
         drawable->m_pAnimation = m_animation;

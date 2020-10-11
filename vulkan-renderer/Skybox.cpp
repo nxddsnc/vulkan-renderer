@@ -23,7 +23,7 @@ Skybox::Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManage
 	m_pPipelineManager = pipelineManager;
     m_pContext = context;
     
-    m_pDrawable = std::make_shared<Drawable>();
+    m_pDrawable = std::make_shared<SingleDrawable>();
     m_pDrawable->m_mesh = std::make_shared<MyMesh>();
     m_pDrawable->m_mesh->CreateCube();
 

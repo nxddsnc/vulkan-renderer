@@ -42,14 +42,14 @@ ResourceManager::~ResourceManager()
     }
 }
 
-void ResourceManager::InitVulkanBuffers(std::shared_ptr<Drawable> drawable)
+void ResourceManager::InitVulkanBuffers(std::shared_ptr<SingleDrawable> drawable)
 {
     CreateVertexBuffers(drawable);
     CreateIndexBuffer(drawable->m_mesh, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
     m_drawables.push_back(drawable);
 }
 
-void ResourceManager::InitVulkanResource(std::shared_ptr<Drawable> drawable)
+void ResourceManager::InitVulkanResource(std::shared_ptr<SingleDrawable> drawable)
 {
 	if (drawable->m_bReady)
 	{
@@ -193,7 +193,7 @@ void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buf
     bufferOffset = 0;
 }
 
-void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
+void ResourceManager::CreateVertexBuffers(std::shared_ptr<SingleDrawable> drawable)
 {
     vk::DeviceSize size = sizeof(drawable->m_mesh->m_positions[0]) * drawable->m_mesh->m_positions.size();
     vk::Buffer positionBuffer;
@@ -820,7 +820,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::GetVulkanTexture(std::shared_ptr
 	}
 }
 
-void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
+void ResourceManager::_createTextures(std::shared_ptr<SingleDrawable> drawable)
 {
     if (drawable->m_material->m_pDiffuseMap == nullptr && drawable->m_material->m_pNormalMap == nullptr)
     {

@@ -4,7 +4,7 @@
 #include "Drawable.h"
 #pragma once
 
-class Drawable;
+class SingleDrawable;
 class Skybox;
 class Axis;
 class ResourceManager;

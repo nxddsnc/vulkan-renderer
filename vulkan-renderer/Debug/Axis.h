@@ -3,7 +3,7 @@
 #include "Platform.h"
 
 class MyMesh;
-class Drawable;
+class SingleDrawable;
 class ResourceManager;
 class PipelineManager;
 class RenderPass;
@@ -15,7 +15,7 @@ public:
 
     void CreateDrawCommand(vk::CommandBuffer &commandBuffer, vk::DescriptorSet descriptorSet, std::shared_ptr<RenderPass> renderPass);
 
-    std::shared_ptr<Drawable> m_pDrawable;
+    std::shared_ptr<SingleDrawable> m_pDrawable;
 
     ResourceManager * m_pResouceManager;
     PipelineManager * m_pPipelineMananger;

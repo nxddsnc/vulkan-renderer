@@ -7,7 +7,6 @@ MyScene::MyScene()
 	m_bbox.max = -glm::vec3(INFINITE);
 }
 
-
 MyScene::~MyScene()
 {
 }
@@ -15,32 +14,16 @@ MyScene::~MyScene()
 void MyScene::AddDrawable(std::shared_ptr<Drawable> node)
 {
     _drawables.push_back(node);
-
-	if (m_bbox.min.x > node->m_bbox.min.x)
+	int hashId = node->GetHash();
+	if (_drawableMap.count(hashId) > 0) 
 	{
-		m_bbox.min.x = node->m_bbox.min.x;
+		// make instance drawable
 	}
-	if (m_bbox.min.y > node->m_bbox.min.y)
+	else
 	{
-		m_bbox.min.y = node->m_bbox.min.y;
+		_drawableMap.insert(std::make_pair(node->GetHash(), node));
 	}
-	if (m_bbox.min.z > node->m_bbox.min.z)
-	{
-		m_bbox.min.z = node->m_bbox.min.z;
-	}
-
-	if (m_bbox.max.x < node->m_bbox.max.x)
-	{
-		m_bbox.max.x = node->m_bbox.max.x;
-	}
-	if (m_bbox.max.y < node->m_bbox.max.y)
-	{
-		m_bbox.max.y = node->m_bbox.max.y;
-	}
-	if (m_bbox.max.z < node->m_bbox.max.z)
-	{
-		m_bbox.max.z = node->m_bbox.max.z;
-	}
+	m_bbox.Merge(node->m_bbox);
 }
 
 std::vector<std::shared_ptr<Drawable>> MyScene::GetDrawables()

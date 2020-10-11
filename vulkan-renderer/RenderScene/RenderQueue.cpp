@@ -18,7 +18,7 @@ RenderQueue::~RenderQueue()
 {
 }
 
-void RenderQueue::AddDrawable(std::shared_ptr<Drawable> drawable)
+void RenderQueue::AddDrawable(std::shared_ptr<SingleDrawable> drawable)
 {
 	drawable->m_pPipeline = m_pPipeline;
 	m_drawables.push_back(drawable);

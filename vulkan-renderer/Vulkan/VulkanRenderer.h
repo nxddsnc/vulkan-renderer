@@ -6,7 +6,7 @@
 
 class Window;
 class MyCamera;
-class Drawable;
+class SingleDrawable;
 struct Vertex;
 class SHLight;
 class Axis;
@@ -130,7 +130,7 @@ private:
     vk::DescriptorPool                            _descriptorPool;
     std::vector<VkCommandBuffer>                  _commandBuffers;
 
-    std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>>> _drawableMap;
+    std::unordered_map<PipelineId, std::vector<std::shared_ptr<SingleDrawable>>> _drawableMap;
 
 	std::shared_ptr<RenderScene>				  _renderScene;
 

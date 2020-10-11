@@ -7,7 +7,7 @@
 
 Axis::Axis(ResourceManager *pResourceManager, PipelineManager *pPipelineManager)
 {
-    m_pDrawable = std::make_shared<Drawable>();
+    m_pDrawable = std::make_shared<SingleDrawable>();
     m_pDrawable->m_mesh = std::make_shared<MyMesh>();
     m_pDrawable->m_mesh->CreateAixs();
 
