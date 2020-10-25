@@ -38,6 +38,7 @@ public:
 	int getIndexSize();
 	int                                    m_indexType;
 	VertexBits                             m_vertexBits;
+	// normal data
 	std::vector<glm::vec3>                 m_positions;
 	std::vector<glm::vec3>                 m_normals;
 	std::vector<glm::vec3>                 m_tangents;

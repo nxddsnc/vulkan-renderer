@@ -604,6 +604,16 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 		attributeIndex++;
 	}
 
+	if (m_id.model.primitivePart.info.bits.instanceMatrixData)
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			_addInputBinding(sizeof(float) * 4, vk::VertexInputRate::eInstance);
+			_addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32A32Sfloat, sizeof(float) * 4 * i);
+			attributeIndex++;
+		}
+	}
+
 	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
 		static_cast<uint32_t>(_inputBindings.size()),
 		_inputBindings.data(),

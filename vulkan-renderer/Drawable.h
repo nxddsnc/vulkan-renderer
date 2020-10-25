@@ -41,11 +41,14 @@ public:
 
 	std::shared_ptr<MyMesh>       m_mesh;
 	std::shared_ptr<MyMaterial>   m_material;
+	std::shared_ptr<MyAnimation>   m_pAnimation;
+	DRAWALBE_TYPE				   m_type;
 
 	// buffers
 	std::vector<vk::Buffer>       m_vertexBuffers;
 	std::vector<vk::DeviceSize>   m_vertexBufferOffsets;
 	std::vector<VmaAllocation>    m_vertexBufferMemorys;
+
 	vk::Buffer                    m_indexBuffer;
 	VmaAllocation                 m_indexBufferMemory;
 	std::shared_ptr<Pipeline>     m_pPipeline;
@@ -60,10 +63,6 @@ public:
 	vk::DescriptorSet              textureDescriptorSet;
 
 	bool						   m_bReady;
-
-	std::shared_ptr<MyAnimation>   m_pAnimation;
-
-	DRAWALBE_TYPE				   m_type;
 };
 
 class SingleDrawable : public Drawable
@@ -82,10 +81,17 @@ class InstanceDrawable : public Drawable
 {
 public:
 	InstanceDrawable();
+	InstanceDrawable(std::shared_ptr<SingleDrawable> d);
 	~InstanceDrawable();
 
+	void AddDrawable(std::shared_ptr<SingleDrawable> d);
 	void ComputeBBox();
 public:
 	std::vector<glm::mat4>  m_matricies;
 	std::vector<glm::mat4>  m_normalMatrices;
+
+
+	std::vector<vk::Buffer>       m_instanceBuffer;
+	std::vector<VmaAllocation>    m_instanceBufferMemory;
+
 };

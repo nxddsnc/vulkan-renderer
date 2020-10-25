@@ -18,7 +18,7 @@ RenderQueue::~RenderQueue()
 {
 }
 
-void RenderQueue::AddDrawable(std::shared_ptr<SingleDrawable> drawable)
+void RenderQueue::AddDrawable(std::shared_ptr<Drawable> drawable)
 {
 	drawable->m_pPipeline = m_pPipeline;
 	m_drawables.push_back(drawable);
@@ -68,10 +68,14 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 		}
 
 		uint32_t offset = 0;
-		commandBuffer.pushConstants(m_pPipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->m_matrix));
-		offset += sizeof(glm::mat4);
-		commandBuffer.pushConstants(m_pPipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable->m_normalMatrix));
-		offset += sizeof(glm::mat4);
+		if (drawable->m_type == SINGLE_DRAWABLE)
+		{
+			std::shared_ptr<SingleDrawable> drawable_ = std::dynamic_pointer_cast<SingleDrawable>(drawable);
+			commandBuffer.pushConstants(m_pPipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable_->m_matrix));
+			offset += sizeof(glm::mat4);
+			commandBuffer.pushConstants(m_pPipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&drawable_->m_normalMatrix));
+			offset += sizeof(glm::mat4);
+		}
 
 		if (m_pPipeline->m_id.model.materialPart.info.bits.baseColorInfo)
 		{

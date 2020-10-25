@@ -89,8 +89,24 @@ InstanceDrawable::InstanceDrawable()
 	m_bReady = false;
 }
 
+InstanceDrawable::InstanceDrawable(std::shared_ptr<SingleDrawable> d)
+{
+	m_mesh = d->m_mesh;
+	m_material = d->m_material;
+	m_type = INSTANCE_DRAWABLE;
+	m_matricies.push_back(d->m_matrix);
+	m_normalMatrices.push_back(d->m_normalMatrix);
+	m_bReady = false;
+}
+
 InstanceDrawable::~InstanceDrawable()
 {
+}
+
+void InstanceDrawable::AddDrawable(std::shared_ptr<SingleDrawable> d)
+{
+	m_matricies.push_back(d->m_matrix);
+	m_normalMatrices.push_back(d->m_normalMatrix);
 }
 
 void InstanceDrawable::ComputeBBox()

@@ -27,5 +27,6 @@ public:
 private:
     std::vector<std::shared_ptr<Drawable>> _drawables;
 	std::unordered_map<int, std::shared_ptr<Drawable>> _drawableMap;
+	bool _instanceComputed;
 };
 

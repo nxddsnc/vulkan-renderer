@@ -42,14 +42,14 @@ ResourceManager::~ResourceManager()
     }
 }
 
-void ResourceManager::InitVulkanBuffers(std::shared_ptr<SingleDrawable> drawable)
+void ResourceManager::InitVulkanBuffers(std::shared_ptr<Drawable> drawable)
 {
     CreateVertexBuffers(drawable);
     CreateIndexBuffer(drawable->m_mesh, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
     m_drawables.push_back(drawable);
 }
 
-void ResourceManager::InitVulkanResource(std::shared_ptr<SingleDrawable> drawable)
+void ResourceManager::InitVulkanResource(std::shared_ptr<Drawable> drawable)
 {
 	if (drawable->m_bReady)
 	{
@@ -151,12 +151,12 @@ void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
     _endSingleTimeCommand(commandBuffer);
 }
 
-void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset)
+void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset, vk::BufferUsageFlagBits usage)
 {
     vk::BufferCreateInfo bufferInfo({
         {},
         size,
-        vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+		usage | vk::BufferUsageFlagBits::eTransferDst,
         vk::SharingMode::eExclusive,
         1,
         &m_graphicsQueueFamilyIndex
@@ -193,7 +193,7 @@ void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buf
     bufferOffset = 0;
 }
 
-void ResourceManager::CreateVertexBuffers(std::shared_ptr<SingleDrawable> drawable)
+void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
 {
     vk::DeviceSize size = sizeof(drawable->m_mesh->m_positions[0]) * drawable->m_mesh->m_positions.size();
     vk::Buffer positionBuffer;
@@ -270,6 +270,18 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<SingleDrawable> drawab
 		drawable->m_vertexBuffers.push_back(std::move(weightsBuffer));
 		drawable->m_vertexBufferMemorys.push_back(std::move(weightsBufferMemory));
 		drawable->m_vertexBufferOffsets.push_back(std::move(weightsBufferOffset));
+	}
+	if (drawable->m_type == INSTANCE_DRAWABLE)
+	{
+		std::shared_ptr<InstanceDrawable> instance = std::dynamic_pointer_cast<InstanceDrawable>(drawable);
+
+		vk::Buffer instanceBuffer;
+		VmaAllocation instanceBufferMemory;
+		vk::DeviceSize instanceBufferOffset;
+		size = sizeof(float) * 16 * instance->m_matricies.size();
+		InitVertexBuffer(size, reinterpret_cast<void*>(instance->m_matricies.data()), instanceBuffer, instanceBufferMemory, instanceBufferOffset);
+		instance->m_instanceBuffer.push_back(std::move(instanceBuffer));
+		instance->m_instanceBufferMemory.push_back(std::move(instanceBufferMemory));
 	}
 }
 
@@ -820,7 +832,7 @@ std::shared_ptr<VulkanTexture> ResourceManager::GetVulkanTexture(std::shared_ptr
 	}
 }
 
-void ResourceManager::_createTextures(std::shared_ptr<SingleDrawable> drawable)
+void ResourceManager::_createTextures(std::shared_ptr<Drawable> drawable)
 {
     if (drawable->m_material->m_pDiffuseMap == nullptr && drawable->m_material->m_pNormalMap == nullptr)
     {

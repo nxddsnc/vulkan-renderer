@@ -40,6 +40,7 @@ struct PipelineId
 		  bool tangentVertexData : 1;
 		  bool jointVertexData : 1;
 		  bool weightVertexData : 1;
+		  bool instanceMatrixData : 1;
           uint8_t countTexCoord : 2;
           uint8_t countColor : 2;
           PrimitiveMode primitiveMode : 3;
