@@ -32,11 +32,19 @@ layout(set = 1, binding = 0) uniform LightUniforms {
     mat4 matrixB;
 } lightUniforms;
 
+#if INSTANCE_ENABLED
+layout(push_constant) uniform UniformPerDrawable
+{
+    layout(offset = 0) vec4 baseColor;
+    layout(offset = 16) vec2 metallicRoughness;
+} uniformPerDrawable;
+#else
 layout(push_constant) uniform UniformPerDrawable
 {
     layout(offset = 128) vec4 baseColor;
     layout(offset = 144) vec2 metallicRoughness;
 } uniformPerDrawable;
+#endif
 
 layout(set = 2, binding = 0) uniform samplerCube u_prefileteredCubemap;
 layout(set = 2, binding = 1) uniform samplerCube u_IrradianceMap;

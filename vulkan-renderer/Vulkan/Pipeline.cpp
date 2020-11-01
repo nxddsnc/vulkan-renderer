@@ -368,6 +368,15 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 	_addInputBinding(sizeof(glm::vec3), vk::VertexInputRate::eVertex);
 	_addAttributes(0, 0, vk::Format::eR32G32B32Sfloat, 0);
 
+	if (m_id.model.primitivePart.info.bits.instanceMatrixData)
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			_addInputBinding(sizeof(float) * 4, vk::VertexInputRate::eInstance);
+			_addAttributes(1, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(float) * 4 * i);
+		}
+	}
+
 	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({ {},
 		static_cast<uint32_t>(_inputBindings.size()),
 		_inputBindings.data(),
@@ -491,8 +500,13 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 
 	uint32_t offset = 0;
 	uint32_t size = sizeof(glm::mat4) * 2;
-	pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, size));
-	offset += size;
+
+	if (!m_id.model.primitivePart.info.bits.instanceMatrixData)
+	{
+		pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, size));
+		offset += size;
+	}
+
 
 	// pipeline layout
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
@@ -609,7 +623,7 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 		for (int i = 0; i < 3; ++i)
 		{
 			_addInputBinding(sizeof(float) * 4, vk::VertexInputRate::eInstance);
-			_addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32A32Sfloat, sizeof(float) * 4 * i);
+			_addAttributes(attributeIndex, attributeIndex, vk::Format::eR32G32B32A32Sfloat, 0);
 			attributeIndex++;
 		}
 	}
@@ -743,8 +757,11 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 
 	uint32_t offset = 0;
 	uint32_t size = sizeof(glm::mat4) * 2;
-	pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, size));
-	offset += size;
+	if (!m_id.model.primitivePart.info.bits.instanceMatrixData)
+	{
+		pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, size));
+		offset += size;
+	}
 
 	size = 0;
 	if (m_id.model.materialPart.info.bits.baseColorInfo)

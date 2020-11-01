@@ -81,6 +81,7 @@ void SingleDrawable::ComputeBBox()
 	}
 }
 
+// TODO: Not efficient way to initialize variables.
 InstanceDrawable::InstanceDrawable()
 {
 	m_bbox.min = glm::vec3(INFINITE);
@@ -97,6 +98,12 @@ InstanceDrawable::InstanceDrawable(std::shared_ptr<SingleDrawable> d)
 	m_matricies.push_back(d->m_matrix);
 	m_normalMatrices.push_back(d->m_normalMatrix);
 	m_bReady = false;
+	m_matrixCols.emplace_back(std::vector<glm::vec4>());
+	m_matrixCols.emplace_back(std::vector<glm::vec4>());
+	m_matrixCols.emplace_back(std::vector<glm::vec4>());
+	m_matrixCols[0].emplace_back(glm::vec4(d->m_matrix[0][0], d->m_matrix[1][0], d->m_matrix[2][0], d->m_matrix[3][0]));
+	m_matrixCols[1].emplace_back(glm::vec4(d->m_matrix[0][1], d->m_matrix[1][1], d->m_matrix[2][1], d->m_matrix[3][1]));
+	m_matrixCols[2].emplace_back(glm::vec4(d->m_matrix[0][2], d->m_matrix[1][2], d->m_matrix[2][2], d->m_matrix[3][2]));
 }
 
 InstanceDrawable::~InstanceDrawable()
@@ -106,6 +113,10 @@ InstanceDrawable::~InstanceDrawable()
 void InstanceDrawable::AddDrawable(std::shared_ptr<SingleDrawable> d)
 {
 	m_matricies.push_back(d->m_matrix);
+	// TODO: not cache friendly.
+	m_matrixCols[0].push_back(glm::vec4(d->m_matrix[0][0], d->m_matrix[1][0], d->m_matrix[2][0], d->m_matrix[3][0]));
+	m_matrixCols[1].push_back(glm::vec4(d->m_matrix[0][1], d->m_matrix[1][1], d->m_matrix[2][1], d->m_matrix[3][1]));
+	m_matrixCols[2].push_back(glm::vec4(d->m_matrix[0][2], d->m_matrix[1][2], d->m_matrix[2][2], d->m_matrix[3][2]));
 	m_normalMatrices.push_back(d->m_normalMatrix);
 }
 

@@ -87,11 +87,12 @@ public:
 	void AddDrawable(std::shared_ptr<SingleDrawable> d);
 	void ComputeBBox();
 public:
-	std::vector<glm::mat4>  m_matricies;
-	std::vector<glm::mat4>  m_normalMatrices;
+	std::vector<glm::mat4>				 m_matricies;
+	std::vector<std::vector<glm::vec4>>  m_matrixCols;
+	std::vector<glm::mat4>				 m_normalMatrices;
 
 
-	std::vector<vk::Buffer>       m_instanceBuffer;
-	std::vector<VmaAllocation>    m_instanceBufferMemory;
-
+	std::vector<vk::Buffer>				 m_instanceBuffer;
+	std::vector<VmaAllocation>			 m_instanceBufferMemory;
+	std::vector<vk::DeviceSize>			 m_instanceBufferOffsets;
 };

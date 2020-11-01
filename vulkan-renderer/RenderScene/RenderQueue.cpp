@@ -33,6 +33,11 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 		uint32_t bufferNumber = m_pPipeline->m_id.type != DEPTH ? drawable->m_vertexBuffers.size() : 1;
 		commandBuffer.bindVertexBuffers(0, drawable->m_vertexBuffers.size(), drawable->m_vertexBuffers.data(), drawable->m_vertexBufferOffsets.data());
 
+		if (drawable->m_type == INSTANCE_DRAWABLE)
+		{
+			auto drawable_ = std::dynamic_pointer_cast<InstanceDrawable>(drawable);
+			commandBuffer.bindVertexBuffers(drawable_->m_vertexBuffers.size(), drawable_->m_instanceBuffer.size(), drawable_->m_instanceBuffer.data(), drawable_->m_instanceBufferOffsets.data());
+		}
 		switch (drawable->m_mesh->m_indexType)
 		{
 		case 2:
@@ -88,7 +93,15 @@ void RenderQueue::Draw(vk::CommandBuffer commandBuffer, std::shared_ptr<MyCamera
 			offset += sizeof(glm::vec2);
 		}
 
- 		commandBuffer.drawIndexed(drawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+		if (drawable->m_type == INSTANCE_DRAWABLE)
+		{
+			std::shared_ptr<InstanceDrawable> instance = std::dynamic_pointer_cast<InstanceDrawable>(drawable);
+			commandBuffer.drawIndexed(instance->m_mesh->m_indexNum, instance->m_matricies.size(), 0, 0, 0);
+		}
+		else 
+		{
+			commandBuffer.drawIndexed(drawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+		}
 	}
 
 }

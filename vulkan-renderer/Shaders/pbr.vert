@@ -85,7 +85,10 @@ void main()
 #else 
 
 #if INSTANCE_ENABLED
-    mat4 mat = mat4(matrix0, matrix1, matrix2, vec4(0.0, 0.0, 0.0, 1.0));
+    mat4 mat = mat4(matrix0[0], matrix1[0], matrix2[0], 0.0,
+                    matrix0[1], matrix1[1], matrix2[1], 0.0,
+                    matrix0[2], matrix1[2], matrix2[2], 0.0,
+                    matrix0[3], matrix1[3], matrix2[3], 1.0);
 
     outPosition = (mat * vec4(inPosition, 1.0)).xyz;
     gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);

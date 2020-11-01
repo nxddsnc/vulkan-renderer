@@ -26,7 +26,19 @@ ResourceManager::~ResourceManager()
             vmaDestroyBuffer(m_memoryAllocator, drawable->m_vertexBuffers[i], drawable->m_vertexBufferMemorys[i]);
         }
         vmaDestroyBuffer(m_memoryAllocator, drawable->m_indexBuffer, drawable->m_indexBufferMemory);
+
+		if (drawable->m_type == INSTANCE_DRAWABLE)
+		{
+			auto drawable_ = std::dynamic_pointer_cast<InstanceDrawable>(drawable);
+			for (int i = 0; i < drawable_->m_instanceBuffer.size(); ++i)
+			{
+				vmaDestroyBuffer(m_memoryAllocator, drawable_->m_instanceBuffer[i], drawable_->m_instanceBufferMemory[i]);
+			}
+		}
+
     }
+
+
 
     for (auto pair : m_textureMap)
     {
@@ -275,13 +287,17 @@ void ResourceManager::CreateVertexBuffers(std::shared_ptr<Drawable> drawable)
 	{
 		std::shared_ptr<InstanceDrawable> instance = std::dynamic_pointer_cast<InstanceDrawable>(drawable);
 
-		vk::Buffer instanceBuffer;
-		VmaAllocation instanceBufferMemory;
-		vk::DeviceSize instanceBufferOffset;
-		size = sizeof(float) * 16 * instance->m_matricies.size();
-		InitVertexBuffer(size, reinterpret_cast<void*>(instance->m_matricies.data()), instanceBuffer, instanceBufferMemory, instanceBufferOffset);
-		instance->m_instanceBuffer.push_back(std::move(instanceBuffer));
-		instance->m_instanceBufferMemory.push_back(std::move(instanceBufferMemory));
+		for (int i = 0; i < 3; ++i)
+		{
+			vk::Buffer instanceBuffer;
+			VmaAllocation instanceBufferMemory;
+			vk::DeviceSize instanceBufferOffset;
+			size = sizeof(float) * 4 * instance->m_matricies.size();
+			InitVertexBuffer(size, reinterpret_cast<void*>(instance->m_matrixCols[i].data()), instanceBuffer, instanceBufferMemory, instanceBufferOffset);
+			instance->m_instanceBuffer.push_back(std::move(instanceBuffer));
+			instance->m_instanceBufferMemory.push_back(std::move(instanceBufferMemory));
+			instance->m_instanceBufferOffsets.push_back(instanceBufferOffset);
+		}
 	}
 }
 

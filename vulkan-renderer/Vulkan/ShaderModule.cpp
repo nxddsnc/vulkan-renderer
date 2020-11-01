@@ -148,6 +148,13 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
                 options->AddMacroDefinition("TEXTURE_METALLIC_ROUGHNESS", "1");
                 options->AddMacroDefinition("TEXTURE_METALLIC_ROUGHNESS_LOCATION", std::to_string(bindings++));
             }
+			if (_id.model.primitivePart.info.bits.instanceMatrixData)
+			{
+				options->AddMacroDefinition("INSTANCE_ENABLED", "1");
+				//options->AddMacroDefinition("IN_MATRIX_0", std::to_string(bindings++));
+				//options->AddMacroDefinition("IN_MATRIX_1", std::to_string(bindings++));
+				//options->AddMacroDefinition("IN_MATRIX_2", std::to_string(bindings++));
+			}
         }
         break;
     }

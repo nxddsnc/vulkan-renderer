@@ -27,11 +27,19 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 cameraPos;
 } ubo;
 
+#if INSTANCE_ENABLED
+layout(push_constant) uniform UniformPerDrawable
+{
+    layout(offset = 0) vec4 baseColor;
+    layout(offset = 16) vec2 metallicRoughness;
+} uniformPerDrawable;
+#else
 layout(push_constant) uniform UniformPerDrawable
 {
     layout(offset = 128) vec4 baseColor;
     layout(offset = 144) vec2 metallicRoughness;
 } uniformPerDrawable;
+#endif
 
 #if TEXTURE_BASE_COLOR
 layout(set = 1, binding = TEXUTRE_BASE_COLOR_LOCATION) uniform sampler2D baseColorTexture;
