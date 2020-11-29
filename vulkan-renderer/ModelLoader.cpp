@@ -7,7 +7,7 @@
 #include "MyMesh.h"
 #include "MyMaterial.h"
 #include "MyTexture.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "stb_image.h"
 #include <memory>
 #include "MyImage.h"
@@ -80,13 +80,13 @@ void ModelLoader::_extractNode(aiNode * node, glm::mat4 &parentTransform)
         // extract mesh
         auto mesh = _extractMesh(node, node->mMeshes[i]);
         auto material = _extractMaterial(m_pAiScene->mMeshes[node->mMeshes[i]]->mMaterialIndex);
-        std::shared_ptr<SingleDrawable> drawable = std::make_shared<SingleDrawable>();
-        drawable->m_mesh = mesh;
-        drawable->m_material = material;
-        drawable->m_matrix = matrix;
-        drawable->m_normalMatrix = glm::transpose(glm::inverse(matrix));
-		drawable->ComputeBBox();
-		m_pScene->AddDrawable(drawable);
+        std::shared_ptr<SingleRenderable> renderable = std::make_shared<SingleRenderable>();
+        renderable->m_mesh = mesh;
+        renderable->m_material = material;
+        renderable->m_matrix = matrix;
+        renderable->m_normalMatrix = glm::transpose(glm::inverse(matrix));
+		renderable->ComputeBBox();
+		m_pScene->AddRenderable(renderable);
     }
 
     for (int i = 0; i < node->mNumChildren; ++i)

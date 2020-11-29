@@ -8,7 +8,7 @@
 /************************************************************************/
 /* Meant to Control the gpu resource allocation.*/
 /************************************************************************/
-class Drawable;
+class Renderable;
 struct VulkanTexture;
 class  MyTexture;
 class ResourceManager
@@ -18,15 +18,15 @@ public:
         uint32_t graphicsQueueFamilyIndex, VmaAllocator memoryAllocator, vk::PhysicalDevice &gpu);
     ~ResourceManager();
 
-    // TODO:: move the following functions to drawable class.
-    void InitVulkanBuffers(std::shared_ptr<Drawable> drawable);
-    void InitVulkanResource(std::shared_ptr<Drawable> drawable);
+    // TODO:: move the following functions to renderable class.
+    void InitVulkanBuffers(std::shared_ptr<Renderable> renderable);
+    void InitVulkanResource(std::shared_ptr<Renderable> renderable);
 
     std::shared_ptr<VulkanTexture> CreateVulkanTexture(std::shared_ptr<MyTexture> texture);
     std::shared_ptr<VulkanTexture> CreateCombinedTexture(std::shared_ptr<MyTexture> texture);
 	std::shared_ptr<VulkanTexture> GetVulkanTexture(std::shared_ptr<MyTexture> texture);
 
-    void CreateVertexBuffers(std::shared_ptr<Drawable> drawable);
+    void CreateVertexBuffers(std::shared_ptr<Renderable> renderable);
     void CreateIndexBuffer(std::shared_ptr<MyMesh> mesh, vk::Buffer &buffer, VmaAllocation &bufferMemory);
     void InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset, vk::BufferUsageFlagBits usage = vk::BufferUsageFlagBits::eVertexBuffer);
     void SetImageLayout(vk::CommandBuffer &command, vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
@@ -38,7 +38,7 @@ public:
 	void UpdateBuffer(VmaAllocation bufferMemory, char* src, int size);
 	void TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, std::shared_ptr<MyTexture> dst);
 private:
-    void _createTextures(std::shared_ptr<Drawable> drawable);
+    void _createTextures(std::shared_ptr<Renderable> renderable);
     vk::CommandBuffer _beginSingleTimeCommand();
     void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage);
@@ -53,7 +53,7 @@ public:
 	vk::DescriptorPool												 m_descriptorPool;
 
 private:
-	std::vector<std::shared_ptr<Drawable>>							 m_drawables;
+	std::vector<std::shared_ptr<Renderable>>							 m_renderables;
 	std::unordered_map<std::string, std::shared_ptr<VulkanTexture>>  m_textureMap;
 };
 

@@ -1,5 +1,5 @@
 #include "RenderScene.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "ResourceManager.h"
 #include "PipelineManager.h"
 #include "RenderQueue.h"
@@ -55,31 +55,33 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
     }
 	m_pShadowMap->AddScene(scene);
 
-	auto drawables = scene->GetDrawables();
+	auto renderables = scene->GetRenderables();
 
-	for (int i = 0; i < drawables.size(); ++i)
+	PipelineId id;
+
+	id.model.primitivePart.info.bits.positionVertexData = 1;
+	id.model.primitivePart.info.bits.normalVertexData = 1;
+	id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
+	id.model.materialPart.info.bits.baseColorInfo = 1;
+
+	for (int i = 0; i < renderables.size(); ++i)
 	{
-		std::shared_ptr<Drawable> drawable_ = drawables[i];
+		std::shared_ptr<Renderable> renderable_ = renderables[i];
 
-		m_pResourceManager->InitVulkanResource(drawable_);
+		id.model.primitivePart.info.bits.tangentVertexData = renderable_->m_mesh->m_vertexBits.hasTangent;
+		id.model.primitivePart.info.bits.countTexCoord = renderable_->m_mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
+		id.model.primitivePart.info.bits.countColor = renderable_->m_mesh->m_vertexBits.hasColor;
+		id.model.primitivePart.info.bits.jointVertexData = renderable_->m_mesh->m_vertexBits.hasBone;
+		id.model.primitivePart.info.bits.weightVertexData = renderable_->m_mesh->m_vertexBits.hasBone;
+		id.model.materialPart.info.bits.baseColorMap = renderable_->m_material->m_pDiffuseMap != nullptr;
+		id.model.materialPart.info.bits.normalMap = renderable_->m_material->m_pNormalMap != nullptr;
+		id.model.materialPart.info.bits.metallicRoughnessMap = renderable_->m_material->m_pMetallicRoughnessMap != nullptr;
 
-		drawable_->m_pAnimation = m_animation;
+		m_pResourceManager->InitVulkanResource(renderable_);
 
-		PipelineId id;
+		renderable_->m_pAnimation = m_animation;
 
-		id.model.primitivePart.info.bits.positionVertexData = 1;
-		id.model.primitivePart.info.bits.normalVertexData = 1;
-		id.model.primitivePart.info.bits.tangentVertexData = drawable_->m_mesh->m_vertexBits.hasTangent;
-		id.model.primitivePart.info.bits.countTexCoord = drawable_->m_mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
-		id.model.primitivePart.info.bits.countColor = drawable_->m_mesh->m_vertexBits.hasColor;
-		id.model.primitivePart.info.bits.jointVertexData = drawable_->m_mesh->m_vertexBits.hasBone;
-		id.model.primitivePart.info.bits.weightVertexData = drawable_->m_mesh->m_vertexBits.hasBone;
-		id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
-		id.model.materialPart.info.bits.baseColorInfo = 1;
-		id.model.materialPart.info.bits.baseColorMap = drawable_->m_material->m_pDiffuseMap != nullptr;
-		id.model.materialPart.info.bits.normalMap = drawable_->m_material->m_pNormalMap != nullptr;
-		id.model.materialPart.info.bits.metallicRoughnessMap = drawable_->m_material->m_pMetallicRoughnessMap != nullptr;
-		if (drawable_->m_type == INSTANCE_DRAWABLE)
+		if (renderable_->m_type == INSTANCE_RENDERABLE)
 		{
 			id.model.primitivePart.info.bits.instanceMatrixData = 1;
 		}
@@ -92,7 +94,7 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 		if (m_pRenderQueueManager->HasRenderQueue(id))
 		{
 			auto renderQueue = m_pRenderQueueManager->GetRenderQueue(id, m_framebuffers[0]->m_pRenderPass);
-			renderQueue->AddDrawable(drawable_);
+			renderQueue->AddRenderable(renderable_);
 		}
 		else
 		{

@@ -2,7 +2,7 @@
 #include "Platform.h"
 #include <array>
 #include <vector>
-#include "Drawable.h"
+#include "Renderable.h"
 #include <memory.h>
 #include <unordered_map>
 
@@ -15,9 +15,9 @@ public:
 	MyScene();
 	~MyScene();
 
-    void AddDrawable(std::shared_ptr<Drawable> node);
-    std::vector<std::shared_ptr<Drawable>> GetDrawables();
-	std::unordered_map<int, std::shared_ptr<Drawable>> GetDrawableMap() {return _drawableMap;};
+    void AddRenderable(std::shared_ptr<Renderable> node);
+    std::vector<std::shared_ptr<Renderable>> GetRenderables();
+	std::unordered_map<int, std::shared_ptr<Renderable>> GetRenderableMap() {return _renderableMap;};
 
 	void AddAnimation(std::shared_ptr<MyAnimation> animation);
 
@@ -25,8 +25,8 @@ public:
 
     std::vector<std::shared_ptr<MyAnimation>> m_animations;
 private:
-    std::vector<std::shared_ptr<Drawable>> _drawables;
-	std::unordered_map<int, std::shared_ptr<Drawable>> _drawableMap;
+    std::vector<std::shared_ptr<Renderable>> _renderables;
+	std::unordered_map<int, std::shared_ptr<Renderable>> _renderableMap;
 	bool _instanceComputed;
 };
 

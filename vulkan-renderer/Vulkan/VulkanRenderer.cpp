@@ -16,7 +16,7 @@
 #include "PipelineManager.h"
 #include "RenderPass.h"
 #include "Pipeline.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "Context.h"
 #include "Skybox.h"
 #include "Axis.h"

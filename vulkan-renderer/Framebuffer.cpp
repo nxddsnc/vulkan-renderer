@@ -1,7 +1,7 @@
 #include "Framebuffer.h"
 #include "RenderPass.h"
 #include "ResourceManager.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "MyTexture.h"
 
 Framebuffer::Framebuffer()

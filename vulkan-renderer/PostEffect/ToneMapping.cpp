@@ -3,7 +3,7 @@
 #include "Framebuffer.h"
 #include "PipelineManager.h"
 #include "MyImage.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "MyTexture.h"
 #include "RenderPass.h"
 

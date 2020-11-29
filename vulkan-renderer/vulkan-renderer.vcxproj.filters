@@ -147,9 +147,6 @@
     <ClCompile Include="RenderScene\RenderSceneForward.cpp">
       <Filter>源文件\RenderScene</Filter>
     </ClCompile>
-    <ClCompile Include="Drawable.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ShadowMap\ShadowMap.cpp">
       <Filter>源文件\ShadowMap</Filter>
     </ClCompile>
@@ -157,6 +154,9 @@
       <Filter>源文件\Camera</Filter>
     </ClCompile>
     <ClCompile Include="MyAnimation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderable.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -189,9 +189,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MyTexture.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Drawable.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MyScene.h">
@@ -264,6 +261,9 @@
       <Filter>头文件\Camera</Filter>
     </ClInclude>
     <ClInclude Include="MyAnimation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderable.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

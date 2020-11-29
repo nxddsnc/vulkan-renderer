@@ -254,8 +254,8 @@ void Pipeline::InitModelForward(std::shared_ptr<RenderPass> renderPass)
         1, vk::ShaderStageFlagBits::eFragment, {});
     descriptorSetLayouts.push_back(_createDescriptorSetLayout({ preFileteredEnvMapBinding, irradianceMapBinding, brdfLutBinding }));
 
-    // per drawable
-    std::vector<vk::DescriptorSetLayoutBinding> perDrawableBindings;
+    // per renderable
+    std::vector<vk::DescriptorSetLayoutBinding> perRenderableBindings;
     
     std::vector<vk::PushConstantRange> pushConstantRanges;
 
@@ -283,7 +283,7 @@ void Pipeline::InitModelForward(std::shared_ptr<RenderPass> renderPass)
             1,
             vk::ShaderStageFlagBits::eFragment,
             {});
-        perDrawableBindings.push_back(materialSamplerBinding);
+        perRenderableBindings.push_back(materialSamplerBinding);
     }
     if (m_id.model.materialPart.info.bits.normalMap)
     {
@@ -292,7 +292,7 @@ void Pipeline::InitModelForward(std::shared_ptr<RenderPass> renderPass)
             1,
             vk::ShaderStageFlagBits::eFragment,
             {});
-        perDrawableBindings.push_back(materialSamplerBinding);
+        perRenderableBindings.push_back(materialSamplerBinding);
     }
     if (m_id.model.materialPart.info.bits.metallicRoughnessMap)
     {
@@ -301,11 +301,11 @@ void Pipeline::InitModelForward(std::shared_ptr<RenderPass> renderPass)
             1,
             vk::ShaderStageFlagBits::eFragment,
             {});
-        perDrawableBindings.push_back(materialSamplerBinding);
+        perRenderableBindings.push_back(materialSamplerBinding);
     }
-	if (perDrawableBindings.size() > 0)
+	if (perRenderableBindings.size() > 0)
 	{
-		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
+		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perRenderableBindings));
 	}
 
     // pipeline layout
@@ -373,7 +373,7 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 		for (int i = 0; i < 3; ++i)
 		{
 			_addInputBinding(sizeof(float) * 4, vk::VertexInputRate::eInstance);
-			_addAttributes(1, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(float) * 4 * i);
+			_addAttributes(i + 1, i + 1, vk::Format::eR32G32B32A32Sfloat, 0);
 		}
 	}
 
@@ -493,20 +493,18 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 
 	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
-	// per drawable
-	std::vector<vk::DescriptorSetLayoutBinding> perDrawableBindings;
+	// per renderable
+	std::vector<vk::DescriptorSetLayoutBinding> perRenderableBindings;
 
 	std::vector<vk::PushConstantRange> pushConstantRanges;
 
 	uint32_t offset = 0;
 	uint32_t size = sizeof(glm::mat4) * 2;
-
 	if (!m_id.model.primitivePart.info.bits.instanceMatrixData)
 	{
 		pushConstantRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, offset, size));
 		offset += size;
 	}
-
 
 	// pipeline layout
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo({ {},
@@ -750,8 +748,8 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 
 	descriptorSetLayouts.push_back(_createDescriptorSetLayout({ cameraBinding }));
 
-	// per drawable
-	std::vector<vk::DescriptorSetLayoutBinding> perDrawableBindings;
+	// per renderable
+	std::vector<vk::DescriptorSetLayoutBinding> perRenderableBindings;
 
 	std::vector<vk::PushConstantRange> pushConstantRanges;
 
@@ -782,7 +780,7 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 			1,
 			vk::ShaderStageFlagBits::eFragment,
 			{});
-		perDrawableBindings.push_back(materialSamplerBinding);
+		perRenderableBindings.push_back(materialSamplerBinding);
 	}
 	if (m_id.model.materialPart.info.bits.normalMap)
 	{
@@ -791,7 +789,7 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 			1,
 			vk::ShaderStageFlagBits::eFragment,
 			{});
-		perDrawableBindings.push_back(materialSamplerBinding);
+		perRenderableBindings.push_back(materialSamplerBinding);
 	}
 	if (m_id.model.materialPart.info.bits.metallicRoughnessMap)
 	{
@@ -800,11 +798,11 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 			1,
 			vk::ShaderStageFlagBits::eFragment,
 			{});
-		perDrawableBindings.push_back(materialSamplerBinding);
+		perRenderableBindings.push_back(materialSamplerBinding);
 	}
-	if (perDrawableBindings.size() > 0)
+	if (perRenderableBindings.size() > 0)
 	{
-		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perDrawableBindings));
+		descriptorSetLayouts.push_back(_createDescriptorSetLayout(perRenderableBindings));
 	}
 
     if (m_id.model.primitivePart.info.bits.jointVertexData)

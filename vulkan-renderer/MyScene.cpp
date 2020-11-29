@@ -12,53 +12,53 @@ MyScene::~MyScene()
 {
 }
 
-void MyScene::AddDrawable(std::shared_ptr<Drawable> node)
+void MyScene::AddRenderable(std::shared_ptr<Renderable> node)
 {
-    _drawables.push_back(node);
+    _renderables.push_back(node);
 	m_bbox.Merge(node->m_bbox);
 }
 
-std::vector<std::shared_ptr<Drawable>> MyScene::GetDrawables()
+std::vector<std::shared_ptr<Renderable>> MyScene::GetRenderables()
 {
 	if (_instanceComputed)
 	{
-		return _drawables;
+		return _renderables;
 	}
-	size_t len = _drawables.size();
-	std::vector<std::shared_ptr<Drawable>> res;
+	size_t len = _renderables.size();
+	std::vector<std::shared_ptr<Renderable>> res;
 	for (int i = 0; i < len; ++i)
 	{
-		auto drawable = _drawables[i];
-		std::shared_ptr<Drawable> d;
-		auto it = _drawableMap.find(drawable->GetHash());
-		if (it != _drawableMap.end())
+		auto renderable = _renderables[i];
+		std::shared_ptr<Renderable> d;
+		auto it = _renderableMap.find(renderable->GetHash());
+		if (it != _renderableMap.end())
 		{
 			d = it->second;
-			if (d->m_type == SINGLE_DRAWABLE)
+			if (d->m_type == SINGLE_RENDERABLE)
 			{
-				auto instanceDrawable = std::make_shared<InstanceDrawable>(std::dynamic_pointer_cast<SingleDrawable>(d));
-				instanceDrawable->AddDrawable(std::dynamic_pointer_cast<SingleDrawable>(drawable));
-				it->second = instanceDrawable;
+				auto instanceRenderable = std::make_shared<InstanceRenderable>(std::dynamic_pointer_cast<SingleRenderable>(d));
+				instanceRenderable->AddRenderable(std::dynamic_pointer_cast<SingleRenderable>(renderable));
+				it->second = instanceRenderable;
 
 			}
 			else
 			{
-				std::shared_ptr<InstanceDrawable> d_ = std::dynamic_pointer_cast<InstanceDrawable>(d);
-				d_->AddDrawable(std::dynamic_pointer_cast<SingleDrawable>(drawable));
+				std::shared_ptr<InstanceRenderable> d_ = std::dynamic_pointer_cast<InstanceRenderable>(d);
+				d_->AddRenderable(std::dynamic_pointer_cast<SingleRenderable>(renderable));
 			}
 		}
-		else 
+		else
 		{
-			_drawableMap.insert(std::make_pair(drawable->GetHash(), drawable));
+			_renderableMap.insert(std::make_pair(renderable->GetHash(), renderable));
 		}
 	}
-	for (auto it = _drawableMap.begin(); it != _drawableMap.end(); ++it)
+	for (auto it = _renderableMap.begin(); it != _renderableMap.end(); ++it)
 	{
 		res.emplace_back(it->second);
 	}
-	_drawables = res;
+	_renderables = res;
 	_instanceComputed = true;
-	return _drawables;
+	return _renderables;
 }
 
 void MyScene::AddAnimation(std::shared_ptr<MyAnimation> animation)

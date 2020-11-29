@@ -11,6 +11,7 @@
 /* Minimum renderable node.*/
 /************************************************************************/
 class Pipeline;
+class MyCamera;
 
 struct VulkanTexture
 {
@@ -27,14 +28,14 @@ class MyAnimation;
 
 enum DRAWALBE_TYPE
 {
-	SINGLE_DRAWABLE,
-	INSTANCE_DRAWABLE
+	SINGLE_RENDERABLE,
+	INSTANCE_RENDERABLE
 };
-class Drawable
+class Renderable
 {
 public:
 	virtual void ComputeBBox() = 0;
-
+	virtual void Render(vk::CommandBuffer& commandBuffer, Pipeline* pipeline, MyCamera* camera) = 0;
 	int GetHash();
 	BBox						  m_bbox;
 
@@ -65,27 +66,29 @@ public:
 	bool						   m_bReady;
 };
 
-class SingleDrawable : public Drawable
+class SingleRenderable : public Renderable
 {
 public:
-	SingleDrawable();
-	~SingleDrawable();
+	SingleRenderable();
+	~SingleRenderable();
 
 	void ComputeBBox();
+	void Render(vk::CommandBuffer& commandBuffer, Pipeline* pipeline, MyCamera* camera);
 public:
     glm::mat4                     m_matrix;
     glm::mat4                     m_normalMatrix;
 };
 
-class InstanceDrawable : public Drawable
+class InstanceRenderable : public Renderable
 {
 public:
-	InstanceDrawable();
-	InstanceDrawable(std::shared_ptr<SingleDrawable> d);
-	~InstanceDrawable();
+	InstanceRenderable();
+	InstanceRenderable(std::shared_ptr<SingleRenderable> d);
+	~InstanceRenderable();
 
-	void AddDrawable(std::shared_ptr<SingleDrawable> d);
+	void AddRenderable(std::shared_ptr<SingleRenderable> d);
 	void ComputeBBox();
+	void Render(vk::CommandBuffer& commandBuffer, Pipeline* pipeline, MyCamera* camera);
 public:
 	std::vector<glm::mat4>				 m_matricies;
 	std::vector<std::vector<glm::vec4>>  m_matrixCols;
