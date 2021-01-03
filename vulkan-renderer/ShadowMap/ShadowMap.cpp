@@ -1,7 +1,7 @@
 #include "ShadowMap.h"
 #include "Framebuffer.h"
 #include "MyImage.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "ResourceManager.h"
 #include "Pipeline.h"
 #include "PipelineManager.h"
@@ -42,33 +42,42 @@ std::shared_ptr<Framebuffer> ShadowMap::GetFramebuffer()
 
 void ShadowMap::AddScene(std::shared_ptr<MyScene> scene)
 {
-	auto drawables = scene->GetDrawables();
+	auto renderables = scene->GetRenderables();
 
-	for (int i = 0; i < drawables.size(); ++i)
+	PipelineId id;
+
+	id.model.primitivePart.info.bits.positionVertexData = 1;
+	id.model.primitivePart.info.bits.normalVertexData = 1;
+	id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
+	id.model.materialPart.info.bits.baseColorInfo = 0;
+	id.model.materialPart.info.bits.baseColorMap = 0;
+	id.model.materialPart.info.bits.normalMap = 0;
+	id.model.materialPart.info.bits.metallicRoughnessMap = 0;
+	id.type = DEPTH;
+	for (int i = 0; i < renderables.size(); ++i)
 	{
-		std::shared_ptr<Drawable> drawable = drawables[i];
-		m_pResourceManager->InitVulkanResource(drawable);
+		std::shared_ptr<Renderable> renderable = renderables[i];
 
-		PipelineId id;
+		id.model.primitivePart.info.bits.tangentVertexData = renderable->m_mesh->m_vertexBits.hasTangent;
+		id.model.primitivePart.info.bits.countTexCoord = renderable->m_mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
+		id.model.primitivePart.info.bits.countColor = renderable->m_mesh->m_vertexBits.hasColor;
+		id.model.primitivePart.info.bits.jointVertexData = renderable->m_mesh->m_vertexBits.hasBone;
+		id.model.primitivePart.info.bits.weightVertexData = renderable->m_mesh->m_vertexBits.hasBone;
+		if (renderable->m_type == INSTANCE_RENDERABLE)
+		{
+			id.model.primitivePart.info.bits.instanceMatrixData = 1;
+		}
+		else
+		{
+			id.model.primitivePart.info.bits.instanceMatrixData = 0;
+		}
 
-		id.model.primitivePart.info.bits.positionVertexData = 1;
-		id.model.primitivePart.info.bits.normalVertexData = 1;
-		id.model.primitivePart.info.bits.tangentVertexData = drawable->m_mesh->m_vertexBits.hasTangent;
-		id.model.primitivePart.info.bits.countTexCoord = drawable->m_mesh->m_vertexBits.hasTexCoord0 ? 1 : 0;
-		id.model.primitivePart.info.bits.countColor = drawable->m_mesh->m_vertexBits.hasColor;
-		id.model.primitivePart.info.bits.jointVertexData = drawable->m_mesh->m_vertexBits.hasBone;
-		id.model.primitivePart.info.bits.weightVertexData = drawable->m_mesh->m_vertexBits.hasBone;
-		id.model.primitivePart.info.bits.primitiveMode = PrimitiveMode::Triangles;
-		id.model.materialPart.info.bits.baseColorInfo = 0;
-		id.model.materialPart.info.bits.baseColorMap = 0;
-		id.model.materialPart.info.bits.normalMap = 0;
-		id.model.materialPart.info.bits.metallicRoughnessMap = 0;
-		id.type = DEPTH;
+		m_pResourceManager->InitVulkanResource(renderable);
 
 		if (m_pRenderQueuemanager->HasRenderQueue(id))
 		{
 			auto renderQueue = m_pRenderQueuemanager->GetRenderQueue(id, m_pFramebuffer->m_pRenderPass);
-			renderQueue->AddDrawable(drawable);
+			renderQueue->AddRenderable(renderable);
 		} 
 		else
 		{

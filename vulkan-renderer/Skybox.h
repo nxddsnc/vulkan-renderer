@@ -201,7 +201,7 @@ typedef struct {
 
 class ResourceManager;
 class PipelineManager;
-class Drawable;
+class SingleRenderable;
 class MyTexture;
 struct VulkanTexture;
 class MyCamera;
@@ -240,7 +240,7 @@ public:
     std::shared_ptr<VulkanTexture> m_pVulkanTextureBRDFLUT;
 
 
-    std::shared_ptr<Drawable>      m_pDrawable;
+    std::shared_ptr<SingleRenderable>      m_pRenderable;
     vk::DescriptorSet              m_dsSkybox;
     vk::DescriptorSet              m_preFilteredDescriptorSet;
 

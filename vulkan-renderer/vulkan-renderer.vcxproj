@@ -165,7 +165,6 @@
     <ClCompile Include="Camera\MyCamera.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Debug\Axis.cpp" />
-    <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GLFWWindow.cpp" />
     <ClCompile Include="main.cpp" />
@@ -178,6 +177,7 @@
     <ClCompile Include="PostEffect\Bloom.cpp" />
     <ClCompile Include="PostEffect\PostEffect.cpp" />
     <ClCompile Include="PostEffect\ToneMapping.cpp" />
+    <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="RenderScene\RenderQueue.cpp" />
     <ClCompile Include="RenderScene\RenderQueueManager.cpp" />
     <ClCompile Include="RenderScene\RenderScene.cpp" />
@@ -209,12 +209,12 @@
     <ClInclude Include="MyMaterial.h" />
     <ClInclude Include="MyMesh.h" />
     <ClInclude Include="ModelLoader.h" />
-    <ClInclude Include="Drawable.h" />
     <ClInclude Include="MyTexture.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="PostEffect\Bloom.h" />
     <ClInclude Include="PostEffect\PostEffect.h" />
     <ClInclude Include="PostEffect\ToneMapping.h" />
+    <ClInclude Include="Renderable.h" />
     <ClInclude Include="RenderScene\RenderQueue.h" />
     <ClInclude Include="RenderScene\RenderQueueManager.h" />
     <ClInclude Include="RenderScene\RenderScene.h" />

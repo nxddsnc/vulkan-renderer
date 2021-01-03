@@ -6,7 +6,7 @@
 
 class Window;
 class MyCamera;
-class Drawable;
+class SingleRenderable;
 struct Vertex;
 class SHLight;
 class Axis;
@@ -96,7 +96,7 @@ private:
     void _initSynchronizations();
     void _deInitSynchronizations();
 
-    //void _createCommandBuffers(std::vector<std::shared_ptr<Drawable>> drawables);
+    //void _createCommandBuffers(std::vector<std::shared_ptr<Renderable>> renderables);
     void _createCommandBuffers();
 	VulkanContext                        *        _context;
 
@@ -130,7 +130,7 @@ private:
     vk::DescriptorPool                            _descriptorPool;
     std::vector<VkCommandBuffer>                  _commandBuffers;
 
-    std::unordered_map<PipelineId, std::vector<std::shared_ptr<Drawable>>> _drawableMap;
+    std::unordered_map<PipelineId, std::vector<std::shared_ptr<SingleRenderable>>> _renderableMap;
 
 	std::shared_ptr<RenderScene>				  _renderScene;
 

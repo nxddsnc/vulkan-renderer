@@ -5,47 +5,60 @@ MyScene::MyScene()
 {
 	m_bbox.min = glm::vec3(INFINITE);
 	m_bbox.max = -glm::vec3(INFINITE);
+	_instanceComputed = false;
 }
-
 
 MyScene::~MyScene()
 {
 }
 
-void MyScene::AddDrawable(std::shared_ptr<Drawable> node)
+void MyScene::AddRenderable(std::shared_ptr<Renderable> node)
 {
-    _drawables.push_back(node);
-
-	if (m_bbox.min.x > node->m_bbox.min.x)
-	{
-		m_bbox.min.x = node->m_bbox.min.x;
-	}
-	if (m_bbox.min.y > node->m_bbox.min.y)
-	{
-		m_bbox.min.y = node->m_bbox.min.y;
-	}
-	if (m_bbox.min.z > node->m_bbox.min.z)
-	{
-		m_bbox.min.z = node->m_bbox.min.z;
-	}
-
-	if (m_bbox.max.x < node->m_bbox.max.x)
-	{
-		m_bbox.max.x = node->m_bbox.max.x;
-	}
-	if (m_bbox.max.y < node->m_bbox.max.y)
-	{
-		m_bbox.max.y = node->m_bbox.max.y;
-	}
-	if (m_bbox.max.z < node->m_bbox.max.z)
-	{
-		m_bbox.max.z = node->m_bbox.max.z;
-	}
+    _renderables.push_back(node);
+	m_bbox.Merge(node->m_bbox);
 }
 
-std::vector<std::shared_ptr<Drawable>> MyScene::GetDrawables()
+std::vector<std::shared_ptr<Renderable>> MyScene::GetRenderables()
 {
-    return _drawables;
+	if (_instanceComputed)
+	{
+		return _renderables;
+	}
+	size_t len = _renderables.size();
+	std::vector<std::shared_ptr<Renderable>> res;
+	for (int i = 0; i < len; ++i)
+	{
+		auto renderable = _renderables[i];
+		std::shared_ptr<Renderable> d;
+		auto it = _renderableMap.find(renderable->GetHash());
+		if (it != _renderableMap.end())
+		{
+			d = it->second;
+			if (d->m_type == SINGLE_RENDERABLE)
+			{
+				auto instanceRenderable = std::make_shared<InstanceRenderable>(std::dynamic_pointer_cast<SingleRenderable>(d));
+				instanceRenderable->AddRenderable(std::dynamic_pointer_cast<SingleRenderable>(renderable));
+				it->second = instanceRenderable;
+
+			}
+			else
+			{
+				std::shared_ptr<InstanceRenderable> d_ = std::dynamic_pointer_cast<InstanceRenderable>(d);
+				d_->AddRenderable(std::dynamic_pointer_cast<SingleRenderable>(renderable));
+			}
+		}
+		else
+		{
+			_renderableMap.insert(std::make_pair(renderable->GetHash(), renderable));
+		}
+	}
+	for (auto it = _renderableMap.begin(); it != _renderableMap.end(); ++it)
+	{
+		res.emplace_back(it->second);
+	}
+	_renderables = res;
+	_instanceComputed = true;
+	return _renderables;
 }
 
 void MyScene::AddAnimation(std::shared_ptr<MyAnimation> animation)

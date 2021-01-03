@@ -37,11 +37,15 @@ struct TextureKey
                         wrapMode[2] != textureKey.wrapMode[2];
     }
 };
+
 template<> struct std::hash<TextureKey> {
     size_t operator()(const TextureKey& textureKey) const {
-        // TODO: use more appropriate hash value
-        return std::hash<uint32_t>()(std::strlen(textureKey.fileName) + 
-                                    (textureKey.wrapMode[0] + textureKey.wrapMode[1] << 2 + textureKey.wrapMode[2] << 4) << 10);
+        std::size_t res = 0;
+        hash_combine(res, std::string(textureKey.fileName));
+        hash_combine(res, textureKey.wrapMode[0]);
+        hash_combine(res, textureKey.wrapMode[1]);
+        hash_combine(res, textureKey.wrapMode[2]);
+        return res;
     }
 };
 

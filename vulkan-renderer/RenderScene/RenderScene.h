@@ -1,10 +1,10 @@
 #include "Platform.h"
 #include <unordered_map>
 #include "Pipeline.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #pragma once
 
-class Drawable;
+class SingleRenderable;
 class Skybox;
 class Axis;
 class ResourceManager;

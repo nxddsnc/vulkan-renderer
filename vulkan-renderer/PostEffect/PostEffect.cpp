@@ -3,7 +3,7 @@
 #include "PipelineManager.h"
 #include "Framebuffer.h"
 #include "MyTexture.h"
-#include "Drawable.h"
+#include "Renderable.h"
 
 PostEffect::PostEffect(ResourceManager *resourceManager, PipelineManager *pipelineManager, int width, int height)
 {

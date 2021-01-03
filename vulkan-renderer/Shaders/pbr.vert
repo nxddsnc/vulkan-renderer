@@ -11,11 +11,17 @@ layout(set = 1, binding = 0) uniform UboJointMatrices {
     mat4 value[64];
 } uboJointMatrices;
 
+#if INSTANCE_ENABLED
+layout(location = IN_MATRIX_0) in vec4 matrix0;
+layout(location = IN_MATRIX_1) in vec4 matrix1;
+layout(location = IN_MATRIX_2) in vec4 matrix2;
+#else
 layout(push_constant) uniform UniformPerDrawable
 {
     mat4 modelMatrix;
     mat4 normalMatrix;
 } uniformPerDrawable;
+#endif 
 
 layout(location = 0) in vec3 inPosition;
 
@@ -77,11 +83,30 @@ void main()
 #endif
 
 #else 
+
+#if INSTANCE_ENABLED
+    mat4 mat = mat4(matrix0[0], matrix1[0], matrix2[0], 0.0,
+                    matrix0[1], matrix1[1], matrix2[1], 0.0,
+                    matrix0[2], matrix1[2], matrix2[2], 0.0,
+                    matrix0[3], matrix1[3], matrix2[3], 1.0);
+
+    outPosition = (mat * vec4(inPosition, 1.0)).xyz;
+    gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
+
+    #if IN_NORMAL
+    mat3 normal_mat = mat3(matrix0.xyz, matrix1.xyz, matrix2.xyz);
+    normal_mat = inverse(normal_mat);
+    outNormal = (normal_mat * inNormal).xyz;
+    #endif
+
+#else 
     outPosition = (uniformPerDrawable.modelMatrix * vec4(inPosition, 1.0)).xyz;
     gl_Position = ubo.proj * ubo.view * vec4(outPosition, 1.0);
 
 #if IN_NORMAL
     outNormal = (uniformPerDrawable.normalMatrix * vec4(inNormal, 0.0)).xyz;
+#endif
+
 #endif
 
 #endif

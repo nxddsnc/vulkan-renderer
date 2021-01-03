@@ -1,17 +1,17 @@
 #include "Axis.h"
 #include "MyMesh.h"
 #include "ResourceManager.h"
-#include "Drawable.h"
+#include "Renderable.h"
 #include "Pipeline.h"
 #include "PipelineManager.h"
 
 Axis::Axis(ResourceManager *pResourceManager, PipelineManager *pPipelineManager)
 {
-    m_pDrawable = std::make_shared<Drawable>();
-    m_pDrawable->m_mesh = std::make_shared<MyMesh>();
-    m_pDrawable->m_mesh->CreateAixs();
+    m_pRenderable = std::make_shared<SingleRenderable>();
+    m_pRenderable->m_mesh = std::make_shared<MyMesh>();
+    m_pRenderable->m_mesh->CreateAixs();
 
-    pResourceManager->InitVulkanBuffers(m_pDrawable);
+    pResourceManager->InitVulkanBuffers(m_pRenderable);
 
     m_pResouceManager = pResourceManager;
     m_pPipelineMananger = pPipelineManager;
@@ -37,7 +37,7 @@ void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer, vk::DescriptorSe
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipeline());
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLines->GetPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
-    commandBuffer.bindVertexBuffers(0, m_pDrawable->m_vertexBuffers.size(), m_pDrawable->m_vertexBuffers.data(), m_pDrawable->m_vertexBufferOffsets.data());
+    commandBuffer.bindVertexBuffers(0, m_pRenderable->m_vertexBuffers.size(), m_pRenderable->m_vertexBuffers.data(), m_pRenderable->m_vertexBufferOffsets.data());
    
     uint32_t offset = 0;
     auto matrix = glm::mat4(1.0);
@@ -46,9 +46,9 @@ void Axis::CreateDrawCommand(vk::CommandBuffer & commandBuffer, vk::DescriptorSe
     commandBuffer.pushConstants(pipelineLines->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, offset, sizeof(glm::mat4), reinterpret_cast<void*>(&matrix));
     offset += sizeof(glm::mat4);
 
-    commandBuffer.bindIndexBuffer(m_pDrawable->m_indexBuffer, 0, vk::IndexType::eUint16);
+    commandBuffer.bindIndexBuffer(m_pRenderable->m_indexBuffer, 0, vk::IndexType::eUint16);
 
-    commandBuffer.drawIndexed(m_pDrawable->m_mesh->m_indexNum, 1, 0, 0, 0);
+    commandBuffer.drawIndexed(m_pRenderable->m_mesh->m_indexNum, 1, 0, 0, 0);
 }
 
 
