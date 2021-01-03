@@ -46,3 +46,10 @@ void float32(float* __restrict out, const uint16_t in);
 void float16(uint16_t* __restrict out, const float in);
 
 void ApplyMatrixToBBox(glm::mat4& mat, BBox& bbox);
+
+template <class T>
+inline void hash_combine(std::size_t & s, const T & v)
+{
+    std::hash<T> h;
+    s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
+}

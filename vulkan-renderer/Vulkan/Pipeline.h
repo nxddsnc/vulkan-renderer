@@ -1,3 +1,4 @@
+#include "Utils.h"
 #include "Platform.h"
 #pragma once
 enum PipelineType
@@ -83,8 +84,10 @@ struct PipelineId
 
 template<> struct std::hash<PipelineId> {
     size_t operator()(const PipelineId& id) const {
-        // TODO: use more appropriate hash value
-        return std::hash<uint32_t>()(id.model.primitivePart.info.value * 31 + id.model.materialPart.info.value);
+        std::size_t res = 0;
+        hash_combine(res, id.model.primitivePart.info.value);
+        hash_combine(res, id.model.materialPart.info.value);
+        return res;
     }
 };
 
