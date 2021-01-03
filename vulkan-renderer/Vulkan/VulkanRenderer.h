@@ -65,6 +65,12 @@ public:
     uint32_t GetSwapchainImageCount();
     vk::SurfaceFormatKHR GetSurfaceFormat();
     vk::Format GetDepthFormat();
+    vk::DescriptorPool GetDescriptorPool();
+    VmaAllocator GetMemoryAllocator();
+    VkSwapchainKHR GetSwapchain();
+    VulkanContext *GetVulkanContext();
+    vk::PresentModeKHR GetPresentMode();
+    ResourceManager* GetResourceManager();
 
     void AddScene(std::shared_ptr<MyScene> scene);
 private:
@@ -152,6 +158,8 @@ private:
     VkFence                                       _swapchainImageAvailable;
 											      
     Window                            *           _window = nullptr;
+
+    vk::PresentModeKHR                            _presentMode;
 											      
 	std::vector<std::shared_ptr<PostEffect>>      m_postEffects;
 };

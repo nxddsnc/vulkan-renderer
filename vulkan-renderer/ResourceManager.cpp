@@ -72,7 +72,7 @@ void ResourceManager::InitVulkanResource(std::shared_ptr<Renderable> renderable)
 	renderable->m_bReady = true;
 }
 
-vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()
+vk::CommandBuffer ResourceManager::BeginSingleTimeCommand()
 {
     vk::CommandBufferAllocateInfo allocInfo({
         m_commandPool,
@@ -89,7 +89,7 @@ vk::CommandBuffer ResourceManager::_beginSingleTimeCommand()
     return commandBuffers[0];
 }
 
-void ResourceManager::_endSingleTimeCommand(vk::CommandBuffer &commandBuffer)
+void ResourceManager::EndSingleTimeCommand(vk::CommandBuffer &commandBuffer)
 {
     commandBuffer.end();
 
@@ -109,7 +109,7 @@ void ResourceManager::_endSingleTimeCommand(vk::CommandBuffer &commandBuffer)
 
 void ResourceManager::_copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage)
 {
-    vk::CommandBuffer cmdBuffer = _beginSingleTimeCommand();
+    vk::CommandBuffer cmdBuffer = BeginSingleTimeCommand();
 
     vk::DeviceSize offset = 0;
     std::vector<vk::BufferImageCopy> regions;
@@ -146,12 +146,12 @@ void ResourceManager::_copyBufferToImage(vk::Buffer buffer, vk::Image image, std
 
     cmdBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, regions);
 
-    _endSingleTimeCommand(cmdBuffer);
+    EndSingleTimeCommand(cmdBuffer);
 }
 
 void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size)
 {
-    vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
+    vk::CommandBuffer commandBuffer = BeginSingleTimeCommand();
 
     vk::BufferCopy copyRegion({
         0,
@@ -160,7 +160,7 @@ void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
     });
     commandBuffer.copyBuffer(srcBuffer, dstBuffer, copyRegion);
 
-    _endSingleTimeCommand(commandBuffer);
+    EndSingleTimeCommand(commandBuffer);
 }
 
 void ResourceManager::InitVertexBuffer(vk::DeviceSize size, void *data_, vk::Buffer &buffer, VmaAllocation &bufferMemory, vk::DeviceSize &bufferOffset, vk::BufferUsageFlagBits usage)
@@ -504,11 +504,11 @@ void ResourceManager::SetImageLayout(vk::CommandBuffer& commandBuffer, vk::Image
 }
 void ResourceManager::SetImageLayoutInSingleCmd(vk::Image &image, vk::Format format, vk::ImageSubresourceRange subResourceRange, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
 {
-    vk::CommandBuffer commandBuffer = _beginSingleTimeCommand();
+    vk::CommandBuffer commandBuffer = BeginSingleTimeCommand();
 
     SetImageLayout(commandBuffer, image, format, subResourceRange, oldLayout, newLayout);
 
-    _endSingleTimeCommand(commandBuffer);
+    EndSingleTimeCommand(commandBuffer);
 }
 
 std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_ptr<MyTexture> texture)

@@ -109,7 +109,7 @@
       <PreprocessorDefinitions>_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);NOMINMAX;STB_IMAGE_WRITE_IMPLEMENTATION;_GLFW_WIN32</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/glm;third-party/glfw/include;third-party/includes/assimp;Vulkan;./;Debug;RenderScene;ShadowMap;Camera;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third-party/imgui;third-party/includes;third-party/includes/shaderc;third-party/includes/gli;third-party/glm;third-party/glfw/include;third-party/includes/assimp;Vulkan;./;Debug;RenderScene;ShadowMap;Camera;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
     </ClCompile>
@@ -162,6 +162,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BaseApp.cpp" />
     <ClCompile Include="Camera\MyCamera.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Debug\Axis.cpp" />
@@ -189,6 +190,12 @@
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="SHLight.cpp" />
     <ClCompile Include="Skybox.cpp" />
+    <ClCompile Include="third-party\imgui\imgui.cpp" />
+    <ClCompile Include="third-party\imgui\imgui_draw.cpp" />
+    <ClCompile Include="third-party\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="third-party\imgui\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="third-party\imgui\imgui_tables.cpp" />
+    <ClCompile Include="third-party\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Vulkan\Pipeline.cpp" />
     <ClCompile Include="Vulkan\PipelineManager.cpp" />
@@ -199,6 +206,7 @@
     <ClCompile Include="Window_32.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseApp.h" />
     <ClInclude Include="BUILD_OPTIONS.h" />
     <ClInclude Include="Camera\MyCamera.h" />
     <ClInclude Include="Context.h" />
@@ -226,6 +234,11 @@
     <ClInclude Include="Shared.h" />
     <ClInclude Include="SHLight.h" />
     <ClInclude Include="Skybox.h" />
+    <ClInclude Include="third-party\imgui\imconfig.h" />
+    <ClInclude Include="third-party\imgui\imgui.h" />
+    <ClInclude Include="third-party\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="third-party\imgui\imgui_impl_vulkan.h" />
+    <ClInclude Include="third-party\imgui\imgui_internal.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vulkan\GraphicsPipeline.h" />
     <ClInclude Include="Vulkan\Pipeline.h" />

@@ -43,9 +43,9 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _device = _context->GetLogicalDevice();
     _instance = _context->GetInstance();
     _queue = _context->GetDeviceQueue();
-    _surface = _context->GetSuface();
+    _surface = _context->GetSurface();
     _commandPool = _context->GetCommandPool();
-    _surface = _context->GetSuface();
+    _surface = _context->GetSurface();
     _surfaceFormat = _context->GetSurfaceFormat();
     _graphicsQueueFamilyIndex = _context->GetGraphicsQueueFamilyIndex();
 
@@ -192,6 +192,36 @@ vk::Format VulkanRenderer::GetDepthFormat()
     return _depthStencilImage->format;
 }
 
+vk::DescriptorPool VulkanRenderer::GetDescriptorPool()
+{
+    return _descriptorPool;
+}
+
+VmaAllocator VulkanRenderer::GetMemoryAllocator()
+{
+    return _memoryAllocator;
+}
+
+VkSwapchainKHR VulkanRenderer::GetSwapchain()
+{
+    return _swapchain;
+}
+
+VulkanContext * VulkanRenderer::GetVulkanContext()
+{
+    return _context;
+}
+
+vk::PresentModeKHR VulkanRenderer::GetPresentMode()
+{
+    return _presentMode;
+}
+
+ResourceManager * VulkanRenderer::GetResourceManager()
+{
+    return _resourceManager;
+}
+
 std::shared_ptr<MyCamera> VulkanRenderer::GetCamera()
 {
     return _renderScene->m_pCamera;
@@ -294,14 +324,14 @@ void VulkanRenderer::_initSwapchain()
         _swapchainImageCount = surfaceCapibilities.minImageCount;
     }
 
-    vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
+    _presentMode = vk::PresentModeKHR::eFifo;
     {
         std::vector<vk::PresentModeKHR> presentModes = _gpu.getSurfacePresentModesKHR(_surface);
         for (auto m : presentModes)
         {
             if (m == vk::PresentModeKHR::eMailbox)
             {
-                presentMode = m;
+                _presentMode = m;
                 break;
             }
         }
@@ -321,7 +351,7 @@ void VulkanRenderer::_initSwapchain()
         nullptr,
         vk::SurfaceTransformFlagBitsKHR::eIdentity,
         vk::CompositeAlphaFlagBitsKHR::eOpaque,
-        presentMode,
+        _presentMode,
         true,
         nullptr
     });

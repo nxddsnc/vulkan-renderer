@@ -52,6 +52,9 @@
     <Filter Include="源文件\ThirdParty\GLFW">
       <UniqueIdentifier>{566d4332-ff24-4d42-9ca3-ac4f7a257814}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\ImGui">
+      <UniqueIdentifier>{d473dbbe-d7a8-4bcb-8430-98b567dad454}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -159,6 +162,27 @@
     <ClCompile Include="Renderable.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui.cpp">
+      <Filter>头文件\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_draw.cpp">
+      <Filter>头文件\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_tables.cpp">
+      <Filter>头文件\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_widgets.cpp">
+      <Filter>头文件\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_impl_glfw.cpp">
+      <Filter>头文件\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_impl_vulkan.cpp">
+      <Filter>头文件\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseApp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -264,6 +288,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="third-party\imgui\imconfig.h">
+      <Filter>头文件\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third-party\imgui\imgui.h">
+      <Filter>头文件\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third-party\imgui\imgui_internal.h">
+      <Filter>头文件\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third-party\imgui\imgui_impl_glfw.h">
+      <Filter>头文件\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third-party\imgui\imgui_impl_vulkan.h">
+      <Filter>头文件\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseApp.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

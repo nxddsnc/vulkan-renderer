@@ -54,7 +54,7 @@ vk::PhysicalDeviceMemoryProperties VulkanContext::GetPhysicalDeviceMemoryPropert
     return _gpuMemoryProperties;
 }
 
-vk::SurfaceKHR VulkanContext::GetSuface()
+vk::SurfaceKHR VulkanContext::GetSurface()
 {
     return _surface;
 }

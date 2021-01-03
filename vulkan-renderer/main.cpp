@@ -7,6 +7,14 @@
 #include "MyScene.h"
 #include "ModelLoader.h"
 #include "MyCamera.h"
+#include "Context.h"
+#include "ResourceManager.h"
+
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
+ImGui_ImplVulkanH_Window g_MainWindowData;
+
 
 VulkanRenderer *renderer;
 Window *window;
@@ -98,9 +106,56 @@ void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
 int main()
 {
     window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
+
     renderer = new VulkanRenderer(window);
 	renderer->LoadSkybox(envMaps[envMapIndex].c_str());
     GLFWwindow *_window = window->GetGLFWWindow();
+   
+    // https://frguthmann.github.io/posts/vulkan_imgui/
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForVulkan(window->GetGLFWWindow(), true);
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = renderer->GetVulkanInstance();
+    init_info.PhysicalDevice = renderer->GetPhysicalDevice();
+    init_info.Device = renderer->GetVulkanDevice();
+    init_info.QueueFamily = renderer->GetGraphicFamilyIndex();
+    init_info.Queue = renderer->GetVulkanDeviceQueue();
+    init_info.PipelineCache = VK_NULL_HANDLE;
+    init_info.DescriptorPool = renderer->GetDescriptorPool();
+    init_info.Allocator = nullptr;
+    init_info.MinImageCount = renderer->GetSwapchainImageCount();
+    init_info.ImageCount = renderer->GetSwapchainImageCount();
+    init_info.CheckVkResultFn = nullptr;
+    ImGui_ImplVulkan_Init(&init_info, renderer->GetVulkanRenderPass());
+
+    VulkanContext* context = renderer->GetVulkanContext();
+    g_MainWindowData.Width = window->GetWindowExtent().width;
+    g_MainWindowData.Height = window->GetWindowExtent().height;
+    g_MainWindowData.Swapchain = renderer->GetSwapchain();
+    g_MainWindowData.Surface = context->GetSurface();
+    g_MainWindowData.SurfaceFormat = context->GetSurfaceFormat();
+    g_MainWindowData.PresentMode = (VkPresentModeKHR )renderer->GetPresentMode();
+    g_MainWindowData.RenderPass = renderer->GetVulkanRenderPass();
+    g_MainWindowData.Pipeline = nullptr;
+    g_MainWindowData.ClearEnable = true;
+    g_MainWindowData.ImageCount = init_info.ImageCount;
+
+    ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
+    // Upload Fonts
+    {
+        vk::CommandBuffer command_buffer = renderer->GetResourceManager()->BeginSingleTimeCommand();
+        ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+        renderer->GetResourceManager()->EndSingleTimeCommand(command_buffer);
+        ImGui_ImplVulkan_DestroyFontUploadObjects();
+    }
+
     glfwSetWindowSizeCallback(_window, ResizeCallback);
     glfwSetWindowCloseCallback(_window, CloseCallback);
     glfwSetMouseButtonCallback(_window, MouseButtonCallback);
@@ -134,6 +189,34 @@ int main()
 
     while (renderer->Run())
     {
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+
+            ImGui::End();
+        }
+
+        // Rendering
+        ImGui::Render();
+        ImDrawData* draw_data = ImGui::GetDrawData();
+
+        const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
+        if (!is_minimized)
+        {
+            /*memcpy(&wd->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
+            FrameRender(wd, draw_data);
+            FramePresent(wd);*/
+            
+        }
+
         if (lastFrameTime + std::chrono::milliseconds(16) < timer.now())
         {
             lastFrameTime = timer.now();

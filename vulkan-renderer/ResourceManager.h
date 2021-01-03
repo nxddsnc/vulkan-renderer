@@ -37,10 +37,10 @@ public:
 	void DestroyUniformBuffer(vk::Buffer &buffer, VmaAllocation &bufferMemory);
 	void UpdateBuffer(VmaAllocation bufferMemory, char* src, int size);
 	void TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, std::shared_ptr<MyTexture> dst);
+    vk::CommandBuffer BeginSingleTimeCommand();
+    void EndSingleTimeCommand(vk::CommandBuffer &commandBuffer);
 private:
     void _createTextures(std::shared_ptr<Renderable> renderable);
-    vk::CommandBuffer _beginSingleTimeCommand();
-    void _endSingleTimeCommand(vk::CommandBuffer &commandBuffer);
     void _copyBufferToImage(vk::Buffer buffer, vk::Image image, std::shared_ptr<MyImage> myImage);
     void _copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 public:
