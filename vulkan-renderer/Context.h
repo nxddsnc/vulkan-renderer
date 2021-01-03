@@ -22,7 +22,7 @@ public:
     vk::Queue                            GetDeviceQueue();
     VkPhysicalDeviceProperties           GetPhyscialDeivceProperties();
     vk::PhysicalDeviceMemoryProperties   GetPhysicalDeviceMemoryProperties();
-    vk::SurfaceKHR                       GetSuface();
+    vk::SurfaceKHR                       GetSurface();
     vk::CommandPool                      GetCommandPool();
     vk::SurfaceFormatKHR                 GetSurfaceFormat();
     uint32_t                             GetGraphicsQueueFamilyIndex();
