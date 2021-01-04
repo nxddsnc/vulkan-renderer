@@ -334,7 +334,7 @@ void Pipeline::InitModelForward(std::shared_ptr<RenderPass> renderPass)
                                                  {},
                                                  static_cast<int32_t>(-1) });
 
-    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
     for (auto descriptorSetLayout : descriptorSetLayouts)
     {
@@ -538,7 +538,7 @@ void Pipeline::InitDepth(std::shared_ptr<RenderPass> renderPass)
 		{},
 		static_cast<int32_t>(-1) });
 
-	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
 	for (auto descriptorSetLayout : descriptorSetLayouts)
 	{
@@ -841,7 +841,7 @@ void Pipeline::InitModelGBuffer(std::shared_ptr<RenderPass> renderPass)
 		{},
 		static_cast<int32_t>(-1) });
 
-	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
 	for (auto descriptorSetLayout : descriptorSetLayouts)
 	{
@@ -998,7 +998,7 @@ void Pipeline::InitSkybox(std::shared_ptr<RenderPass> renderPass)
         {},
         static_cast<int32_t>(-1) });
 
-    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
     for (auto descriptorSetLayout : descriptorSetLayouts)
     {
@@ -1162,7 +1162,7 @@ void Pipeline::InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPa
         {},
         static_cast<int32_t>(-1));
 
-    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
     for (auto descriptorSetLayout : descriptorSetLayouts)
     {
@@ -1326,7 +1326,7 @@ void Pipeline::InitIrradianceMap(vk::Device device, vk::RenderPass renderPass)
         {},
         static_cast<int32_t>(-1));
 
-    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
     for (auto descriptorSetLayout : descriptorSetLayouts)
     {
@@ -1473,7 +1473,7 @@ void Pipeline::InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass)
         {},
         static_cast<int32_t>(-1));
 
-    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+    _graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
     for (auto descriptorSetLayout : descriptorSetLayouts)
     {
@@ -1628,7 +1628,7 @@ void Pipeline::InitBrightPass(vk::Device device, vk::RenderPass renderPass)
 		{},
 		static_cast<int32_t>(-1));
 
-	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
 	for (auto descriptorSetLayout : descriptorSetLayouts)
 	{
@@ -1781,7 +1781,7 @@ void Pipeline::InitGaussianBlur(vk::Device device, vk::RenderPass renderPass)
 		{},
 		static_cast<int32_t>(-1));
 
-	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
 	for (auto descriptorSetLayout : descriptorSetLayouts)
 	{
@@ -1941,7 +1941,7 @@ void Pipeline::InitBlit(vk::Device device, vk::RenderPass renderPass)
 		{},
 		static_cast<int32_t>(-1));
 
-	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
 	for (auto descriptorSetLayout : descriptorSetLayouts)
 	{
@@ -2163,7 +2163,7 @@ void Pipeline::InitDeferred(std::shared_ptr<RenderPass> renderPass)
 		{},
 		static_cast<int32_t>(-1));
 
-	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo);
+	_graphicsPipeline = m_device.createGraphicsPipeline(nullptr, pipelineInfo).value;
 
 	for (auto descriptorSetLayout : descriptorSetLayouts)
 	{

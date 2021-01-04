@@ -31,10 +31,12 @@
 #include "RenderSceneDeferred.h"
 #include "MyScene.h"
 #include "ShadowMap.h"
+#include "MyGui.h"
+
 VulkanRenderer::VulkanRenderer(Window *window)
 {
     _window = window;
-    _swapchainExtent = {WIDTH, HEIGHT};
+    _swapchainExtent = vk::Extent2D(WIDTH, HEIGHT);
     _context = new VulkanContext(window);
 
     _pipelineManager = new PipelineManager(this);
@@ -71,7 +73,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
     _initDepthStencilImage();
     _initFramebuffers();
     _initSynchronizations();
-
+	_initMyGui();
 	_initOffscreenRenderTargets();
 }
 
@@ -86,6 +88,8 @@ VulkanRenderer::~VulkanRenderer()
 
     delete _window;
 	delete _pipelineManager;
+
+	_deInitMyGui();
 
     _deInitSynchronizations();
     _deInitFramebuffers();
@@ -574,6 +578,16 @@ void VulkanRenderer::_deInitSynchronizations()
     }
 }
 
+void VulkanRenderer::_initMyGui()
+{
+	_myGui = std::make_shared<MyGui>(this);
+}
+
+void VulkanRenderer::_deInitMyGui()
+{
+
+}
+
 void VulkanRenderer::_createCommandBuffers()
 {
     for (uint32_t i = 0; i < _swapchainImageCount; ++i)
@@ -610,6 +624,8 @@ void VulkanRenderer::_createCommandBuffers()
 		////std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, _renderScene->m_pShadowMap->m_pFramebuffer };
 		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, offscreenFramebuffer };
 		m_postEffects.back()->Draw(commandBuffer, framebuffers, _framesData[i].framebuffer);
+
+		_myGui->Draw(commandBuffer);
 
 		commandBuffer.end();
 

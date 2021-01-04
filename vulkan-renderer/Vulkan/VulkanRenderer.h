@@ -29,6 +29,7 @@ class Framebuffer;
 class RenderPass;
 struct VulkanTexture;
 class RenderScene;
+class MyGui;
 
 struct FrameData 
 {
@@ -102,6 +103,9 @@ private:
     void _initSynchronizations();
     void _deInitSynchronizations();
 
+	void _initMyGui();
+	void _deInitMyGui();
+
     //void _createCommandBuffers(std::vector<std::shared_ptr<Renderable>> renderables);
     void _createCommandBuffers();
 	VulkanContext                        *        _context;
@@ -139,6 +143,8 @@ private:
     std::unordered_map<PipelineId, std::vector<std::shared_ptr<SingleRenderable>>> _renderableMap;
 
 	std::shared_ptr<RenderScene>				  _renderScene;
+
+	std::shared_ptr<MyGui>						  _myGui;
 
     std::vector<vk::Semaphore>                    _imageAvailableSemaphores;
 											      

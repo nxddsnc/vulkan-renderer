@@ -55,6 +55,12 @@
     <Filter Include="头文件\ImGui">
       <UniqueIdentifier>{d473dbbe-d7a8-4bcb-8430-98b567dad454}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\GUI">
+      <UniqueIdentifier>{a868d7df-c131-42cc-9e1c-49a0edefff42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\GUI">
+      <UniqueIdentifier>{a9f67647-2219-4e6f-b69d-e2434850b03c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -180,7 +186,7 @@
     <ClCompile Include="third-party\imgui\imgui_impl_vulkan.cpp">
       <Filter>头文件\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="BaseApp.cpp">
+    <ClCompile Include="MyGui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -305,7 +311,7 @@
     <ClInclude Include="third-party\imgui\imgui_impl_vulkan.h">
       <Filter>头文件\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="BaseApp.h">
+    <ClInclude Include="MyGui.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
