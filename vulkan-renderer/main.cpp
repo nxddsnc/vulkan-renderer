@@ -9,7 +9,7 @@
 #include "MyCamera.h"
 #include "Context.h"
 #include "ResourceManager.h"
-
+#include "MyGui.h"
 
 VulkanRenderer *renderer;
 Window *window;
@@ -137,6 +137,8 @@ int main()
         renderer->AddScene(myScene);
     }
 
+    std::string fpsInfo;
+    MyGui* mygui = renderer->GetMyGui();
     while (renderer->Run())
     {
         if (lastFrameTime + std::chrono::milliseconds(16) < timer.now())
@@ -149,11 +151,16 @@ int main()
         }
 
         ++frameCounter;
-        if (lastTime + std::chrono::seconds(1) < timer.now()) {
+        if (lastTime + std::chrono::seconds(1) < timer.now()) 
+        {
+            mygui->Clear();
             lastTime = timer.now();
             fps = frameCounter;
             frameCounter = 0;
-            std::cout << "FPS: " << fps << std::endl;
+
+            fpsInfo = "FPS: " + std::to_string(fps);
+
+            mygui->AddInfo(fpsInfo);
         }
         renderer->DrawFrame();
 

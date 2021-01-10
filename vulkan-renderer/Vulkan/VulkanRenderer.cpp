@@ -226,6 +226,11 @@ ResourceManager * VulkanRenderer::GetResourceManager()
     return _resourceManager;
 }
 
+MyGui * VulkanRenderer::GetMyGui()
+{
+    return _myGui.get();
+}
+
 std::shared_ptr<MyCamera> VulkanRenderer::GetCamera()
 {
     return _renderScene->m_pCamera;
@@ -251,6 +256,7 @@ void VulkanRenderer::DrawFrame()
 {
     _beginRender();
     
+    _createCommandBuffers();
 
     vk::PipelineStageFlags pipelineStageFlag = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     vk::SubmitInfo submitInfo( uint32_t(1),
@@ -590,8 +596,9 @@ void VulkanRenderer::_deInitMyGui()
 
 void VulkanRenderer::_createCommandBuffers()
 {
-    for (uint32_t i = 0; i < _swapchainImageCount; ++i)
-    {
+    //for (uint32_t i = 0; i < _swapchainImageCount; ++i)
+    //{
+    int i = _currentFrame;
 		_framesData[i].cmdBuffers.clear();
 
 		vk::CommandBufferAllocateInfo commandBufferAllocateInfo({
@@ -630,7 +637,7 @@ void VulkanRenderer::_createCommandBuffers()
 		commandBuffer.end();
 
 		_framesData[i].cmdBuffers.push_back(commandBuffer);
-	}
+	//}
 }
 
 void VulkanRenderer::AddScene(std::shared_ptr<MyScene> scene)

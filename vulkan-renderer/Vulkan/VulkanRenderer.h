@@ -72,6 +72,7 @@ public:
     VulkanContext *GetVulkanContext();
     vk::PresentModeKHR GetPresentMode();
     ResourceManager* GetResourceManager();
+    MyGui*  GetMyGui();
 
     void AddScene(std::shared_ptr<MyScene> scene);
 private:

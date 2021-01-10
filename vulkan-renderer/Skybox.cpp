@@ -245,7 +245,7 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
 {
     uint32_t width = m_pTextureEnvMap->m_pImage->m_width;
     uint32_t height = m_pTextureEnvMap->m_pImage->m_height;
-    uint32_t mipmapCount = static_cast<uint32_t>(floor(log2(width)) + +1);
+    uint32_t mipmapCount = static_cast<uint32_t>(floor(log2(width)) + 1);
     std::shared_ptr<MyTexture> offscreenTexture = std::make_shared<MyTexture>();
     offscreenTexture->m_pImage = std::make_shared<MyImage>("prefiltered-env-map-colorAttachment");
     offscreenTexture->m_pImage->m_width = width;

@@ -9,5 +9,11 @@ public:
 	~MyGui();
 
 	void Draw(vk::CommandBuffer& commandBuffer);
+
+    void Clear();
+
+    void AddInfo(std::string info);
+private:
+    std::vector<std::string> _graphicsInfos;
 };
 

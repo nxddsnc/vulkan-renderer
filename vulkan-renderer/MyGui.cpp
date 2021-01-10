@@ -54,9 +54,13 @@ void MyGui::Draw(vk::CommandBuffer& commandBuffer)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+    // create window called graphics status.
+	ImGui::Begin("graphics status");
 
-	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+    for (int i = 0; i < _graphicsInfos.size(); ++i)
+    {
+        ImGui::Text(_graphicsInfos[i].c_str());
+    }
 
 	ImGui::End();
 
@@ -64,4 +68,14 @@ void MyGui::Draw(vk::CommandBuffer& commandBuffer)
 	ImDrawData* draw_data = ImGui::GetDrawData();
 
 	ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffer);
+}
+
+void MyGui::Clear()
+{
+    _graphicsInfos.clear();
+}
+
+void MyGui::AddInfo(std::string info)
+{
+    _graphicsInfos.push_back(info);
 }
