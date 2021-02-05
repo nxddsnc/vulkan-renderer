@@ -35,7 +35,7 @@ void Window::Resize(int width, int height)
 
 vk::Extent2D Window::GetWindowExtent()
 {
-	return vk::Extent2D({ _width, _height });
+	return vk::Extent2D( _width, _height );
 }
 
 void Window::SetWindowExtent(VkExtent2D extent)

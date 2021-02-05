@@ -76,11 +76,10 @@ void MyAnimation::CreateDescriptorSet(vk::Device & device, vk::DescriptorPool & 
 	});
 	device.allocateDescriptorSets(&allocInfo, &m_descriptorSet);
 
-	vk::DescriptorBufferInfo bufferInfo({
-		m_uniformBuffer,
-		0,
-		sizeof(glm::mat4) * m_JointMatrices.size()
-	});
+	vk::DescriptorBufferInfo bufferInfo;
+	bufferInfo.buffer = m_uniformBuffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(glm::mat4) * m_JointMatrices.size();
 
 	vk::WriteDescriptorSet descriptorWrite({
 		m_descriptorSet,

@@ -159,11 +159,10 @@ void SHLight::CreateDescriptorSet(vk::Device &device, vk::DescriptorPool &descri
     });
     device.allocateDescriptorSets(&allocInfo, &m_descriptorSet);
 
-    vk::DescriptorBufferInfo bufferInfo({
-        m_uniformBuffer,
-        0,
-        sizeof(m_matrixR) * 3
-    });
+    vk::DescriptorBufferInfo bufferInfo;
+    bufferInfo.buffer = m_uniformBuffer,
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(m_matrixR) * 3;
 
     vk::WriteDescriptorSet descriptorWrite({
         m_descriptorSet,

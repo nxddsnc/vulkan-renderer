@@ -3,7 +3,7 @@
 #include <array>
 #include <chrono>
 #include <iostream>
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 #include "MyScene.h"
 #include "ModelLoader.h"
 #include "MyCamera.h"

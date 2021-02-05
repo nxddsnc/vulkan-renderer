@@ -7,3 +7,9 @@
 [submodule "vulkan-renderer/third-party/glfw"]
 	path = vulkan-renderer/third-party/glfw
 	url = https://github.com/nxddsnc/glfw.git
+[submodule "vulkan-renderer/third-party/shaderc"]
+	path = vulkan-renderer/third-party/shaderc
+	url = https://github.com/google/shaderc.git
+[submodule "vulkan-renderer/third-party/assimp"]
+	path = vulkan-renderer/third-party/assimp
+	url = https://github.com/assimp/assimp.git

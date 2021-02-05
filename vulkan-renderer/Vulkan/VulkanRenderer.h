@@ -155,7 +155,7 @@ private:
 
 	std::shared_ptr<VulkanTexture>				  _depthStencilImage;
 
-    boolean                                       _stencilAvailable = false;
+    bool                                          _stencilAvailable = false;
 											      
     vk::SurfaceFormatKHR                          _surfaceFormat;
     VkSwapchainKHR                                _swapchain = VK_NULL_HANDLE;

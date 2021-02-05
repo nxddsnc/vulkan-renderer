@@ -160,11 +160,11 @@ void MyCamera::CreateDescriptorSet(vk::Device & device, vk::DescriptorPool & des
 	});
 	device.allocateDescriptorSets(&allocInfo, &m_descriptorSet);
 
-	vk::DescriptorBufferInfo bufferInfo({
+	vk::DescriptorBufferInfo bufferInfo(
 		m_uniformBuffer,
 		0,
 		sizeof(m_matrices) + sizeof(glm::vec3)
-	});
+	);
 
 	vk::WriteDescriptorSet descriptorWrite({
 		m_descriptorSet,

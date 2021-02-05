@@ -1,6 +1,6 @@
 #include "ShaderModule.h"
 #include <fstream>
-#include "shaderc\shaderc.hpp"
+#include "shaderc/shaderc.hpp"
 #include <iostream>
 
 ShaderModule::ShaderModule(vk::Device* device, PipelineId id)
@@ -172,6 +172,8 @@ void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions *
 			}
 		}
 		break;
+		default:
+		    break;
 	}
 }
 

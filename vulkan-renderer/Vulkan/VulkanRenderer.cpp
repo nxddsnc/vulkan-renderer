@@ -7,7 +7,7 @@
 #include "Shared.h"
 #include "Window.h"
 #include <array>
-#include "Scene.h"
+#include "scene.h"
 #include <chrono>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -562,14 +562,14 @@ void VulkanRenderer::_initSynchronizations()
     createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     vkCreateFence(_device, &createInfo, nullptr, &_swapchainImageAvailable);
 
-    vk::SemaphoreCreateInfo semaphoreInfo({});
+    vk::SemaphoreCreateInfo semaphoreInfo();
 
     _imageAvailableSemaphores.resize(_swapchainImageCount);
 
     for (size_t i = 0; i < _swapchainImageCount; i++)
     {
-        _imageAvailableSemaphores[i] = _device.createSemaphore(semaphoreInfo);
-        _framesData[i].renderFinishedSemaphore = _device.createSemaphore(semaphoreInfo);
+//        _imageAvailableSemaphores[i] = _device.createSemaphore(reinterpret_cast<vk::SemaphoreCreateInfo*>(&semaphoreInfo));
+//        _framesData[i].renderFinishedSemaphore = _device.createSemaphore(semaphoreInfo);
     }
 }
 

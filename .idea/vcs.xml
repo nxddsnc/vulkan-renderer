@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/glfw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc/third_party/effcee" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc/third_party/glslang" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc/third_party/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc/third_party/re2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc/third_party/spirv-headers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/vulkan-renderer/third-party/shaderc/third_party/spirv-tools" vcs="Git" />
+  </component>
+</project>

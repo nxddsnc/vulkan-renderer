@@ -36,7 +36,7 @@ class Renderable
 public:
 	virtual void ComputeBBox() = 0;
 	virtual void Render(vk::CommandBuffer& commandBuffer, Pipeline* pipeline, MyCamera* camera) = 0;
-	int GetHash();
+	std::size_t GetHash();
 	BBox						  m_bbox;
 
 

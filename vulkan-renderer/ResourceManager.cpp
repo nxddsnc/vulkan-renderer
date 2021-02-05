@@ -153,11 +153,11 @@ void ResourceManager::_copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
 {
     vk::CommandBuffer commandBuffer = BeginSingleTimeCommand();
 
-    vk::BufferCopy copyRegion({
+    vk::BufferCopy copyRegion(
         0,
         0,
         size
-    });
+    );
     commandBuffer.copyBuffer(srcBuffer, dstBuffer, copyRegion);
 
     EndSingleTimeCommand(commandBuffer);
@@ -591,11 +591,11 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     vk::ImageCreateInfo imageCreateInfo(flags,
         vk::ImageType::e2D,
         vulkanTexture->format,
-        vk::Extent3D({
-        static_cast<uint32_t>(myImage->m_width),
-        static_cast<uint32_t>(myImage->m_height),
+        vk::Extent3D(
+            static_cast<uint32_t>(myImage->m_width),
+            static_cast<uint32_t>(myImage->m_height),
         1
-    }),
+        ),
         myImage->m_mipmapCount,
         myImage->m_layerCount,
         vk::SampleCountFlagBits::e1,

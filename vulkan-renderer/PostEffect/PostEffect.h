@@ -25,6 +25,6 @@ private:
 	virtual void _deInit();
 
 protected:
-	virtual void PostEffect::beforeRendering(vk::CommandBuffer& commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, vk::ImageSubresourceRange& ssr);
-	virtual void PostEffect::afterRendering(vk::CommandBuffer& commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, vk::ImageSubresourceRange& ssr);
+	virtual void beforeRendering(vk::CommandBuffer& commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, vk::ImageSubresourceRange& ssr);
+	virtual void afterRendering(vk::CommandBuffer& commandBuffer, std::shared_ptr<Framebuffer> inputFramebuffer, vk::ImageSubresourceRange& ssr);
 };

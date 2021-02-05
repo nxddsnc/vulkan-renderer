@@ -33,15 +33,13 @@ private:
 	uint32_t							_height = 512;
 	std::string							_windowName;
 
-#ifdef VK_USE_PLATFORM_WIN32_KHR
 #ifdef USE_GLFW
     GLFWwindow                      *   _window;
-#else
+#elif VK_USE_PLATFORM_WIN32_KHR
 	HINSTANCE							_win32Instance = NULL;
 	HWND								_win32Window = NULL;
 	std::string							_win32ClassName;
 	static uint64_t						_win32ClassIdCounter;
-#endif
 #elif VK_USE_PLATFORM_XCB_KHR
 	xcb_connection_t				*	_xcb_connection = nullptr;
 	xcb_screen_t					*	_xcb_screen = nullptr;

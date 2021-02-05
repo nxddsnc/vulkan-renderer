@@ -1,7 +1,9 @@
 #include "Renderable.h"
 #include "MyCamera.h"
 #include "Pipeline.h"
+#include <math.h>
 #include "vulkan.hpp"
+
 
 SingleRenderable::SingleRenderable()
 {
@@ -293,8 +295,10 @@ void InstanceRenderable::Render(vk::CommandBuffer & commandBuffer, Pipeline* pip
 	commandBuffer.drawIndexed(m_mesh->m_indexNum, m_matricies.size(), 0, 0, 0);
 }
 
-int Renderable::GetHash()
+std::size_t Renderable::GetHash()
 {
-	// TODO: use real hash function
-	return (int)m_mesh.get() + (int)m_material.get();
+	std::size_t res = 0;
+	hash_combine(res, m_mesh.get());
+	hash_combine(res, m_material.get());
+    return res;
 }
