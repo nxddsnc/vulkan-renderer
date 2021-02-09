@@ -6,7 +6,6 @@
 #include "Shared.h"
 #include "GLFW/glfw3.h"
 
-#ifdef VK_USE_PLATFORM_WIN32_KHR
 #ifdef USE_GLFW
 void Window::_initOSWindow()
 {
@@ -37,5 +36,4 @@ void Window::InitOSSurface(vk::Instance instance, VkSurfaceKHR *surface)
     glfwCreateWindowSurface(instance, _window, nullptr, surface);
 }
 
-#endif
 #endif
