@@ -13,3 +13,11 @@ x64/
 vulkan-renderer/TestModel/
 
 vulkan-renderer/third-party/libs/shaderc_combined.lib
+
+CMakeCache.txt
+
+CMakeCache.txt
+
+CMakeFiles/
+*.cmake
+vulkan_renderer
