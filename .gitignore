@@ -19,5 +19,9 @@ CMakeCache.txt
 CMakeCache.txt
 
 CMakeFiles/
+
 *.cmake
+
 vulkan_renderer
+
+*.DS_Store
