@@ -24,4 +24,16 @@ CMakeFiles/
 
 vulkan_renderer
 
-*.DS_Store
+.DS_Store
+
+*.xcbuild
+
+build/
+
+*.plist
+
+vulkan_renderer.build/
+
+*.make
+
+vulkan_renderer.xcodeproj/
