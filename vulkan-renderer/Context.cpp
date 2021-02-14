@@ -128,7 +128,9 @@ void VulkanContext::_setupDebug()
         0;
 
     //_instanceLayers.push_back()
-    _instanceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+    _instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
+    
+    _instanceExtensions.push_back("VK_EXT_metal_surface");
 
     _instanceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
     //VK_LAYER_NV_optimus
@@ -143,7 +145,7 @@ void VulkanContext::_setupDebug()
     //VK_LAYER_LUNARG_standard_validation
     //VK_LAYER_LUNARG_vktrace
 
-    _deviceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+    _deviceLayers.push_back("VK_LAYER_KHRONOS_validation");
 }
 
 

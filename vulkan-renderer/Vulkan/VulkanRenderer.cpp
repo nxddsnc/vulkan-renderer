@@ -43,6 +43,7 @@ VulkanRenderer::VulkanRenderer(Window *window)
 
     _gpu = _context->GetPhysicalDevice();
     _device = _context->GetLogicalDevice();
+    
     _instance = _context->GetInstance();
     _queue = _context->GetDeviceQueue();
     _surface = _context->GetSurface();
