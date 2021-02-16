@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.15)
 project(vulkan_renderer)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -32,16 +32,7 @@ file(GLOB SOURCES vulkan-renderer/*.*
         vulkan-renderer/ShadowMap/*.cpp)
 file(GLOB IMGUI_SRC vulkan-renderer/third-party/imgui/*.cpp)
 
-# set(SHADERC_SKIP_INSTALL FALSE)
-# set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
-# set(SPIRV_HEADERS_SKIP_INSTALL ON CACHE BOOL "" FORCE)
-# set(SPIRV_TOOLS_BUILD_STATIC OFF CACHE BOOL "" FORCE)
-# set(SKIP_SPIRV_TOOLS_INSTALL OFF CACHE BOOL "" FORCE)
-# set(SPIRV_TOOLS_LIBRARY_TYPE STATIC)
-# set(BUILD_SHARED_LIBS 0)
-
-# add_subdirectory(vulkan-renderer/third-party/shaderc)
-# include_directories(vulkan-renderer/third-party/shaderc/libshaderc/include)
+set(BUILD_SHARED_LIBS  ON CACHE BOOL "" FORCE)
 
 add_subdirectory(vulkan-renderer/third-party/assimp)
 include_directories(vulkan-renderer/third-party/assimp/include/assimp)
@@ -49,4 +40,34 @@ include_directories(vulkan-renderer/third-party/assimp/include/assimp)
 add_compile_definitions(STB_IMAGE_WRITE_IMPLEMENTATION)
 
 add_executable(vulkan_renderer ${SOURCES} ${IMGUI_SRC})
-target_link_libraries(vulkan_renderer glfw ${GLFW_LIBRARIES} /usr/local/lib/libshaderc_shared.1.dylib assimp /usr/local/lib/libvulkan.1.dylib)
+
+if (APPLE)
+        target_link_libraries(vulkan_renderer glfw ${GLFW_LIBRARIES} /usr/local/lib/libshaderc_shared.1.dylib assimp /usr/local/lib/libvulkan.1.dylib)
+else()
+        target_link_libraries(vulkan_renderer glfw ${GLFW_LIBRARIES} assimp $ENV{VULKAN_SDK}/Lib/shaderc_shared.lib $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
+
+
+        set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+        message(STATUS ${RUNTIME_OUTPUT_DIRECTORY})
+        message(STATUS ${EXECUTABLE_OUTPUT_PATH})
+        message(STATUS ${CMAKE_BINARY_DIR})
+        message(STATUS ${CMAKE_BUILD_TYPE})
+
+        add_custom_command(TARGET vulkan_renderer POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "vulkan-renderer/third-party/glfw/src/$<CONFIG>/glfw3$<$<CONFIG:Debug>:d>.dll"
+                ${EXECUTABLE_OUTPUT_PATH}/$<CONFIG>)
+        
+        message(STATUS MSVC_VERSION: ${MSVC_VERSION})
+        IF(MSVC_VERSION EQUAL 1800)
+                SET(ASSIMP_MSVC_VERSION "vc120")
+        ELSEIF(MSVC_VERSION EQUAL 1900)
+                SET(ASSIMP_MSVC_VERSION "vc140")
+        ELSEIF((MSVC_VERSION GREATER_EQUAL 1910) OR (MSVC_VERSION LESS_EQUAL 1919))
+                SET(ASSIMP_MSVC_VERSION "vc141")
+        ENDIF()
+        add_custom_command(TARGET vulkan_renderer POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "vulkan-renderer/third-party/assimp/bin/$<CONFIG>/assimp-${ASSIMP_MSVC_VERSION}-mt$<$<CONFIG:Debug>:d>.dll"      # <--this is in-file
+                ${EXECUTABLE_OUTPUT_PATH}/$<CONFIG>)
+endif()

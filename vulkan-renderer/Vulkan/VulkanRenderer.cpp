@@ -563,14 +563,14 @@ void VulkanRenderer::_initSynchronizations()
     createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     vkCreateFence(_device, &createInfo, nullptr, &_swapchainImageAvailable);
 
-    vk::SemaphoreCreateInfo semaphoreInfo();
+    vk::SemaphoreCreateInfo semaphoreInfo;
 
     _imageAvailableSemaphores.resize(_swapchainImageCount);
 
     for (size_t i = 0; i < _swapchainImageCount; i++)
     {
-//        _imageAvailableSemaphores[i] = _device.createSemaphore(reinterpret_cast<vk::SemaphoreCreateInfo*>(&semaphoreInfo));
-//        _framesData[i].renderFinishedSemaphore = _device.createSemaphore(semaphoreInfo);
+        _imageAvailableSemaphores[i] = _device.createSemaphore(semaphoreInfo);
+        _framesData[i].renderFinishedSemaphore = _device.createSemaphore(semaphoreInfo);
     }
 }
 
@@ -633,7 +633,7 @@ void VulkanRenderer::_createCommandBuffers()
 		std::vector<std::shared_ptr<Framebuffer>> framebuffers = { inputFrameubffer, offscreenFramebuffer };
 		m_postEffects.back()->Draw(commandBuffer, framebuffers, _framesData[i].framebuffer);
 
-		_myGui->Draw(commandBuffer);
+		//_myGui->Draw(commandBuffer);
 
 		commandBuffer.end();
 

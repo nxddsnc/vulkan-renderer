@@ -3,13 +3,10 @@
 #include <array>
 #include <chrono>
 #include <iostream>
-#include <GLFW/glfw3.h>
+#include <GLFW\glfw3.h>
 #include "MyScene.h"
 #include "ModelLoader.h"
 #include "MyCamera.h"
-#include "Context.h"
-#include "ResourceManager.h"
-#include "MyGui.h"
 
 VulkanRenderer *renderer;
 Window *window;
@@ -20,38 +17,38 @@ int envMapIndex = 0;
 
 void ResizeCallback(GLFWwindow* window, int width, int height)
 {
-    renderer->Resize(width, height);
+	renderer->Resize(width, height);
 }
 
 void CloseCallback(GLFWwindow* _window)
 {
-    window->Close();
+	window->Close();
 }
 
 void MouseButtonCallback(GLFWwindow* _window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_1)
-    {
-        if (action == GLFW_PRESS)
-        {
-            renderer->GetCamera()->m_keys.left = true;
-        }
-        else
-        {
-            renderer->GetCamera()->m_keys.left = false;
-        }
-    }
-    else if (button == GLFW_MOUSE_BUTTON_2)
-    {
-        if (action == GLFW_PRESS)
-        {
-            renderer->GetCamera()->m_keys.right = true;
-        }
-        else
-        {
-            renderer->GetCamera()->m_keys.right = false;
-        }
-    }
+	if (button == GLFW_MOUSE_BUTTON_1)
+	{
+		if (action == GLFW_PRESS)
+		{
+			renderer->GetCamera()->m_keys.left = true;
+		}
+		else
+		{
+			renderer->GetCamera()->m_keys.left = false;
+		}
+	}
+	else if (button == GLFW_MOUSE_BUTTON_2)
+	{
+		if (action == GLFW_PRESS)
+		{
+			renderer->GetCamera()->m_keys.right = true;
+		}
+		else
+		{
+			renderer->GetCamera()->m_keys.right = false;
+		}
+	}
 }
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -75,97 +72,88 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void MouseScrollCallback(GLFWwindow* _window, double xoffset, double yoffset)
 {
-    auto camera = renderer->GetCamera();
-    camera->MoveForward(yoffset);
+	auto camera = renderer->GetCamera();
+	camera->MoveForward(yoffset);
 }
 
 void MouseMoveCallback(GLFWwindow* _window, double xpos, double ypos)
 {
-    double dx = mouseX - xpos;
-    double dy = mouseY - ypos;
+	double dx = mouseX - xpos;
+	double dy = mouseY - ypos;
 
-    mouseX = xpos;
-    mouseY = ypos;
-    
-    std::shared_ptr<MyCamera> camera = renderer->GetCamera();
-    if (camera->m_keys.left) 
-    {
-        camera->Rotate(-dx, -dy);
-    }
-    else if (camera->m_keys.right)
-    {
-        camera->Translate(dx, dy);
-    }
+	mouseX = xpos;
+	mouseY = ypos;
+
+	std::shared_ptr<MyCamera> camera = renderer->GetCamera();
+	if (camera->m_keys.left)
+	{
+		camera->Rotate(-dx, -dy);
+	}
+	else if (camera->m_keys.right)
+	{
+		camera->Translate(dx, dy);
+	}
 }
 
 int main()
 {
-    window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
-
-    renderer = new VulkanRenderer(window);
+	window = new Window(WIDTH, HEIGHT, "Vulkan_Renderer");
+	renderer = new VulkanRenderer(window);
 	renderer->LoadSkybox(envMaps[envMapIndex].c_str());
-    GLFWwindow *_window = window->GetGLFWWindow();
-
-    glfwSetWindowSizeCallback(_window, ResizeCallback);
-    glfwSetWindowCloseCallback(_window, CloseCallback);
-    glfwSetMouseButtonCallback(_window, MouseButtonCallback);
+	GLFWwindow *_window = window->GetGLFWWindow();
+	glfwSetWindowSizeCallback(_window, ResizeCallback);
+	glfwSetWindowCloseCallback(_window, CloseCallback);
+	glfwSetMouseButtonCallback(_window, MouseButtonCallback);
 	glfwSetKeyCallback(_window, KeyCallback);
-    glfwSetScrollCallback(_window, MouseScrollCallback);
-    glfwSetCursorPosCallback(_window, MouseMoveCallback);
+	glfwSetScrollCallback(_window, MouseScrollCallback);
+	glfwSetCursorPosCallback(_window, MouseMoveCallback);
 
-    auto timer = std::chrono::steady_clock();
-    auto lastTime = timer.now();
-    auto lastFrameTime = timer.now();
-    uint64_t frameCounter = 0;
-    uint64_t fps = 0;
+	auto timer = std::chrono::steady_clock();
+	auto lastTime = timer.now();
+	auto lastFrameTime = timer.now();
+	uint64_t frameCounter = 0;
+	uint64_t fps = 0;
 
 	std::shared_ptr<MyScene> myScene = std::make_shared<MyScene>();
-    ModelLoader modelLoader(myScene);
-    //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
-    //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
-    //if (!modelLoader.load("./TestModel/sphere1.obj"))
+	ModelLoader modelLoader(myScene);
+	//if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
+	//if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
+	//if (!modelLoader.load("./TestModel/sphere1.obj"))
 	if (!modelLoader.load("./TestModel/house.fbx"))
-	//if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
-	//if (!modelLoader.load("./TestModel/walking/scene.gltf"))
-    //if (!modelLoader.load("./TestModel/crytek-sponza-huge-vray.fbx"))
-    {
-        std::cout << "can't read file!" << std::endl;
-        return -1;
-    } 
-    else
-    {
-        renderer->AddScene(myScene);
-    }
+		//if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
+		//if (!modelLoader.load("./TestModel/walking/scene.gltf"))
+		//if (!modelLoader.load("./TestModel/crytek-sponza-huge-vray.fbx"))
+	{
+		std::cout << "can't read file!" << std::endl;
+		return -1;
+	}
+	else
+	{
+		renderer->AddScene(myScene);
+	}
 
-    std::string fpsInfo;
-    MyGui* mygui = renderer->GetMyGui();
-    while (renderer->Run())
-    {
-        if (lastFrameTime + std::chrono::milliseconds(16) < timer.now())
-        {
-            lastFrameTime = timer.now();
-        }
-        else
-        {
-            continue;
-        }
+	while (renderer->Run())
+	{
+		if (lastFrameTime + std::chrono::milliseconds(16) < timer.now())
+		{
+			lastFrameTime = timer.now();
+		}
+		else
+		{
+			continue;
+		}
 
-        ++frameCounter;
-        if (lastTime + std::chrono::seconds(1) < timer.now()) 
-        {
-            mygui->Clear();
-            lastTime = timer.now();
-            fps = frameCounter;
-            frameCounter = 0;
+		++frameCounter;
+		if (lastTime + std::chrono::seconds(1) < timer.now()) {
+			lastTime = timer.now();
+			fps = frameCounter;
+			frameCounter = 0;
+			std::cout << "FPS: " << fps << std::endl;
+		}
+		renderer->DrawFrame();
 
-            fpsInfo = "FPS: " + std::to_string(fps);
-
-            mygui->AddInfo(fpsInfo);
-        }
-        renderer->DrawFrame();
-
-        glfwPollEvents();
-    }
-    delete renderer;
-    return 0;
+		glfwPollEvents();
+	}
+	delete renderer;
+	return 0;
 }

@@ -130,7 +130,9 @@ void VulkanContext::_setupDebug()
     //_instanceLayers.push_back()
     _instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
     
+#if __APPLE__
     _instanceExtensions.push_back("VK_EXT_metal_surface");
+#endif
 
     _instanceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
     //VK_LAYER_NV_optimus
@@ -224,7 +226,7 @@ void VulkanContext::_initDebug()
 void VulkanContext::_deInitDebug()
 {
     fvkDestroyDebugReportCallbackExt(_instance, _debugReport, nullptr);
-    _debugReport = nullptr;
+    _debugReport = VK_NULL_HANDLE;
 }
 
 void VulkanContext::_initDevice()
