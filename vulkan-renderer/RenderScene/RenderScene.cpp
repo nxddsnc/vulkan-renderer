@@ -100,6 +100,7 @@ void RenderScene::AddScene(std::shared_ptr<MyScene> scene)
 		{
 			auto renderQueue = m_pRenderQueueManager->GetRenderQueue(id, m_framebuffers[0]->m_pRenderPass);
 			m_renderQueues.push_back(renderQueue);
+			renderQueue->AddRenderable(renderable_);
 		}
 	}
 

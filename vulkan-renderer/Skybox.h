@@ -214,7 +214,9 @@ class Skybox
 public:
     Skybox(ResourceManager *resourceManager, PipelineManager *pipelineManager, VulkanContext *context);
     ~Skybox();
-    bool LoadFromDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool);
+    bool LoadFromCubmapDDS(const char* path, vk::Device device, vk::DescriptorPool &descriptorPool);
+
+    bool LoadFromPanoramaHdr(const char* path, vk::Device device, vk::DescriptorPool& descriptorPool);
 
 	void Draw(vk::CommandBuffer &commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<RenderPass> renderPass);
 public:
@@ -249,6 +251,7 @@ private:
     std::shared_ptr<VulkanTexture> generateIrradianceMap(vk::DescriptorPool &descriptorPool);
     std::shared_ptr<VulkanTexture> generateBRDFLUT(vk::DescriptorPool &descriptorPool);
 
+    bool m_bCubemap = true;
 	void initSHLight();
 };
 

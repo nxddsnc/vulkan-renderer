@@ -12,7 +12,7 @@ VulkanRenderer *renderer;
 Window *window;
 double mouseX, mouseY;
 
-std::string envMaps[2] = { "./TestModel/Skybox/environment.dds", "./TestModel/Skybox/country.dds" };
+std::string envMaps[2] = {"./TestModel/Skybox/panorama.hdr", "./TestModel/Skybox/environment.dds"};
 int envMapIndex = 0;
 
 void ResizeCallback(GLFWwindow* window, int width, int height)
@@ -116,10 +116,10 @@ int main()
 
 	std::shared_ptr<MyScene> myScene = std::make_shared<MyScene>();
     ModelLoader modelLoader(myScene);
-    //if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
+    if (!modelLoader.load("./TestModel/damagedHelmet/damagedHelmet.gltf"))
     //if (!modelLoader.load("./TestModel/cube/Cube.gltf"))
     //if (!modelLoader.load("./TestModel/sphere1.obj"))
-	if (!modelLoader.load("./TestModel/house.fbx"))
+	//if (!modelLoader.load("./TestModel/house.fbx"))
 	//if (!modelLoader.load("./TestModel/BrainStem/BrainStem.gltf"))
 	//if (!modelLoader.load("./TestModel/walking/scene.gltf"))
     //if (!modelLoader.load("./TestModel/crytek-sponza-huge-vray.fbx"))

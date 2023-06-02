@@ -545,7 +545,13 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
 		break;
 	case MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT:
 		vulkanTexture->format = vk::Format::eR16G16B16A16Sfloat;
+        break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT:
+        vulkanTexture->format = vk::Format::eR32G32B32A32Sfloat;
 		break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGB32_FLOAT:
+        vulkanTexture->format = vk::Format::eR32G32B32Sfloat;
+        break;
 	case MyImageFormat::MY_IMAGEFORMAT_R16_FLOAT:
 		vulkanTexture->format = vk::Format::eR16Sfloat;
 		break;
@@ -661,6 +667,8 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
 	case MyImageFormat::MY_IMAGEFORMAT_D32_FLOAT:
 		imageFormat = vk::Format::eD32Sfloat;
 		break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGB32_FLOAT:
+        imageFormat = vk::Format::eR32G32B32Sfloat;
 		break;
     }
 
@@ -801,6 +809,9 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateCombinedTexture(std::share
 		imageFormat = vk::Format::eD32Sfloat;
 		bDepthTexture = true;
 		break;
+    case MyImageFormat::MY_IMAGEFORMAT_RGB32_FLOAT:
+        imageFormat = vk::Format::eR32G32B32Sfloat;
+        break;
     }
 
 	vk::CompareOp compareOp = vk::CompareOp::eAlways;

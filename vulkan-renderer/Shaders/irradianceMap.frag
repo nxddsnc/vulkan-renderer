@@ -3,9 +3,20 @@
 layout (location = 0) in vec3 inPos;
 layout (location = 0) out vec4 outColor;
 
+#if IS_CUBEMAP
 layout (binding = 0) uniform samplerCube samplerEnv;
+#else
+layout (binding = 0) uniform sampler2D samplerEnv;
+#endif
 
 const float PI = 3.1415926535897932384626433832795;
+
+vec2 dirToUV(vec3 dir)
+{
+	return vec2(
+		0.5f + 0.5f * atan(dir.z, dir.x) / PI,
+		1.f - acos(dir.y) / PI);
+}
 
 void main()
 {		
@@ -25,7 +36,11 @@ void main()
 		for (float theta = 0.0; theta < HALF_PI; theta += deltaTheta) {
 			vec3 tempVec = cos(phi) * right + sin(phi) * up;
 			vec3 sampleVector = cos(theta) * N + sin(theta) * tempVec;
+#if IS_CUBEMAP
 			color += texture(samplerEnv, sampleVector).rgb * cos(theta) * sin(theta);
+#else
+			color += texture(samplerEnv, dirToUV(sampleVector)).rgb * cos(theta) * sin(theta);
+#endif
 			sampleCount++;
 		}
 	}
