@@ -114,6 +114,8 @@ void main()
     vec2 texelScale = 1.0 / textureSize(u_shadowMap, 0);
     outColor *= shadow(pos.xyz, texelScale);
 
+    //outColor.rgb = diffuse;
+
     outColor.a = 1.0;
 
 }

@@ -6,7 +6,7 @@
 MyCamera::MyCamera(VmaAllocator * memoryAllocator, bool orthogonal)
 {
 	m_rotationSpeed = 0.001f;
-	m_movementSpeed = 20.0f;
+	m_movementSpeed = 2.0f;
     
     m_alpha = 0.0f;
     m_beta  = 0.0f;

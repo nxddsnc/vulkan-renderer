@@ -27,7 +27,8 @@ vec2 dirToUV(vec3 dir)
 
 void main() 
 {
-	vec3 color = texture(samplerEnv, dirToUV(inUVW)).rgb;
+	// vec3 color = texture(samplerEnv, dirToUV(inUVW)).rgb;
+	vec3 color = inUVW;
 
 	// color = textureLod(samplerPreFilteredCubeMap, inUVW, 20).rgb;
 	// color = Uncharted2Tonemap(color);

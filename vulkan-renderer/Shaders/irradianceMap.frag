@@ -27,8 +27,8 @@ void main()
 
 	const float TWO_PI = PI * 2.0;
 	const float HALF_PI = PI * 0.5;
-	const float deltaPhi = TWO_PI / 360.0;
-	const float deltaTheta = HALF_PI / 180.0;
+	const float deltaPhi = TWO_PI / 36.0;
+	const float deltaTheta = HALF_PI / 18.0;
 
 	vec3 color = vec3(0.0);
 	uint sampleCount = 0u;

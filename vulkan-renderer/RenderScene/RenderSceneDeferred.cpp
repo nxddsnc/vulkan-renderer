@@ -37,7 +37,7 @@ void RenderSceneDeferred::Draw(vk::CommandBuffer& commandBuffer)
 
 	_begin(commandBuffer);
 	// drawAxis
-	//m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->descriptorSet, m_framebuffers[0]->m_pRenderPass);
+	m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->m_descriptorSet, m_framebuffers[0]->m_pRenderPass);
 
 	for (auto renderQueue : m_renderQueues)
 	{

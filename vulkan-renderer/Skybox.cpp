@@ -274,6 +274,8 @@ bool Skybox::LoadFromPanoramaHdr(const char* path, vk::Device device, vk::Descri
     m_pVulkanTextureEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTextureEnvMap);
     m_pResourceManager->InitVulkanTextureData(m_pTextureEnvMap, m_pVulkanTextureEnvMap);
 
+    // FIXME: Stupid way to avoid duplicated delete...
+    image->m_data = nullptr;
 
     {
         std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
@@ -585,7 +587,7 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
     irradianceMap->m_pImage->m_bufferSize = 0;
     for (int i = 0; i < mipmapCount; ++i)
     {
-        m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize += width * height * 4 * 2 / std::max(1, int(width / pow(2, i)));
+        irradianceMap->m_pImage->m_bufferSize += width * height * 4 * 2 / std::max(1, int(width / pow(2, i)));
     }
     irradianceMap->m_pImage->m_bufferSize *= 6;
     irradianceMap->m_pImage->m_mipmapCount = mipmapCount;
