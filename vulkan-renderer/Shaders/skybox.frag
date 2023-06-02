@@ -1,7 +1,6 @@
 #version 450
 
-// layout (set = 1, binding = 0) uniform samplerCube samplerEnv;
-layout (set = 1, binding = 0) uniform sampler2D samplerEnv;
+layout (set = 1, binding = 0) uniform samplerCube samplerEnv;
 
 // layout (set = 2, binding = 0) uniform samplerCube samplerPreFilteredCubeMap;
 // layout (set = 2, binding = 0) uniform samplerCube samplerPreFilteredCubeMap;
@@ -16,18 +15,9 @@ layout (location = 0) out vec4 outColor;
 // 	float gamma;
 // } uboParams;
 
-const float PI = 3.1415926536;
-
-vec2 dirToUV(vec3 dir)
-{
-	return vec2(
-		0.5f + 0.5f * atan(dir.z, dir.x) / PI,
-		1.f - acos(dir.y) / PI);
-}
-
 void main() 
 {
-	vec3 color = texture(samplerEnv, dirToUV(inUVW)).rgb;
+	vec3 color = texture(samplerEnv, inUVW).rgb;
 
 	// color = textureLod(samplerPreFilteredCubeMap, inUVW, 20).rgb;
 	// color = Uncharted2Tonemap(color);

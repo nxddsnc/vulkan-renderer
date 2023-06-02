@@ -1,7 +1,4 @@
 #include "Utils.h"
-#include <algorithm>
-#include <cctype>
-#include <string>
 
 std::string GetFileDirectory(std::string filename)
 {
@@ -111,15 +108,5 @@ void ApplyMatrixToBBox(glm::mat4 & mat, BBox & bbox)
 		{
 			bbox.max.z = points[i].z;
 		}
-	}
-}
-
-bool HasEnding(std::string const& fullString, std::string const& ending)
-{
-	if (fullString.length() >= ending.length()) {
-		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-	}
-	else {
-		return false;
 	}
 }

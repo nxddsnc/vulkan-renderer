@@ -14,7 +14,7 @@ ShaderModule::~ShaderModule()
 	_device->destroyShaderModule(_shaderModule);
 }
 
-void ShaderModule::BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry, std::vector<std::string> macros)
+void ShaderModule::BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry)
 {
 	std::ifstream file(filename);
 
@@ -28,11 +28,6 @@ void ShaderModule::BuildFromFile(const std::string& filename, ShaderStage stage,
 
 	shaderc::Compiler compiler;
 	shaderc::CompileOptions options;
-
-	for (auto& macro : macros)
-	{
-		options.AddMacroDefinition(macro, "1");
-	}
 	addShaderOptions(stage, &options);
 
 	shaderc_shader_kind kind;

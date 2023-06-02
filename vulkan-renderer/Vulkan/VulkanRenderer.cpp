@@ -31,12 +31,10 @@
 #include "RenderSceneDeferred.h"
 #include "MyScene.h"
 #include "ShadowMap.h"
-#include "Utils.h"
-
 VulkanRenderer::VulkanRenderer(Window *window)
 {
     _window = window;
-    _swapchainExtent = vk::Extent2D(WIDTH, HEIGHT);
+    _swapchainExtent = {WIDTH, HEIGHT};
     _context = new VulkanContext(window);
 
     _pipelineManager = new PipelineManager(this);
@@ -211,10 +209,7 @@ void VulkanRenderer::GetExtendSize(uint32_t &width, uint32_t &height)
 
 void VulkanRenderer::LoadSkybox(const char * path)
 {
-    if (HasEnding(path, "dds"))
-	    _renderScene->m_pSkybox->LoadFromCubmapDDS(path, _device, _descriptorPool);
-    else
-        _renderScene->m_pSkybox->LoadFromPanoramaHdr(path, _device, _descriptorPool);
+	_renderScene->m_pSkybox->LoadFromDDS(path, _device, _descriptorPool);
 	_createCommandBuffers();
 }
 

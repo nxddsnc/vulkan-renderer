@@ -24,7 +24,7 @@ public:
     vk::ShaderModule GetShaderModule() { return _shaderModule; };
     vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() { return _stageCreateInfo; }
 
-    void BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry, std::vector<std::string> macros = std::vector<std::string>());
+    void BuildFromFile(const std::string& filename, ShaderStage stage, const char *entry);
 
 private:
     void addShaderOptions(ShaderStage stage, shaderc::CompileOptions *option);

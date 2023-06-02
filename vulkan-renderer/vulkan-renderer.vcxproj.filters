@@ -159,9 +159,6 @@
     <ClCompile Include="Renderable.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="hdrloader.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUILD_OPTIONS.h">
@@ -267,9 +264,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderable.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="hdrloader.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

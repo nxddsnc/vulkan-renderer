@@ -128,7 +128,7 @@ void VulkanContext::_setupDebug()
         0;
 
     //_instanceLayers.push_back()
-    _instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
+    _instanceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
 
     _instanceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
     //VK_LAYER_NV_optimus
@@ -143,7 +143,7 @@ void VulkanContext::_setupDebug()
     //VK_LAYER_LUNARG_standard_validation
     //VK_LAYER_LUNARG_vktrace
 
-    _deviceLayers.push_back("VK_LAYER_KHRONOS_validation");
+    _deviceLayers.push_back("VK_LAYER_LUNARG_standard_validation");
 }
 
 
@@ -173,8 +173,8 @@ void VulkanContext::_initInstance()
         "Vulkan Renderer",
         1,
         "Vulkan",
-        VK_API_VERSION_1_3,
-        VK_API_VERSION_1_3
+        VK_API_VERSION_1_1,
+        VK_API_VERSION_1_1
     });
 
     vk::InstanceCreateInfo instanceCreateInfo({

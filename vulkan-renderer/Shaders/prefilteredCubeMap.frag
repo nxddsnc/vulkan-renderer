@@ -3,11 +3,7 @@
 layout (location = 0) in vec3 inPos;
 layout (location = 0) out vec4 outColor;
 
-#if IS_CUBEMAP
 layout (binding = 0) uniform samplerCube samplerEnv;
-#else
-layout (binding = 0) uniform sampler2D samplerEnv;
-#endif 
 
 layout(push_constant) uniform PushConsts {
 	layout (offset = 64) float roughness;
@@ -66,13 +62,6 @@ float D_GGX(float dotNH, float roughness)
 	return (alpha2)/(PI * denom*denom); 
 }
 
-vec2 dirToUV(vec3 dir)
-{
-	return vec2(
-		0.5f + 0.5f * atan(dir.z, dir.x) / PI,
-		1.f - acos(dir.y) / PI);
-}
-
 int numSamples = 32;
 vec3 prefilterEnvMap(vec3 R, float roughness)
 {
@@ -100,12 +89,7 @@ vec3 prefilterEnvMap(vec3 R, float roughness)
 			float omegaP = 4.0 * PI / (6.0 * envMapDim * envMapDim);
 			// Biased (+1.0) mip level for better result
 			float mipLevel = roughness == 0.0 ? 0.0 : max(0.5 * log2(omegaS / omegaP) + 1.0, 0.0f);
-
-#if IS_CUBEMAP
 			color += textureLod(samplerEnv, L, mipLevel).rgb * dotNL;
-#else
-			color += textureLod(samplerEnv, dirToUV(L), mipLevel).rgb * dotNL;
-#endif
 			totalWeight += dotNL;
 
 		}

@@ -1,9 +1,7 @@
 #pragma once
 
-#define WIDTH 800
-#define HEIGHT 600
-#define PREFILTERED_IMAGE_WIDTH 512
-#define PREFILTERED_IMAGE_HEIGHT 512
+#define WIDTH 1600
+#define HEIGHT 1000
 
 #ifdef _WIN32 
 #define USE_GLFW 1

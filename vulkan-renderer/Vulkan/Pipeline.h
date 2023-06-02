@@ -14,8 +14,7 @@ enum PipelineType
 	BRIGHTNESS,
 	GAUSSIAN_BLUR_X,
 	GAUSSIAN_BLUR_Y,
-	BLIT,
-  BLIT_ENV_MAP
+	BLIT
 };
 
 enum class PrimitiveMode : uint8_t {
@@ -109,14 +108,13 @@ public:
 	void InitDepth(std::shared_ptr<RenderPass> renderPass);
 	void InitModelGBuffer(std::shared_ptr<RenderPass> renderPass);
     void InitSkybox(std::shared_ptr<RenderPass> renderPass);
-    void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass, bool isCubemap = true);
-    void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass, bool isCubemap = true);
+    void InitPrefilteredCubeMap(vk::Device device, vk::RenderPass renderPass);
+    void InitIrradianceMap(vk::Device device, vk::RenderPass renderPass);
     void InitGenerateBrdfLut(vk::Device device, vk::RenderPass renderPass);
 	void InitBrightPass(vk::Device device, vk::RenderPass renderPass);
 	void InitGaussianBlur(vk::Device device, vk::RenderPass renderPass);
 	void InitBlit(vk::Device device, vk::RenderPass renderPass);
 	void InitDeferred(std::shared_ptr<RenderPass> renderPass);
-    void InitBlitEnvMap(vk::Device device, vk::RenderPass renderPass);
 public:
 	bool m_bReady;
 	PipelineId m_id;
