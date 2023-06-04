@@ -498,13 +498,11 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     offscreenTexture->m_pImage->m_width = width;
     offscreenTexture->m_pImage->m_height = height;
     offscreenTexture->m_pImage->m_channels = 4;
-    offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+    offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 4;
     offscreenTexture->m_pImage->m_mipmapCount = 1;
     offscreenTexture->m_pImage->m_layerCount = 1;
     offscreenTexture->m_pImage->m_bFramebuffer = true;
     offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
-    offscreenTexture->m_pImage->m_bHostVisible = true;
-    offscreenTexture->m_pImage->m_bTransferSrc= true;
 
     offscreenTexture->m_wrapMode[0] = WrapMode::CLAMP;
     offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
@@ -531,6 +529,7 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     m_pTexturePrefilteredEnvMap->m_wrapMode[0] = WrapMode::CLAMP;
     m_pTexturePrefilteredEnvMap->m_wrapMode[1] = WrapMode::CLAMP;
     m_pTexturePrefilteredEnvMap->m_wrapMode[2] = WrapMode::CLAMP;
+    //m_pTexturePrefilteredEnvMap->m_pImage->m_bHostVisible = true;
 
     m_pVulkanTexturePrefilteredEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTexturePrefilteredEnvMap);
 
@@ -632,10 +631,13 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTexturePrefilteredEnvMap->image, vk::Format::eR32G32B32A32Sfloat, ssrCubemap,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
-    char* cubemapData = new char[m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize];
-    size_t offset = 0;
+    // FIXME: ugly way to copy texture from gpu to cpu...
+    std::vector<std::vector<std::shared_ptr<MyTexture>>> textures;
+    std::vector<std::vector<std::shared_ptr<VulkanTexture>>> vulkanTextures;
     for (int level = 0; level < mipmapCount; ++level)
     {
+        textures.push_back(std::vector<std::shared_ptr<MyTexture>>());
+        vulkanTextures.push_back(std::vector<std::shared_ptr<VulkanTexture>>());
         float roughness = (float)level / (float)(mipmapCount - 1);
         pushBlock.roughness = roughness;
         for (int i = 0; i < 6; ++i)
@@ -661,6 +663,32 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
 
             commandBuffer.endRenderPass();
 
+            /*********************************************************************/
+			std::shared_ptr<MyTexture> tempTexture = std::make_shared<MyTexture>();
+			char imageName[32];
+			sprintf(imageName, "TempImage_%d", i);
+			tempTexture->m_pImage = std::make_shared<MyImage>(imageName);
+			tempTexture->m_pImage->m_width = viewport.width;
+			tempTexture->m_pImage->m_height = viewport.height;
+			tempTexture->m_pImage->m_channels = 4;
+			tempTexture->m_pImage->m_bufferSize = viewport.width * viewport.height * 4 * 4;
+			tempTexture->m_pImage->m_mipmapCount = 1;
+			tempTexture->m_pImage->m_layerCount = 1;
+			tempTexture->m_pImage->m_bFramebuffer = false;
+			tempTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
+			tempTexture->m_pImage->m_bHostVisible = true;
+
+			tempTexture->m_wrapMode[0] = WrapMode::CLAMP;
+			tempTexture->m_wrapMode[1] = WrapMode::CLAMP;
+			tempTexture->m_wrapMode[2] = WrapMode::CLAMP;
+
+
+			std::shared_ptr<VulkanTexture> tempVulkanTexture = m_pResourceManager->CreateVulkanTexture(tempTexture);
+
+			textures[level].push_back(tempTexture);
+			vulkanTextures[level].push_back(tempVulkanTexture);
+            /*********************************************************************/
+
 
 			//m_pResourceManager->TransferGPUTextureToCPU(offscreenVulkanTexture, cubemapData + offset, viewport.width* viewport.height * 4 * 4);
 			//offset += viewport.width* viewport.height * 4 * 4;
@@ -676,11 +704,23 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
                 vk::Offset3D(0, 0, 0),
                 vk::Extent3D(viewport.width, viewport.height, 1));
 
-
-
             commandBuffer.copyImage(offscreenVulkanTexture->image, vk::ImageLayout::eTransferSrcOptimal, 
                 m_pVulkanTexturePrefilteredEnvMap->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
+
+            vk::ImageSubresourceRange ssrTemp(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+			m_pResourceManager->SetImageLayout(commandBuffer, tempVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, ssrTemp,
+				vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+
+			vk::ImageCopy copyRegionTemp(
+				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+				vk::Offset3D(0, 0, 0),
+				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+				vk::Offset3D(0, 0, 0),
+				vk::Extent3D(viewport.width, viewport.height, 1));
+			commandBuffer.copyImage(offscreenVulkanTexture->image, vk::ImageLayout::eTransferSrcOptimal,
+                tempVulkanTexture->image,
+				vk::ImageLayout::eTransferDstOptimal, 1, &copyRegionTemp);
 
 			m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
 				vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
@@ -707,10 +747,20 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
 
-
-	//m_pResourceManager->TransferGPUTextureToCPU(m_pVulkanTexturePrefilteredEnvMap, m_pTexturePrefilteredEnvMap);
-	//char name[32];
-	
+	char* cubemapData = new char[m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize];
+	size_t offset = 0;
+    size_t tempWidth, tempHeight = 0;
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int level = 0; level < mipmapCount; ++level)
+		{
+            tempWidth = width* std::pow(0.5f, level);
+            tempHeight = height* std::pow(0.5f, level);
+            //m_pResourceManager->TransferGPUTextureToCPU(vulkanTextures[level][i], textures[level][i]);
+			m_pResourceManager->TransferGPUTextureToCPU(vulkanTextures[level][i], cubemapData + offset, tempWidth * tempHeight * 4 * 4);
+			offset += tempWidth * tempHeight * 4 * 4;
+        }
+     }
     DumpCubemapToDDS("D:\\Coding\\github\\vulkan-renderer\\vulkan-renderer\\TestModel\\Skybox\\environment.dds", cubemapData, width, height, mipmapCount, m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize);
     delete [] cubemapData;
 
