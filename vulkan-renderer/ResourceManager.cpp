@@ -616,7 +616,19 @@ std::shared_ptr<VulkanTexture> ResourceManager::CreateVulkanTexture(std::shared_
     allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 	if (texture->m_pImage->m_bHostVisible)
 	{
-		allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+
+      /*  VMA_MEMORY_USAGE_CPU_ONLY = 2,
+            VMA_MEMORY_USAGE_CPU_TO_GPU = 3,
+            VMA_MEMORY_USAGE_GPU_TO_CPU = 4,
+            VMA_MEMORY_USAGE_CPU_COPY = 5,
+            VMA_MEMORY_USAGE_GPU_LAZILY_ALLOCATED = 6,*/
+
+		//VK_MEMORY_PROPERTY_HOST_COHERENT_BIT = 4,
+		//	VK_MEMORY_PROPERTY_HOST_CACHED_BIT = 8,
+		//	VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT = 16,
+		//	VK_MEMORY_PROPERTY_PROTECTED_BIT = 32
+		allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_TO_CPU;
+		//allocationCreateInfo.requiredFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
 		imageCreateInfo.tiling = vk::ImageTiling::eLinear;
 	}
     vmaCreateImage(m_memoryAllocator, reinterpret_cast<VkImageCreateInfo*>(&imageCreateInfo), &allocationCreateInfo,
@@ -669,6 +681,9 @@ void ResourceManager::InitVulkanTextureData(std::shared_ptr<MyTexture> texture, 
 		break;
     case MyImageFormat::MY_IMAGEFORMAT_RGB32_FLOAT:
         imageFormat = vk::Format::eR32G32B32Sfloat;
+		break;
+	case MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT:
+		imageFormat = vk::Format::eR32G32B32A32Sfloat;
 		break;
     }
 
@@ -784,6 +799,15 @@ void ResourceManager::TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src
 		dst->m_pImage->m_data = new char[dst->m_pImage->m_bufferSize];
 	}
 	memcpy(dst->m_pImage->m_data, data, static_cast<size_t>(dst->m_pImage->m_bufferSize));
+	vmaUnmapMemory(m_memoryAllocator, src->imageMemory);
+}
+
+void ResourceManager::TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, void* dst, size_t size)
+{
+	void* data;
+	vmaMapMemory(m_memoryAllocator, src->imageMemory, &data);
+
+	memcpy(dst, data, static_cast<size_t>(size));
 	vmaUnmapMemory(m_memoryAllocator, src->imageMemory);
 }
 

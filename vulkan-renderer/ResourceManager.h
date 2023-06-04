@@ -37,6 +37,7 @@ public:
 	void DestroyUniformBuffer(vk::Buffer &buffer, VmaAllocation &bufferMemory);
 	void UpdateBuffer(VmaAllocation bufferMemory, char* src, int size);
 	void TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, std::shared_ptr<MyTexture> dst);
+    void TransferGPUTextureToCPU(std::shared_ptr<VulkanTexture> src, void* dst, size_t size);
 private:
     void _createTextures(std::shared_ptr<Renderable> renderable);
     vk::CommandBuffer _beginSingleTimeCommand();

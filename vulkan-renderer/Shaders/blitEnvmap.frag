@@ -10,9 +10,10 @@ const float PI = 3.1415926536;
 
 vec2 dirToUV(vec3 dir)
 {
+	vec3 normalizedDir = normalize(dir);
 	return vec2(
-		0.5f + 0.5f * atan(dir.z, dir.x) / PI,
-		1.f - acos(dir.y) / PI);
+		0.5f + 0.5f * atan(normalizedDir.y, normalizedDir.x) / PI,
+		acos(normalizedDir.z) / PI);
 }
 
 void main()

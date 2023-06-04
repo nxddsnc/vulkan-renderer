@@ -77,6 +77,12 @@ public:
 public:
     glm::mat4                     m_matrix;
     glm::mat4                     m_normalMatrix;
+
+	void SetMatrix(glm::mat4 matrix)
+	{
+		m_matrix = matrix;
+		m_normalMatrix = glm::transpose(glm::inverse(matrix));
+	}
 };
 
 class InstanceRenderable : public Renderable

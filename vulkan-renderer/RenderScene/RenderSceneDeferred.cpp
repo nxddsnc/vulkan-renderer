@@ -37,7 +37,7 @@ void RenderSceneDeferred::Draw(vk::CommandBuffer& commandBuffer)
 
 	_begin(commandBuffer);
 	// drawAxis
-	m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->m_descriptorSet, m_framebuffers[0]->m_pRenderPass);
+	//m_pAxis->CreateDrawCommand(commandBuffer, m_pCamera->m_descriptorSet, m_framebuffers[0]->m_pRenderPass);
 
 	for (auto renderQueue : m_renderQueues)
 	{
@@ -54,16 +54,16 @@ void RenderSceneDeferred::Draw(vk::CommandBuffer& commandBuffer)
 
 void RenderSceneDeferred::_init()
 {
-	std::vector<MyImageFormat> colorFormats = { MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT, // position 
-												MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT, // normal
-												MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT}; // albedo
+	std::vector<MyImageFormat> colorFormats = { MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT, // position 
+												MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT, // normal
+												MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT }; // albedo
 
 	std::shared_ptr<Framebuffer> framebuffer = std::make_shared<Framebuffer>("deferred-mrt-color", "deferred-depth", m_pResourceManager,
 		colorFormats, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT, m_width, m_height);
 
 	m_framebuffers.push_back(framebuffer);
 
-	std::vector<MyImageFormat> outputColorFormats = { MyImageFormat::MY_IMAGEFORMAT_RGBA16_FLOAT };
+	std::vector<MyImageFormat> outputColorFormats = { MyImageFormat::MY_IMAGEFORMAT_RGBA32_FLOAT };
 	 m_outputFramebuffer = std::make_shared<Framebuffer>("deferred-output-color", "deferred-depth", m_pResourceManager,
 		 outputColorFormats, MyImageFormat::MY_IMAGEFORMAT_D24S8_UINT, m_width, m_height);
 

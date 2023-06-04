@@ -218,6 +218,8 @@ public:
 
     bool LoadFromPanoramaHdr(const char* path, vk::Device device, vk::DescriptorPool& descriptorPool);
 
+    bool DumpCubemapToDDS(const char* path, void* data, DWORD width, DWORD height, DWORD mipmapCount, uint32_t size);
+
 	void Draw(vk::CommandBuffer &commandBuffer, std::shared_ptr<MyCamera> camera, std::shared_ptr<RenderPass> renderPass);
 public:
     ResourceManager               *m_pResourceManager;

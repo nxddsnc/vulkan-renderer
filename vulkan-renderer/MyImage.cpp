@@ -80,6 +80,14 @@ glm::vec3 MyImage::ReadPixel(int x, int y)
 		float32(&(res.y), imageData[offset + 1]);
 		float32(&(res.z), imageData[offset + 2]);
 	}
+	else if (MY_IMAGEFORMAT_RGBA32_FLOAT == m_format)
+	{
+		float* imageData = reinterpret_cast<float*>(m_data);
+		int offset = (y * m_width + x) * m_channels;
+		res.x = imageData[offset];
+		res.y = imageData[offset + 1];
+		res.z = imageData[offset + 2];
+	}
 
 	//res.x = pow(res.x, 2.2);
 	//res.y = pow(res.y, 2.2);

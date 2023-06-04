@@ -50,7 +50,7 @@ bool ModelLoader::load(const char * filepath)
 
     // Seems that assimp's upAxis is +Y.
     // https://github.com/assimp/assimp/issues/165
-    m_flipYZ = false;
+    m_flipYZ = true;
 
     _parseScene(m_pAiScene);
     return true;
@@ -62,8 +62,9 @@ void ModelLoader::_parseScene(const aiScene * scene)
     glm::mat4 identity = glm::mat4(1.0);
     if (m_flipYZ)
     {
-        identity = { 1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1 };
-		//identity = { 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 };
+        //identity = { 1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1 };
+		identity = { 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 };
+        
     }
     _extractNode(root, identity);
     _extractSkeletonAnimations();

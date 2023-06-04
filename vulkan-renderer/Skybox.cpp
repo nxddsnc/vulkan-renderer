@@ -176,6 +176,41 @@ bool Skybox::LoadFromCubmapDDS(const char* path, vk::Device device, vk::Descript
 	m_pResourceManager->InitVulkanTextureData(m_pTextureEnvMap, m_pVulkanTextureEnvMap);
 	fclose(f);
 
+	{
+		std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+		std::vector<vk::DescriptorImageInfo> imageInfos;
+		vk::DescriptorSetLayoutBinding textureBinding(0,
+			vk::DescriptorType::eCombinedImageSampler,
+			1,
+			vk::ShaderStageFlagBits::eFragment,
+			{});
+		textureBindings.push_back(textureBinding);
+
+		vk::DescriptorImageInfo imageInfo(m_pVulkanTextureEnvMap->imageSampler,
+			m_pVulkanTextureEnvMap->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+		imageInfos.push_back(imageInfo);
+
+		vk::DescriptorSetLayout descriptorSetLayout;
+
+		vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
+		descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+
+		vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
+
+		device.allocateDescriptorSets(&allocInfo, &m_dsSkybox);
+
+		vk::WriteDescriptorSet descriptorWrite(m_dsSkybox,
+			uint32_t(0),
+			uint32_t(0),
+			static_cast<uint32_t>(imageInfos.size()),
+			vk::DescriptorType::eCombinedImageSampler,
+			imageInfos.data(),
+			{},
+			{});
+		device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
+	}
+
 
     m_pVulkanTexturePrefilteredEnvMap = generatePrefilteredCubeMap(descriptorPool);
     m_pVulkanTextureIrradianceMap = generateIrradianceMap(descriptorPool);
@@ -223,6 +258,78 @@ bool Skybox::LoadFromCubmapDDS(const char* path, vk::Device device, vk::Descript
     }
 
 }
+
+bool Skybox::DumpCubemapToDDS(const char* path, void* data, DWORD width, DWORD height, DWORD mipmapCount, uint32_t size)
+{
+	DDS_HEADER header;
+
+	unsigned int blockSize;
+
+	// open the DDS file for binary reading and get file size
+	FILE* f;
+	if ((f = fopen(path, "wb")) == 0)
+		return false;
+	fseek(f, 0, SEEK_END);
+	long file_size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
+	// read in 128 bytes from the file
+	unsigned char* magic = new unsigned char[4];
+	//fread(magic, 1, 4, f);
+    fwrite("DDS ", 4, 1, f);
+	// compare the `DDS ` signature
+	//if (memcmp(magic, "DDS ", 4) != 0)
+	//{
+	//	std::cout << "Header is not DDS." << std::endl;
+	//	return false;
+	//}
+	header.dwSize = 124;
+	header.dwFlags = 0x1 | 0x2 | 0x4 | 0x1000 | 0x20000; // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT
+	header.dwHeight = height;
+	header.dwWidth = width;
+	header.dwMipMapCount = mipmapCount;
+	header.ddspf.dwSize = 32;
+    header.ddspf.dwFlags = 0x4;
+    header.dwCaps = 0x8 | 0x400000 | 0x1000;
+    header.dwCaps2 = 0x200 | 0x400 | 0x800 | 0x1000 | 0x2000 | 0x4000 | 0x8000;
+    header.dwPitchOrLinearSize = 512 * 4 * 4;
+    header.dwDepth = 1;
+    header.dwReserved1[0] = 0;
+    header.dwCaps3 = header.dwCaps4 = header.dwReserved2 = 0;
+    //DDS_HEADER_DXT10 fourCC;
+    //fourCC.dxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    //fourCC.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+    //fourCC.miscFlag = 0x04;
+    //fourCC.miscFlags2 = 0x01;
+    //fourCC.arraySize = 1;
+
+    //memcpy(&header.ddspf.dwFourCC, &fourCC, sizeof(DWORD));
+    header.ddspf.dwFourCC = DDS_FORMAT::DX10;
+	header.ddspf.dwRBitMask = 0x00ff0000;
+	header.ddspf.dwGBitMask = 0x0000ff00;
+	header.ddspf.dwBBitMask = 0x000000ff;
+	header.ddspf.dwABitMask = 0xff000000;
+    header.ddspf.dwRGBBitCount = 128;
+
+	fwrite(&header, 124, 1, f);
+
+	DDS_HEADER_DXT10 dx10Header;
+
+	dx10Header.dxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	dx10Header.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+	dx10Header.miscFlag = 0x04;
+	dx10Header.arraySize = 1;
+	dx10Header.miscFlags2 = 0x01;
+    fwrite(&dx10Header, 1, sizeof(dx10Header), f);
+
+    fwrite(data, size, 1, f);
+
+    fclose(f);
+
+    return true;
+}
+
 
 bool Skybox::LoadFromPanoramaHdr(const char* path, vk::Device device, vk::DescriptorPool& descriptorPool)
 {
@@ -289,6 +396,7 @@ bool Skybox::LoadFromPanoramaHdr(const char* path, vk::Device device, vk::Descri
 
         vk::DescriptorImageInfo imageInfo(m_pVulkanTextureEnvMap->imageSampler,
             m_pVulkanTextureEnvMap->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+
         imageInfos.push_back(imageInfo);
 
         vk::DescriptorSetLayout descriptorSetLayout;
@@ -322,6 +430,41 @@ bool Skybox::LoadFromPanoramaHdr(const char* path, vk::Device device, vk::Descri
 
     m_preFilteredDescriptorSet = m_pResourceManager->CreateTextureDescriptorSet({ m_pVulkanTexturePrefilteredEnvMap, m_pVulkanTextureIrradianceMap, m_pVulkanTextureBRDFLUT });
     
+	/*{
+		std::vector<vk::DescriptorSetLayoutBinding> textureBindings;
+		std::vector<vk::DescriptorImageInfo> imageInfos;
+		vk::DescriptorSetLayoutBinding textureBinding(0,
+			vk::DescriptorType::eCombinedImageSampler,
+			1,
+			vk::ShaderStageFlagBits::eFragment,
+			{});
+		textureBindings.push_back(textureBinding);
+
+		vk::DescriptorImageInfo imageInfo(m_pVulkanTextureEnvMap->imageSampler,
+            m_pVulkanTexturePrefilteredEnvMap->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+		imageInfos.push_back(imageInfo);
+
+		vk::DescriptorSetLayout descriptorSetLayout;
+
+		vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(textureBindings.size()), textureBindings.data());
+		descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+
+		vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, 1, &descriptorSetLayout);
+
+		device.allocateDescriptorSets(&allocInfo, &m_dsSkybox);
+
+		vk::WriteDescriptorSet descriptorWrite(m_dsSkybox,
+			uint32_t(0),
+			uint32_t(0),
+			static_cast<uint32_t>(imageInfos.size()),
+			vk::DescriptorType::eCombinedImageSampler,
+			imageInfos.data(),
+			{},
+			{});
+		device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+		device.destroyDescriptorSetLayout(descriptorSetLayout);
+	}*/
 
     return true;
 }
@@ -359,7 +502,9 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     offscreenTexture->m_pImage->m_mipmapCount = 1;
     offscreenTexture->m_pImage->m_layerCount = 1;
     offscreenTexture->m_pImage->m_bFramebuffer = true;
-    offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+    offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
+    offscreenTexture->m_pImage->m_bHostVisible = true;
+    offscreenTexture->m_pImage->m_bTransferSrc= true;
 
     offscreenTexture->m_wrapMode[0] = WrapMode::CLAMP;
     offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
@@ -376,23 +521,24 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize = 0;
     for (int i = 0; i < mipmapCount; ++i)
     {
-        m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize += width * height * 4 * 2 / std::max(1, int(width / pow(2, i)));
+        m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize += width * height * 4 * 4 / std::max(1, int((4, i)));
     }
     m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize *= 6;
     m_pTexturePrefilteredEnvMap->m_pImage->m_mipmapCount = mipmapCount;
     m_pTexturePrefilteredEnvMap->m_pImage->m_layerCount = 6;
     m_pTexturePrefilteredEnvMap->m_pImage->m_bFramebuffer = false;
-    m_pTexturePrefilteredEnvMap->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+    m_pTexturePrefilteredEnvMap->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
     m_pTexturePrefilteredEnvMap->m_wrapMode[0] = WrapMode::CLAMP;
     m_pTexturePrefilteredEnvMap->m_wrapMode[1] = WrapMode::CLAMP;
     m_pTexturePrefilteredEnvMap->m_wrapMode[2] = WrapMode::CLAMP;
+
     m_pVulkanTexturePrefilteredEnvMap = m_pResourceManager->CreateCombinedTexture(m_pTexturePrefilteredEnvMap);
 
     vk::Device device = m_pContext->GetLogicalDevice();
     RenderPass renderPass(&device);
     vk::AttachmentDescription colorAttachment(
         {},
-        vk::Format::eR16G16B16A16Sfloat,
+        vk::Format::eR32G32B32A32Sfloat,
         vk::SampleCountFlagBits::e1,
         vk::AttachmentLoadOp::eClear,
         vk::AttachmentStoreOp::eStore,
@@ -478,14 +624,16 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     
     // transit offscreen image layout
     vk::ImageSubresourceRange srrOffscreen(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
     // transit prefiltered cubemap image layout
     vk::ImageSubresourceRange ssrCubemap(vk::ImageAspectFlagBits::eColor, 0, mipmapCount, 0, 6);
-    m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTexturePrefilteredEnvMap->image, vk::Format::eR16G16B16A16Sfloat, ssrCubemap,
+    m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTexturePrefilteredEnvMap->image, vk::Format::eR32G32B32A32Sfloat, ssrCubemap,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
+    char* cubemapData = new char[m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize];
+    size_t offset = 0;
     for (int level = 0; level < mipmapCount; ++level)
     {
         float roughness = (float)level / (float)(mipmapCount - 1);
@@ -513,7 +661,11 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
 
             commandBuffer.endRenderPass();
 
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+
+			//m_pResourceManager->TransferGPUTextureToCPU(offscreenVulkanTexture, cubemapData + offset, viewport.width* viewport.height * 4 * 4);
+			//offset += viewport.width* viewport.height * 4 * 4;
+
+            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
             // Copy region for transfer from framebuffer to cube face
@@ -524,17 +676,19 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
                 vk::Offset3D(0, 0, 0),
                 vk::Extent3D(viewport.width, viewport.height, 1));
 
+
+
             commandBuffer.copyImage(offscreenVulkanTexture->image, vk::ImageLayout::eTransferSrcOptimal, 
                 m_pVulkanTexturePrefilteredEnvMap->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
-			m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+			m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
 				vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
         }
     }
 
     // transit prefiltered cubemap image layout back
-    m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTexturePrefilteredEnvMap->image, vk::Format::eR16G16B16A16Sfloat, ssrCubemap,
+    m_pResourceManager->SetImageLayout(commandBuffer, m_pVulkanTexturePrefilteredEnvMap->image, vk::Format::eR32G32B32A32Sfloat, ssrCubemap,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
     commandBuffer.end();
@@ -553,24 +707,31 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
     device.freeCommandBuffers(m_pContext->GetCommandPool(), 1, &commandBuffer);
     device.destroyFramebuffer(framebuffer);
 
+
+	//m_pResourceManager->TransferGPUTextureToCPU(m_pVulkanTexturePrefilteredEnvMap, m_pTexturePrefilteredEnvMap);
+	//char name[32];
+	
+    DumpCubemapToDDS("D:\\Coding\\github\\vulkan-renderer\\vulkan-renderer\\TestModel\\Skybox\\environment.dds", cubemapData, width, height, mipmapCount, m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize);
+    delete [] cubemapData;
+
     return m_pVulkanTexturePrefilteredEnvMap;
 }
 
 std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool &descriptorPool)
 {
-    uint32_t width = 64;
-    uint32_t height = 64;
+    uint32_t width = 32;
+    uint32_t height = 32;
     uint32_t mipmapCount = static_cast<uint32_t>(floor(log2(width)) + +1);
     std::shared_ptr<MyTexture> offscreenTexture = std::make_shared<MyTexture>();
     offscreenTexture->m_pImage = std::make_shared<MyImage>("prefiltered-env-map-colorAttachment");
     offscreenTexture->m_pImage->m_width = width;
     offscreenTexture->m_pImage->m_height = height;
     offscreenTexture->m_pImage->m_channels = 4;
-    offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+    offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 4;
     offscreenTexture->m_pImage->m_mipmapCount = 1;
     offscreenTexture->m_pImage->m_layerCount = 1;
     offscreenTexture->m_pImage->m_bFramebuffer = true;
-    offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+    offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
 
     offscreenTexture->m_wrapMode[0] = WrapMode::CLAMP;
     offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
@@ -587,13 +748,13 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
     irradianceMap->m_pImage->m_bufferSize = 0;
     for (int i = 0; i < mipmapCount; ++i)
     {
-        irradianceMap->m_pImage->m_bufferSize += width * height * 4 * 2 / std::max(1, int(width / pow(2, i)));
+        irradianceMap->m_pImage->m_bufferSize += width * height * 4 * 4 / std::max(1, int(width / pow(2, i)));
     }
     irradianceMap->m_pImage->m_bufferSize *= 6;
     irradianceMap->m_pImage->m_mipmapCount = mipmapCount;
     irradianceMap->m_pImage->m_layerCount = 6;
     irradianceMap->m_pImage->m_bFramebuffer = false;
-    irradianceMap->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+    irradianceMap->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
     irradianceMap->m_wrapMode[0] = WrapMode::CLAMP;
     irradianceMap->m_wrapMode[1] = WrapMode::CLAMP;
     irradianceMap->m_wrapMode[2] = WrapMode::CLAMP;
@@ -603,7 +764,7 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
     RenderPass renderPass(&device);
     vk::AttachmentDescription colorAttachment(
     {},
-        vk::Format::eR16G16B16A16Sfloat,
+        vk::Format::eR32G32B32A32Sfloat,
         vk::SampleCountFlagBits::e1,
         vk::AttachmentLoadOp::eClear,
         vk::AttachmentStoreOp::eStore,
@@ -688,12 +849,12 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
 
     // transit offscreen image layout
     vk::ImageSubresourceRange srrOffscreen(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+    m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
     // transit prefiltered cubemap image layout
     vk::ImageSubresourceRange ssrCubemap(vk::ImageAspectFlagBits::eColor, 0, mipmapCount, 0, 6);
-    m_pResourceManager->SetImageLayout(commandBuffer, vulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, ssrCubemap,
+    m_pResourceManager->SetImageLayout(commandBuffer, vulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, ssrCubemap,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
     for (int level = 0; level < mipmapCount; ++level)
@@ -723,7 +884,7 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
 
             commandBuffer.endRenderPass();
 
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
             // Copy region for transfer from framebuffer to cube face
@@ -738,13 +899,13 @@ std::shared_ptr<VulkanTexture> Skybox::generateIrradianceMap(vk::DescriptorPool 
                 vulkanTexture->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
         }
     }
 
     // transit prefiltered cubemap image layout back
-    m_pResourceManager->SetImageLayout(commandBuffer, vulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, ssrCubemap,
+    m_pResourceManager->SetImageLayout(commandBuffer, vulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, ssrCubemap,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
     commandBuffer.end();
@@ -939,7 +1100,7 @@ void Skybox::initSHLight()
             offscreenTexture->m_pImage->m_width = width;
             offscreenTexture->m_pImage->m_height = height;
             offscreenTexture->m_pImage->m_channels = 4;
-            offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+            offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 4;
             offscreenTexture->m_pImage->m_mipmapCount = 1;
             offscreenTexture->m_pImage->m_layerCount = 1;
             offscreenTexture->m_pImage->m_format = m_pTextureEnvMap->m_pImage->m_format;
@@ -1019,7 +1180,7 @@ void Skybox::initSHLight()
         RenderPass renderPass(&device);
         vk::AttachmentDescription colorAttachment(
             {},
-            vk::Format::eR16G16B16A16Sfloat,
+            vk::Format::eR32G32B32A32Sfloat,
             vk::SampleCountFlagBits::e1,
             vk::AttachmentLoadOp::eClear,
             vk::AttachmentStoreOp::eStore,
@@ -1081,11 +1242,11 @@ void Skybox::initSHLight()
             offscreenTexture->m_pImage->m_width = width;
             offscreenTexture->m_pImage->m_height = height;
             offscreenTexture->m_pImage->m_channels = 4;
-            offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+            offscreenTexture->m_pImage->m_bufferSize = width * height * 4 * 4;
             offscreenTexture->m_pImage->m_mipmapCount = 1;
             offscreenTexture->m_pImage->m_layerCount = 1;
             offscreenTexture->m_pImage->m_bFramebuffer = true;
-            offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+            offscreenTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
 
             offscreenTexture->m_wrapMode[0] = WrapMode::CLAMP;
             offscreenTexture->m_wrapMode[1] = WrapMode::CLAMP;
@@ -1095,15 +1256,17 @@ void Skybox::initSHLight()
             std::shared_ptr<VulkanTexture> offscreenVulkanTexture = m_pResourceManager->CreateVulkanTexture(offscreenTexture);
 
             std::shared_ptr<MyTexture> tempTexture = std::make_shared<MyTexture>();
-            tempTexture->m_pImage = std::make_shared<MyImage>("TempImageForSH");
+			char imageName[32];
+			sprintf(imageName, "TempImageForSH_%d", i);
+            tempTexture->m_pImage = std::make_shared<MyImage>(imageName);
             tempTexture->m_pImage->m_width = width;
             tempTexture->m_pImage->m_height = height;
             tempTexture->m_pImage->m_channels = 4;
-            tempTexture->m_pImage->m_bufferSize = width * height * 4 * 2;
+            tempTexture->m_pImage->m_bufferSize = width * height * 4 * 4;
             tempTexture->m_pImage->m_mipmapCount = 1;
             tempTexture->m_pImage->m_layerCount = 1;
             tempTexture->m_pImage->m_bFramebuffer = false;
-            tempTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA16_FLOAT;
+            tempTexture->m_pImage->m_format = MY_IMAGEFORMAT_RGBA32_FLOAT;
             tempTexture->m_pImage->m_bHostVisible = true;
 
             tempTexture->m_wrapMode[0] = WrapMode::CLAMP;
@@ -1119,9 +1282,9 @@ void Skybox::initSHLight()
 
 
             vk::ImageSubresourceRange srrOffscreen(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-            m_pResourceManager->SetImageLayout(commandBuffer, tempVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            m_pResourceManager->SetImageLayout(commandBuffer, tempVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
 
@@ -1182,7 +1345,7 @@ void Skybox::initSHLight()
             commandBuffer.endRenderPass();
 
 
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
             // Copy region for transfer from framebuffer to cube face
@@ -1197,7 +1360,7 @@ void Skybox::initSHLight()
                 tempVulkanTexture->image,
                 vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
-            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR16G16B16A16Sfloat, srrOffscreen,
+            m_pResourceManager->SetImageLayout(commandBuffer, offscreenVulkanTexture->image, vk::Format::eR32G32B32A32Sfloat, srrOffscreen,
                 vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eColorAttachmentOptimal);
 
 
@@ -1222,7 +1385,7 @@ void Skybox::initSHLight()
 
             char name[32];
             sprintf(name, "cubemap-%d.hdr", i);
-            // textures[i]->m_pImage->DumpImageHDR(name);
+             textures[i]->m_pImage->DumpImageHDR(name);
         }
 
         _textures.push_back(textures[0]); // +X

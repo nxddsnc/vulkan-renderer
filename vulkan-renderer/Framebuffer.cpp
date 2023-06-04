@@ -200,7 +200,7 @@ void Framebuffer::_init(std::vector<MyImageFormat> colorFormats, MyImageFormat d
 			dFormat,
 			vk::SampleCountFlagBits::e1,
 			m_pDepthTexture->referenceCount > 1 ? vk::AttachmentLoadOp::eDontCare : vk::AttachmentLoadOp::eClear,
-			vk::AttachmentStoreOp::eDontCare,
+			vk::AttachmentStoreOp::eStore,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eStore,
 			vk::ImageLayout::eUndefined,

@@ -13,9 +13,10 @@ const float PI = 3.1415926535897932384626433832795;
 
 vec2 dirToUV(vec3 dir)
 {
+	vec3 normalizedDir = normalize(dir);
 	return vec2(
-		0.5f + 0.5f * atan(dir.z, dir.x) / PI,
-		1.f - acos(dir.y) / PI);
+		0.5f + 0.5f * atan(normalizedDir.y, normalizedDir.x) / PI,
+		acos(normalizedDir.z) / PI);
 }
 
 void main()
@@ -27,8 +28,8 @@ void main()
 
 	const float TWO_PI = PI * 2.0;
 	const float HALF_PI = PI * 0.5;
-	const float deltaPhi = TWO_PI / 36.0;
-	const float deltaTheta = HALF_PI / 18.0;
+	const float deltaPhi = TWO_PI / 360.0;
+	const float deltaTheta = HALF_PI / 180.0;
 
 	vec3 color = vec3(0.0);
 	uint sampleCount = 0u;

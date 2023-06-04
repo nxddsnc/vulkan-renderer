@@ -83,6 +83,7 @@ void ShadowMap::AddScene(std::shared_ptr<MyScene> scene)
 		{
 			auto renderQueue = m_pRenderQueuemanager->GetRenderQueue(id, m_pFramebuffer->m_pRenderPass);
 			m_renderQueues.push_back(renderQueue);
+			renderQueue->AddRenderable(renderable);
 		}
 		
 	}

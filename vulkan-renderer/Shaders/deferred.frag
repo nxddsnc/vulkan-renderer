@@ -112,9 +112,9 @@ void main()
     pos.xy = (1.0 + pos.xy) * 0.5;
 
     vec2 texelScale = 1.0 / textureSize(u_shadowMap, 0);
-    outColor *= shadow(pos.xyz, texelScale);
+    // outColor *= shadow(pos.xyz, texelScale);
 
-    //outColor.rgb = diffuse;
+    // outColor.rgb = diffuse;
 
     outColor.a = 1.0;
 

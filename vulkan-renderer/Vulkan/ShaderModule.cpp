@@ -83,6 +83,7 @@ void ShaderModule::BuildFromFile(const std::string& filename, ShaderStage stage,
 
 void ShaderModule::addShaderOptions(ShaderStage stage, shaderc::CompileOptions * options)
 {
+	options->AddMacroDefinition("USE_IRRADIANCE_MAP", "0");
 	uint8_t bindings = 0;
 	switch (_id.type)
 	{
