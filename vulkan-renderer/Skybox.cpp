@@ -761,7 +761,7 @@ std::shared_ptr<VulkanTexture> Skybox::generatePrefilteredCubeMap(vk::Descriptor
 			offset += tempWidth * tempHeight * 4 * 4;
         }
      }
-    DumpCubemapToDDS("D:\\Coding\\github\\vulkan-renderer\\vulkan-renderer\\TestModel\\Skybox\\environment.dds", cubemapData, width, height, mipmapCount, m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize);
+    DumpCubemapToDDS("./environment.dds", cubemapData, width, height, mipmapCount, m_pTexturePrefilteredEnvMap->m_pImage->m_bufferSize);
     delete [] cubemapData;
 
     return m_pVulkanTexturePrefilteredEnvMap;
